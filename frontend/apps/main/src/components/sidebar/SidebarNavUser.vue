@@ -2,15 +2,14 @@
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <SidebarMenuButton
+        v-if="!zendesk"
         size="md"
         class="p-0"
       >
         <div class="relative">
           <Avatar class="h-8 w-8 rounded">
             <AvatarImage :src="userStore.avatar" alt="U" class="rounded" />
-            <AvatarFallback class="rounded">
-              {{ userStore.getInitials }}
-            </AvatarFallback>
+            <AvatarFallback class="rounded">{{ userStore.getInitials }}</AvatarFallback>
           </Avatar>
           <StatusDot
             :status="userStore.user.availability_status"
@@ -24,6 +23,23 @@
         </div>
         <ChevronsUpDown class="ml-auto size-4" />
       </SidebarMenuButton>
+      <button
+        v-else
+        type="button"
+        class="zendesk-nav-item w-full !py-2"
+      >
+        <div class="relative">
+          <Avatar class="h-7 w-7 rounded">
+            <AvatarImage :src="userStore.avatar" alt="U" class="rounded" />
+            <AvatarFallback class="rounded text-xs">{{ userStore.getInitials }}</AvatarFallback>
+          </Avatar>
+          <StatusDot
+            :status="userStore.user.availability_status"
+            size="sm"
+            class="absolute -bottom-0.5 -right-0.5 border border-[hsl(var(--zendesk-nav-bg))]"
+          />
+        </div>
+      </button>
     </DropdownMenuTrigger>
     <DropdownMenuContent
       class="min-w-56"
@@ -55,6 +71,19 @@
               :checked="mode === 'dark'"
               @update:checked="(val) => (mode = val ? 'dark' : 'light')"
             />
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-muted-foreground">{{ t('navigation.interfaceLayout') }}</span>
+            <Select :model-value="layout" @update:model-value="setLayout">
+              <SelectTrigger class="h-8 w-[7.5rem]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="UI_LAYOUT_DEFAULT">{{ t('navigation.interfaceDefault') }}</SelectItem>
+                <SelectItem :value="UI_LAYOUT_ZENDESK">{{ t('navigation.interfaceZendesk') }}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div class="border-t border-border pt-3 space-y-3">
@@ -117,16 +146,28 @@ import { SidebarMenuButton } from '@shared-ui/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@shared-ui/components/ui/avatar'
 import StatusDot from '@shared-ui/components/StatusDot.vue'
 import { Switch } from '@shared-ui/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@shared-ui/components/ui/select'
 import { ChevronsUpDown, CircleUserRound, LogOut } from 'lucide-vue-next'
 import { useUserStore } from '../../stores/user'
 import { useRouter } from 'vue-router'
-
 import { useColorMode } from '@vueuse/core'
+import { useUiLayout, UI_LAYOUT_DEFAULT, UI_LAYOUT_ZENDESK } from '../../composables/useUiLayout'
+
+defineProps({
+  zendesk: { type: Boolean, default: false }
+})
 
 const mode = useColorMode()
 const userStore = useUserStore()
 const router = useRouter()
 const { t } = useI18n()
+const { layout, setLayout } = useUiLayout()
 
 const logout = () => {
   window.location.href = '/logout'

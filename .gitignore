@@ -9,3 +9,6 @@ uploads
 dist/
 .vscode/
 static/widget.min.js
+
+# local scratch (binaries, build artifacts)
+.local/
