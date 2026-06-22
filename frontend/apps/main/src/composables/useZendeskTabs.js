@@ -1,0 +1,94 @@
+import { computed, watch } from 'vue'
+import { useStorage } from '@vueuse/core'
+import { useRoute, useRouter } from 'vue-router'
+import { useConversationStore } from '@main/stores/conversation'
+import { useInboxViewContext } from '@main/composables/useInboxViewContext'
+
+const MAX_TABS = 15
+
+const CONVERSATION_ROUTE_NAMES = new Set([
+  'inbox-conversation',
+  'team-inbox-conversation',
+  'view-inbox-conversation'
+])
+
+export function useZendeskTabs () {
+  const tabs = useStorage('libredesk_zendesk_tabs', [])
+  const route = useRoute()
+  const router = useRouter()
+  const conversationStore = useConversationStore()
+  const { listRoute } = useInboxViewContext()
+
+  const activeUuid = computed(() => route.params.uuid || '')
+
+  const buildTabFromRoute = () => {
+    const uuid = route.params.uuid
+    if (!uuid) return null
+
+    const listItem = conversationStore.conversationsList.find((c) => c.uuid === uuid)
+    const current = conversationStore.current?.uuid === uuid ? conversationStore.current : null
+
+    return {
+      uuid,
+      subject: current?.subject || listItem?.subject || '',
+      reference_number: current?.reference_number || listItem?.reference_number || '',
+      routeName: route.name,
+      routeParams: { ...route.params }
+    }
+  }
+
+  const syncActiveTab = () => {
+    if (!CONVERSATION_ROUTE_NAMES.has(route.name)) return
+    const tabData = buildTabFromRoute()
+    if (!tabData) return
+
+    const idx = tabs.value.findIndex((t) => t.uuid === tabData.uuid)
+    if (idx >= 0) {
+      tabs.value[idx] = { ...tabs.value[idx], ...tabData }
+    } else {
+      tabs.value.push(tabData)
+      if (tabs.value.length > MAX_TABS) {
+        tabs.value.shift()
+      }
+    }
+  }
+
+  watch(
+    () => [
+      route.name,
+      route.params.uuid,
+      conversationStore.current?.subject,
+      conversationStore.current?.reference_number
+    ],
+    syncActiveTab,
+    { immediate: true }
+  )
+
+  const selectTab = (tab) => {
+    if (tab.uuid === activeUuid.value) return
+    router.push({ name: tab.routeName, params: tab.routeParams })
+  }
+
+  const closeTab = (uuid) => {
+    const idx = tabs.value.findIndex((t) => t.uuid === uuid)
+    if (idx === -1) return
+
+    const wasActive = activeUuid.value === uuid
+    tabs.value.splice(idx, 1)
+
+    if (!wasActive) return
+
+    if (tabs.value.length) {
+      const nextTab = tabs.value[Math.min(idx, tabs.value.length - 1)]
+      router.push({ name: nextTab.routeName, params: nextTab.routeParams })
+    } else {
+      router.push(listRoute.value)
+    }
+  }
+
+  const addTab = () => {
+    router.push(listRoute.value)
+  }
+
+  return { tabs, activeUuid, selectTab, closeTab, addTab }
+}
