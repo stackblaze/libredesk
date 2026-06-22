@@ -23,6 +23,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,6 +59,7 @@ jobs:
             type=raw,value=${{ steps.version.outputs.version }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -75,4 +78,31 @@ jobs:
           echo "### Published image" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ env.IMAGE }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    # Roll the freshly built image out to prod (kubero-prod / ns libredesk).
+    # Only on main builds; uses a namespace-scoped ServiceAccount (patch the
+    # single libredesk Deployment, nothing else).
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, kubero]
+    steps:
+      - name: Deploy to prod
+        env:
+          IMAGE_REF: ${{ env.IMAGE }}@${{ needs.build.outputs.digest }}
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_PROD_B64 }}
+        run: |
+          set -euo pipefail
+          KCFG="$RUNNER_TEMP/kubeconfig"
+          trap 'rm -f "$KCFG"' EXIT
+          printf '%s' "$KUBECONFIG_B64" | base64 -d > "$KCFG"
+          export KUBECONFIG="$KCFG"
+          echo "Rolling out image: $IMAGE_REF"
+          kubectl -n libredesk set image deploy/libredesk libredesk="$IMAGE_REF"
+          kubectl -n libredesk rollout status deploy/libredesk --timeout=300s
+          echo "### Deployed to prod" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$IMAGE_REF" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
