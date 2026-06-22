@@ -9,7 +9,9 @@
       try {
         var raw = localStorage.getItem('libredesk_ui_layout')
         if (!raw) return
-        if (JSON.parse(raw) !== 'zendesk') return
+        var val = raw
+        try { val = JSON.parse(raw) } catch (e) {}
+        if (val !== 'zendesk') return
         document.documentElement.classList.add('zendesk-layout')
         var meta = document.querySelector('meta[name="viewport"]')
         if (meta) meta.content = 'width=device-width, initial-scale=1'

@@ -4,12 +4,20 @@ export const UI_LAYOUT_ZENDESK = 'zendesk'
 export const DEFAULT_VIEWPORT = 'width=1280, initial-scale=0.29, shrink-to-fit=no'
 export const ZENDESK_VIEWPORT = 'width=device-width, initial-scale=1'
 
-/** Read layout preference from localStorage (VueUse JSON-serialized). */
+/**
+ * Read layout preference from localStorage.
+ * VueUse useStorage with a string default stores the value raw ("zendesk"),
+ * but tolerate a JSON-quoted form ('"zendesk"') too.
+ */
 export function readStoredUiLayout () {
   try {
     const raw = localStorage.getItem(UI_LAYOUT_STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw)
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return raw
+    }
   } catch {
     return null
   }
