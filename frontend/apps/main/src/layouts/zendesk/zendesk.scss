@@ -1,9 +1,15 @@
 // Zendesk-inspired layout theme (opt-in via ui_layout preference)
+html.zendesk-layout {
+  width: 100%;
+  min-width: 100%;
+}
+
 html.zendesk-layout,
 html.zendesk-layout body,
 html.zendesk-layout #app {
   width: 100%;
-  max-width: 100%;
+  max-width: none;
+  min-width: 0;
   overflow: hidden;
 }
 
