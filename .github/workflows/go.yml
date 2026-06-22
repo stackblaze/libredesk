@@ -1,6 +1,14 @@
 name: Go
 
-on: [push]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
