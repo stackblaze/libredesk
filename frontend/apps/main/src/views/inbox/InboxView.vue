@@ -1,6 +1,8 @@
 <template>
-  <ConversationPlaceholder v-if="['inbox', 'team-inbox', 'view-inbox'].includes(route.name)" />
-  <router-view />
+  <div class="h-full w-full min-h-0 min-w-0 flex flex-col">
+    <ConversationPlaceholder v-if="['inbox', 'team-inbox', 'view-inbox'].includes(route.name)" />
+    <router-view class="flex-1 min-h-0 min-w-0 w-full" />
+  </div>
 </template>
 
 <script setup>

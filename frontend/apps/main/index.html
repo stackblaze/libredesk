@@ -4,6 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=1280, initial-scale=0.29, shrink-to-fit=no" />
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('libredesk_ui_layout')
+        if (!raw) return
+        if (JSON.parse(raw) !== 'zendesk') return
+        document.documentElement.classList.add('zendesk-layout')
+        var meta = document.querySelector('meta[name="viewport"]')
+        if (meta) meta.content = 'width=device-width, initial-scale=1'
+      } catch (e) {}
+    })()
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"

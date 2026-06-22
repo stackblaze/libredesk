@@ -1,4 +1,18 @@
 // Zendesk-inspired layout theme (opt-in via ui_layout preference)
+html.zendesk-layout {
+  width: 100%;
+  min-width: 100%;
+}
+
+html.zendesk-layout,
+html.zendesk-layout body,
+html.zendesk-layout #app {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .zendesk-app {
   --zendesk-nav-bg: 210 29% 16%;
   --zendesk-nav-fg: 0 0% 100%;
@@ -72,8 +86,66 @@
   }
 }
 
+.zendesk-ticket-chrome {
+  border-bottom: 1px solid hsl(var(--zendesk-border));
+}
+
+.zendesk-tab-bar {
+  @apply gap-0 min-h-[2.25rem];
+  background: hsl(220 14% 93%);
+  border-bottom: 1px solid hsl(var(--zendesk-border));
+}
+
+.zendesk-tab {
+  @apply relative flex items-center gap-1 px-1.5 py-1 mr-px transition-colors;
+  min-width: 9rem;
+  max-width: 13rem;
+  background: hsl(220 14% 90%);
+  border: 1px solid hsl(var(--zendesk-border));
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+
+  &:hover {
+    background: hsl(0 0% 98%);
+  }
+
+  &.active {
+    background: hsl(var(--zendesk-views-bg));
+    border-bottom: 1px solid hsl(var(--zendesk-views-bg));
+    margin-bottom: -1px;
+    z-index: 1;
+  }
+}
+
+.zendesk-tab-close {
+  @apply p-0.5 rounded hover:bg-black/10 text-muted-foreground;
+}
+
+.zendesk-tab-add {
+  @apply flex items-center px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors;
+}
+
+.zendesk-ticket-breadcrumb {
+  @apply h-9 text-sm bg-background;
+  border-color: hsl(var(--zendesk-border));
+}
+
+.zendesk-breadcrumb-segment {
+  @apply flex items-center px-3 border-r h-9;
+  border-color: hsl(var(--zendesk-border));
+}
+
+.zendesk-breadcrumb-link {
+  @apply text-muted-foreground hover:text-foreground transition-colors shrink-0;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .zendesk-status-badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white;
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white uppercase tracking-wide;
 
   &.status-new {
     background: hsl(var(--zendesk-status-new));
@@ -99,9 +171,4 @@
   .prop-field {
     @apply mb-4;
   }
-}
-
-.zendesk-workspace-footer {
-  @apply flex items-center justify-end gap-2 px-4 py-2 border-t bg-background shrink-0;
-  border-color: hsl(var(--zendesk-border));
 }

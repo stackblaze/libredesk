@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full min-h-0">
+  <div class="flex h-full w-full min-h-0 min-w-0">
     <template v-if="!hasConversation">
       <ZendeskViewsPane
         :user-teams="userTeams"
@@ -11,7 +11,10 @@
         <router-view class="sr-only" aria-hidden="true" />
       </div>
     </template>
-    <router-view v-else class="flex-1 min-w-0" />
+    <div v-else class="flex flex-col flex-1 min-w-0 w-full h-full min-h-0">
+      <ZendeskTicketChrome />
+      <router-view class="flex-1 min-w-0 w-full min-h-0" />
+    </div>
   </div>
 </template>
 
@@ -26,6 +29,7 @@ import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import api from '@main/api'
 import ZendeskViewsPane from './ZendeskViewsPane.vue'
 import ZendeskConversationTable from './ZendeskConversationTable.vue'
+import ZendeskTicketChrome from './ZendeskTicketChrome.vue'
 
 const route = useRoute()
 const userStore = useUserStore()

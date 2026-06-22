@@ -5,10 +5,13 @@ import { useAppSettingsStore } from './stores/appSettings'
 import router from './router'
 import mitt from 'mitt'
 import api from './api'
+import { applyStoredUiLayoutViewport } from './composables/zendeskViewport'
 import '@shared-ui/assets/styles/main.scss'
 import '@main/layouts/zendesk/zendesk.scss'
 import '@shared-ui/utils/string.js'
 import Root from './Root.vue'
+
+applyStoredUiLayoutViewport()
 
 const setFavicon = (url) => {
   let link = document.createElement("link")
