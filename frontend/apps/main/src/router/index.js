@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import App from '@main/App.vue'
+import AppShell from '@main/AppShell.vue'
 import OuterApp from '@main/OuterApp.vue'
-import InboxLayout from '@main/layouts/inbox/InboxLayout.vue'
+import InboxLayoutShell from '@main/layouts/inbox/InboxLayoutShell.vue'
 import AccountLayout from '@main/layouts/account/AccountLayout.vue'
 import AdminLayout from '@main/layouts/admin/AdminLayout.vue'
 import { useAppSettingsStore } from '../stores/appSettings'
@@ -35,7 +35,7 @@ const routes = [
   },
   {
     path: '/',
-    component: App,
+    component: AppShell,
     children: [
       {
         path: 'contacts',
@@ -66,7 +66,7 @@ const routes = [
         path: '/inboxes/teams/:teamID',
         name: 'teams',
         props: true,
-        component: InboxLayout,
+        component: InboxLayoutShell,
         meta: { titleKey: 'globals.terms.teamInbox', hidePageHeader: true },
         children: [
           {
@@ -78,7 +78,7 @@ const routes = [
               {
                 path: 'conversation/:uuid',
                 name: 'team-inbox-conversation',
-                component: () => import('@main/views/conversation/ConversationDetailView.vue'),
+                component: () => import('@main/views/conversation/ConversationDetailShell.vue'),
                 props: true,
                 meta: { titleKey: 'globals.terms.teamInbox', hidePageHeader: true }
               }
@@ -90,7 +90,7 @@ const routes = [
         path: '/inboxes/views/:viewID',
         name: 'views',
         props: true,
-        component: InboxLayout,
+        component: InboxLayoutShell,
         meta: { titleKey: 'globals.terms.view', hidePageHeader: true },
         children: [
           {
@@ -102,7 +102,7 @@ const routes = [
               {
                 path: 'conversation/:uuid',
                 name: 'view-inbox-conversation',
-                component: () => import('@main/views/conversation/ConversationDetailView.vue'),
+                component: () => import('@main/views/conversation/ConversationDetailShell.vue'),
                 props: true,
                 meta: { titleKey: 'globals.terms.view', hidePageHeader: true }
               }
@@ -120,7 +120,7 @@ const routes = [
         path: '/inboxes/:type(assigned|unassigned|all|mentioned)?',
         name: 'inboxes',
         redirect: '/inboxes/assigned',
-        component: InboxLayout,
+        component: InboxLayoutShell,
         props: true,
         meta: { titleKey: 'globals.terms.inbox', hidePageHeader: true },
         children: [
@@ -142,7 +142,7 @@ const routes = [
               {
                 path: 'conversation/:uuid',
                 name: 'inbox-conversation',
-                component: () => import('@main/views/conversation/ConversationDetailView.vue'),
+                component: () => import('@main/views/conversation/ConversationDetailShell.vue'),
                 props: true,
                 meta: {
                   titleKey: 'globals.terms.inbox',

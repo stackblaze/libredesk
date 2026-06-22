@@ -1,0 +1,107 @@
+// Zendesk-inspired layout theme (opt-in via ui_layout preference)
+.zendesk-app {
+  --zendesk-nav-bg: 210 29% 16%;
+  --zendesk-nav-fg: 0 0% 100%;
+  --zendesk-nav-muted: 210 15% 70%;
+  --zendesk-nav-active: 200 70% 45%;
+  --zendesk-views-bg: 0 0% 100%;
+  --zendesk-views-active: 200 80% 95%;
+  --zendesk-table-header: 0 0% 96%;
+  --zendesk-border: 220 13% 91%;
+  --zendesk-status-new: 32 95% 44%;
+  --zendesk-status-open: 0 72% 51%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.zendesk-nav-rail {
+  background: hsl(var(--zendesk-nav-bg));
+  color: hsl(var(--zendesk-nav-fg));
+}
+
+.zendesk-nav-item {
+  @apply flex flex-col items-center justify-center gap-1 py-3 px-2 text-[10px] rounded-md mx-1 transition-colors;
+  color: hsl(var(--zendesk-nav-muted));
+
+  &:hover {
+    color: hsl(var(--zendesk-nav-fg));
+    background: hsl(0 0% 100% / 0.08);
+  }
+
+  &.active {
+    color: hsl(var(--zendesk-nav-fg));
+    background: hsl(var(--zendesk-nav-active));
+  }
+}
+
+.zendesk-views-pane {
+  background: hsl(var(--zendesk-views-bg));
+  border-right: 1px solid hsl(var(--zendesk-border));
+}
+
+.zendesk-view-item {
+  @apply flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors;
+
+  &:hover {
+    background: hsl(var(--zendesk-table-header));
+  }
+
+  &.active {
+    background: hsl(var(--zendesk-views-active));
+    font-weight: 500;
+  }
+}
+
+.zendesk-table {
+  th {
+    background: hsl(var(--zendesk-table-header));
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide px-3 py-2 text-left border-b;
+    border-color: hsl(var(--zendesk-border));
+  }
+
+  td {
+    @apply px-3 py-2.5 text-sm border-b;
+    border-color: hsl(var(--zendesk-border));
+  }
+
+  tr:hover td {
+    @apply bg-accent/50;
+  }
+
+  tr.selected td {
+    background: hsl(var(--zendesk-views-active));
+  }
+}
+
+.zendesk-status-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white;
+
+  &.status-new {
+    background: hsl(var(--zendesk-status-new));
+  }
+
+  &.status-open {
+    background: hsl(var(--zendesk-status-open));
+  }
+
+  &.status-default {
+    @apply bg-muted text-muted-foreground;
+  }
+}
+
+.zendesk-ticket-props {
+  @apply border-r bg-background overflow-y-auto;
+  border-color: hsl(var(--zendesk-border));
+
+  .prop-label {
+    @apply text-xs text-muted-foreground mb-1;
+  }
+
+  .prop-field {
+    @apply mb-4;
+  }
+}
+
+.zendesk-workspace-footer {
+  @apply flex items-center justify-end gap-2 px-4 py-2 border-t bg-background shrink-0;
+  border-color: hsl(var(--zendesk-border));
+}
