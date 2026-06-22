@@ -5,8 +5,10 @@
 
 <script setup>
 import { useUiLayout, UI_LAYOUT_DEFAULT } from '@main/composables/useUiLayout'
+import { useZendeskViewport } from '@main/composables/useZendeskViewport'
 import App from '@main/App.vue'
 import ZendeskApp from '@main/layouts/zendesk/ZendeskApp.vue'
 
 const { layout } = useUiLayout()
+useZendeskViewport()
 </script>

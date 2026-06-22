@@ -1,4 +1,12 @@
 // Zendesk-inspired layout theme (opt-in via ui_layout preference)
+html.zendesk-layout,
+html.zendesk-layout body,
+html.zendesk-layout #app {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .zendesk-app {
   --zendesk-nav-bg: 210 29% 16%;
   --zendesk-nav-fg: 0 0% 100%;
@@ -99,9 +107,4 @@
   .prop-field {
     @apply mb-4;
   }
-}
-
-.zendesk-workspace-footer {
-  @apply flex items-center justify-end gap-2 px-4 py-2 border-t bg-background shrink-0;
-  border-color: hsl(var(--zendesk-border));
 }

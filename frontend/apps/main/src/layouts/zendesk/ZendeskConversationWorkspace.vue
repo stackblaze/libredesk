@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full bg-background">
+  <div class="flex flex-col h-full w-full min-h-0 min-w-0 bg-background">
     <!-- Ticket header -->
     <div class="flex items-center justify-between px-4 h-11 border-b shrink-0 text-sm">
       <div class="flex items-center gap-2 min-w-0">
@@ -31,9 +31,9 @@
       class="h-0.5 shrink-0 bg-primary/40 animate-pulse"
     />
 
-    <div v-if="showContent" class="flex flex-1 min-h-0">
+    <div v-if="showContent" class="flex flex-1 min-h-0 min-w-0 w-full">
       <ZendeskTicketProperties />
-      <div class="flex flex-col flex-1 min-w-0 border-r">
+      <div class="flex flex-col flex-1 min-w-0 w-full border-r">
         <div class="px-4 py-2 border-b shrink-0">
           <h2 class="text-base font-normal truncate">
             {{ conversationStore.current?.subject || t('zendesk.noSubject') }}
@@ -46,13 +46,11 @@
       </div>
       <ZendeskCustomerContext />
     </div>
-
-    <ZendeskWorkspaceFooter v-if="showContent" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDocumentVisibility } from '@vueuse/core'
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next'
@@ -63,7 +61,6 @@ import MessageList from '@/features/conversation/message/MessageList.vue'
 import ReplyBox from '@/features/conversation/ReplyBox.vue'
 import ZendeskTicketProperties from './ZendeskTicketProperties.vue'
 import ZendeskCustomerContext from './ZendeskCustomerContext.vue'
-import ZendeskWorkspaceFooter from './ZendeskWorkspaceFooter.vue'
 
 const props = defineProps({
   uuid: String
