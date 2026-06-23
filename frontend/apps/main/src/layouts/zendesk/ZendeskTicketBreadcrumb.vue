@@ -4,7 +4,7 @@
       <router-link :to="listRoute" class="zendesk-breadcrumb-segment zendesk-breadcrumb-link">
         {{ viewLabel }}
       </router-link>
-      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem]">
+      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem] font-medium text-foreground">
         {{ requesterName }}
       </span>
       <span class="zendesk-breadcrumb-segment flex items-center gap-2 min-w-0">
