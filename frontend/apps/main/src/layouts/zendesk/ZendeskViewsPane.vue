@@ -16,7 +16,10 @@
         :class="{ active: item.isActive }"
         @click="item.onClick"
       >
-        <span class="truncate pr-2">{{ item.label }}</span>
+        <span class="flex items-center gap-2 min-w-0">
+          <component :is="item.icon" class="size-4 shrink-0 text-muted-foreground" />
+          <span class="truncate pr-2">{{ item.label }}</span>
+        </span>
         <span
           v-if="item.showCount && item.isActive"
           class="text-xs tabular-nums text-muted-foreground shrink-0"
@@ -37,7 +40,10 @@
           :class="{ active: String(route.params.teamID) === String(team.id) }"
           @click="navigateToTeamInbox(team.id)"
         >
-          <span class="truncate">{{ team.emoji }} {{ team.name }}</span>
+          <span class="flex items-center gap-2 min-w-0">
+            <Users v-if="!team.emoji" class="size-4 shrink-0 text-muted-foreground" />
+            <span class="truncate">{{ team.emoji }} {{ team.name }}</span>
+          </span>
         </button>
       </div>
 
@@ -58,7 +64,10 @@
           :class="{ active: String(route.params.viewID) === String(view.id) }"
           @click="navigateToViewInbox(view.id)"
         >
-          <span class="truncate flex-1">{{ view.name }}</span>
+          <span class="flex items-center gap-2 min-w-0 flex-1">
+            <SlidersHorizontal class="size-4 shrink-0 text-muted-foreground" />
+            <span class="truncate">{{ view.name }}</span>
+          </span>
         </button>
       </div>
 
@@ -74,7 +83,10 @@
           :class="{ active: String(route.params.viewID) === String(view.id) }"
           @click="navigateToViewInbox(view.id)"
         >
-          <span class="truncate">{{ view.name }}</span>
+          <span class="flex items-center gap-2 min-w-0">
+            <Share2 class="size-4 shrink-0 text-muted-foreground" />
+            <span class="truncate">{{ view.name }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -85,7 +97,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { RefreshCw, Plus } from 'lucide-vue-next'
+import { RefreshCw, Plus, Inbox, AtSign, Users, UserX, Layers, SlidersHorizontal, Share2 } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import { useConversationStore } from '@main/stores/conversation'
 import { useUserStore } from '@main/stores/user'
@@ -115,6 +127,7 @@ const inboxItems = computed(() => [
   {
     key: 'assigned',
     label: t('globals.terms.myInbox'),
+    icon: Inbox,
     isActive: route.path === '/inboxes/assigned' || route.path.startsWith('/inboxes/assigned/'),
     showCount: true,
     onClick: () => navigateToInbox('assigned')
@@ -122,6 +135,7 @@ const inboxItems = computed(() => [
   {
     key: 'mentioned',
     label: t('globals.terms.mention', 2),
+    icon: AtSign,
     isActive: route.path.startsWith('/inboxes/mentioned'),
     showCount: true,
     onClick: () => navigateToInbox('mentioned')
@@ -129,6 +143,7 @@ const inboxItems = computed(() => [
   {
     key: 'unassigned',
     label: t('globals.terms.unassigned'),
+    icon: UserX,
     isActive: route.path.startsWith('/inboxes/unassigned'),
     showCount: true,
     onClick: () => navigateToInbox('unassigned')
@@ -136,6 +151,7 @@ const inboxItems = computed(() => [
   {
     key: 'all',
     label: t('globals.messages.all'),
+    icon: Layers,
     isActive: route.path.startsWith('/inboxes/all'),
     showCount: true,
     onClick: () => navigateToInbox('all')

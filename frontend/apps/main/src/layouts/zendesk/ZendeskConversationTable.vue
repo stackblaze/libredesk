@@ -1,7 +1,12 @@
 <template>
   <div class="flex flex-col h-full bg-background overflow-hidden">
-    <div class="flex items-center justify-between px-4 h-12 border-b shrink-0">
-      <h1 class="zendesk-title">{{ listTitle }}</h1>
+    <div class="flex items-center justify-between px-4 h-14 border-b shrink-0">
+      <div class="min-w-0">
+        <h1 class="zendesk-title truncate">{{ listTitle }}</h1>
+        <p v-if="hasConversations" class="zendesk-meta">
+          {{ t('zendesk.ticketCount', conversationStore.conversations.total, { count: conversationStore.conversations.total }) }}
+        </p>
+      </div>
       <div class="flex items-center gap-2">
         <Button
           v-if="hasConversations"
@@ -45,10 +50,30 @@
       <table v-else-if="hasConversations" class="zendesk-table w-full">
         <thead class="sticky top-0 z-10">
           <tr>
-            <th class="w-10" />
+            <th class="w-10">
+              <Checkbox
+                v-if="canBulkAct"
+                :checked="conversationStore.allSelected"
+                class="ml-1"
+                @update:checked="onToggleSelectAll"
+              />
+            </th>
             <th class="w-28">{{ t('globals.terms.status') }}</th>
+            <th class="w-20">{{ t('zendesk.id') }}</th>
             <th>{{ t('globals.terms.subject') }}</th>
+            <th class="w-28">{{ t('zendesk.channel') }}</th>
             <th class="w-44">{{ t('zendesk.requester') }}</th>
+            <th class="w-36">{{ t('zendesk.assignee') }}</th>
+            <th class="w-28">
+              <button type="button" class="zendesk-sort-th" @click="toggleRequestedSort">
+                {{ t('zendesk.requested') }}
+                <component
+                  :is="requestedSortIcon"
+                  v-if="requestedSortIcon"
+                  class="size-3"
+                />
+              </button>
+            </th>
             <th class="w-32">{{ t('zendesk.slaColumn') }}</th>
           </tr>
         </thead>
@@ -89,8 +114,9 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { MessageCircleQuestion, ChevronDown, Loader2, Play } from 'lucide-vue-next'
+import { MessageCircleQuestion, ChevronDown, Loader2, Play, ArrowDown, ArrowUp } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
+import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,6 +139,25 @@ const { startPlay } = useZendeskPlayMode()
 
 const hasSelection = computed(() => conversationStore.selectedCount > 0)
 const hasConversations = computed(() => conversationStore.conversationsList.length > 0)
+
+const onToggleSelectAll = (checked) => {
+  if (checked) conversationStore.selectAll()
+  else conversationStore.clearSelection()
+}
+
+// "Requested" sorts by created_at; toggle between newest-first and oldest-first.
+const toggleRequestedSort = () => {
+  const next =
+    conversationStore.conversations.sortField === 'started_last' ? 'started_first' : 'started_last'
+  conversationStore.setListSortField(next)
+}
+
+const requestedSortIcon = computed(() => {
+  const field = conversationStore.conversations.sortField
+  if (field === 'started_last') return ArrowDown
+  if (field === 'started_first') return ArrowUp
+  return null
+})
 const showEmpty = computed(
   () =>
     !hasConversations.value &&

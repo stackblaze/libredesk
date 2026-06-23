@@ -3,6 +3,8 @@
     <ZendeskNavRail />
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <ZendeskTopBar @create-conversation="openCreateConversationDialog = true" />
+
       <div
         v-if="!isInboxRoute"
         class="flex-1 min-h-0 m-2 rounded-lg overflow-hidden bg-background border"
@@ -52,6 +54,7 @@ import { toast as sooner } from 'vue-sonner'
 import Command from '@/features/command/CommandBox.vue'
 import CreateConversation from '@/features/conversation/CreateConversation.vue'
 import ZendeskNavRail from './ZendeskNavRail.vue'
+import ZendeskTopBar from './ZendeskTopBar.vue'
 import { useI18n } from 'vue-i18n'
 import { useZendeskShortcuts } from '@main/composables/useZendeskShortcuts'
 import api from '@main/api'

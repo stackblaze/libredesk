@@ -133,6 +133,45 @@ html.zendesk-layout {
   }
 }
 
+.zendesk-sort-th {
+  @apply inline-flex items-center gap-1 uppercase tracking-wider font-semibold transition-colors;
+
+  &:hover {
+    @apply text-foreground;
+  }
+}
+
+// Floating row hover preview (non-interactive, anchored to the hovered row).
+.zendesk-row-preview {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--zendesk-border));
+  border-radius: 8px;
+  box-shadow: 0 10px 30px -8px hsl(220 40% 20% / 0.25);
+  padding: 0.75rem 0.875rem;
+}
+
+// Top utility bar (Add / search / apps).
+.zendesk-top-bar {
+  height: 3rem;
+  background: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--zendesk-border));
+}
+
+.zendesk-top-search {
+  border: 1px solid hsl(var(--zendesk-border));
+  border-radius: 6px;
+  background: hsl(var(--zendesk-table-header));
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    background: hsl(var(--background));
+    border-color: hsl(var(--zendesk-nav-active));
+  }
+}
+
 .zendesk-ticket-chrome {
   border-bottom: 1px solid hsl(var(--zendesk-border));
 }

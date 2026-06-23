@@ -37,3 +37,7 @@ export const formatMessageTimestamp = (time) => {
 export const formatFullTimestamp = (time) => {
   return format(time, 'd MMM yyyy, hh:mm a')
 }
+
+export const formatShortDate = (time) => {
+  return format(time, 'd MMM')
+}
