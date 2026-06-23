@@ -1,10 +1,10 @@
 <template>
-  <div class="zendesk-ticket-breadcrumb flex items-stretch justify-between shrink-0 border-b">
-    <nav class="flex items-stretch min-w-0 h-full text-sm" aria-label="breadcrumb">
+  <div class="zendesk-ticket-breadcrumb flex items-stretch justify-between shrink-0">
+    <nav class="zendesk-breadcrumb-nav min-w-0" aria-label="breadcrumb">
       <router-link :to="listRoute" class="zendesk-breadcrumb-segment zendesk-breadcrumb-link">
         {{ viewLabel }}
       </router-link>
-      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem] text-foreground">
+      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem]">
         {{ requesterName }}
       </span>
       <span class="zendesk-breadcrumb-segment zendesk-breadcrumb-current flex items-center gap-2 min-w-0">
@@ -15,7 +15,7 @@
         >
           {{ status }}
         </span>
-        <span v-if="ticketNumber" class="text-foreground shrink-0 whitespace-nowrap">
+        <span v-if="ticketNumber" class="shrink-0 whitespace-nowrap">
           {{ t('zendesk.ticketNumber', { number: ticketNumber }) }}
         </span>
       </span>
@@ -27,8 +27,8 @@
       </span>
     </nav>
 
-    <div class="flex items-stretch shrink-0">
-      <div class="flex items-center px-3 border-l gap-2 h-9" style="border-color: hsl(var(--zendesk-border))">
+    <div class="zendesk-breadcrumb-meta flex items-stretch shrink-0">
+      <div class="flex items-center px-3 gap-2 h-full">
         <ZendeskTicketViewers />
         <Button variant="ghost" size="sm" class="h-7 text-xs hidden lg:inline-flex" @click="emit('next')" :disabled="!hasNext">
           {{ t('zendesk.next') }}

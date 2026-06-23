@@ -65,9 +65,13 @@ html.zendesk-layout {
   --zendesk-views-active: 200 80% 95%;
   --zendesk-table-header: 220 14% 96%;
   --zendesk-border: 220 13% 91%;
-  --zendesk-tab-bar-bg: 220 14% 96%;
+  --zendesk-tab-bar-bg: 0 0% 100%;
+  --zendesk-chrome-bar-bg: 220 14% 96%;
   --zendesk-tab-inactive: 220 14% 96%;
-  --zendesk-tab-hover: 0 0% 100%;
+  --zendesk-tab-active: 220 14% 96%;
+  --zendesk-tab-hover: 220 14% 94%;
+  --zendesk-tab-bar-height: 3rem;
+  --zendesk-tab-height: 2.5rem;
   --zendesk-status-new: 32 95% 44%;
   --zendesk-status-open: 0 72% 51%;
   --zendesk-status-waiting: 38 92% 50%;
@@ -83,9 +87,13 @@ html.zendesk-layout {
   --zendesk-views-active: 205 40% 22%;
   --zendesk-table-header: 240 5% 15%;
   --zendesk-border: 240 5% 18%;
-  --zendesk-tab-bar-bg: 240 6% 10%;
+  --zendesk-tab-bar-bg: 240 5% 13%;
+  --zendesk-chrome-bar-bg: 240 6% 10%;
   --zendesk-tab-inactive: 240 5% 14%;
+  --zendesk-tab-active: 240 5% 16%;
   --zendesk-tab-hover: 240 5% 18%;
+  --zendesk-tab-bar-height: 3rem;
+  --zendesk-tab-height: 2.5rem;
   --zendesk-accent: 201 90% 56%;
 }
 
@@ -205,13 +213,14 @@ html.zendesk-layout {
 
 // Unified top row: open ticket tabs on the left, search/utilities on the right.
 .zendesk-top-bar {
-  min-height: 2.625rem;
+  min-height: var(--zendesk-tab-bar-height);
   background: hsl(var(--zendesk-tab-bar-bg));
   border-bottom: 1px solid hsl(var(--zendesk-border));
 }
 
 .zendesk-top-bar-actions {
   border-color: hsl(var(--zendesk-border));
+  background: hsl(var(--zendesk-tab-bar-bg));
 }
 
 .zendesk-top-search {
@@ -221,7 +230,7 @@ html.zendesk-layout {
   transition: background 0.15s;
 
   &:hover {
-    background: hsl(var(--zendesk-tab-hover) / 0.55);
+    background: hsl(var(--zendesk-tab-hover));
   }
 }
 
@@ -237,10 +246,11 @@ html.zendesk-layout {
 }
 
 .zendesk-ticket-chrome {
+  background: hsl(var(--zendesk-chrome-bar-bg));
   border-bottom: 1px solid hsl(var(--zendesk-border));
 }
 
-// Open-ticket tabs — flat segments on the gray top bar (no browser-tab rounding).
+// Open-ticket tabs — white bar; active tab is a bordered grey pill.
 .zendesk-tab-bar {
   @apply flex items-stretch min-w-0;
   background: transparent;
@@ -248,37 +258,42 @@ html.zendesk-layout {
 
 .zendesk-tab-scroll {
   @apply flex items-stretch min-w-0 overflow-x-auto;
+  gap: 0.25rem;
+  padding-left: 0.25rem;
 }
 
 .zendesk-tab {
   @apply relative flex items-center gap-2 pl-3 pr-2 transition-colors shrink-0;
-  min-width: 11rem;
-  max-width: 15rem;
-  height: 2.625rem;
+  min-width: 12rem;
+  max-width: 16rem;
+  height: var(--zendesk-tab-height);
+  margin-top: 0.25rem;
   background: transparent;
-  border: 0;
-  border-right: 1px solid hsl(var(--zendesk-border));
-  border-radius: 0;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
   color: hsl(var(--muted-foreground));
 
-  &:hover {
-    background: hsl(var(--zendesk-tab-hover) / 0.55);
+  &:hover:not(.active) {
+    background: hsl(var(--zendesk-tab-hover));
     color: hsl(var(--foreground));
   }
 
   &.active {
-    background: hsl(var(--zendesk-views-bg));
+    background: hsl(var(--zendesk-tab-active));
+    border-color: hsl(var(--zendesk-border));
     color: hsl(var(--foreground));
     z-index: 1;
   }
 }
 
 .zendesk-tab-title {
-  @apply truncate text-xs font-semibold leading-tight;
+  @apply truncate font-semibold leading-tight;
+  font-size: 0.8125rem;
 }
 
 .zendesk-tab-preview {
-  @apply truncate text-[11px] text-muted-foreground leading-tight;
+  @apply truncate text-muted-foreground leading-tight;
+  font-size: 0.75rem;
 }
 
 .zendesk-tab-close {
@@ -287,15 +302,14 @@ html.zendesk-layout {
 
 .zendesk-tab-add {
   @apply flex items-center gap-1 px-3 text-xs font-normal text-muted-foreground shrink-0 transition-colors;
-  height: 2.625rem;
+  height: var(--zendesk-tab-bar-height);
   background: transparent;
   border: 0;
-  border-right: 1px solid hsl(var(--zendesk-border));
   border-radius: 0;
 
   &:hover {
     @apply text-foreground;
-    background: hsl(var(--zendesk-tab-hover) / 0.55);
+    background: transparent;
   }
 }
 
@@ -314,9 +328,16 @@ html.zendesk-layout {
 }
 
 .zendesk-ticket-breadcrumb {
-  @apply h-9 text-sm;
-  background: hsl(var(--zendesk-views-bg));
+  @apply flex items-stretch text-sm;
+  min-height: 2.25rem;
+  background: hsl(var(--zendesk-chrome-bar-bg));
   border-color: hsl(var(--zendesk-border));
+}
+
+.zendesk-breadcrumb-nav {
+  @apply flex items-center min-w-0;
+  padding: 0.1875rem 0 0.1875rem 0.375rem;
+  gap: 0;
 }
 
 .zendesk-ticket-viewers {
@@ -327,53 +348,85 @@ html.zendesk-layout {
 }
 
 .zendesk-breadcrumb-segment {
-  @apply flex items-center px-3.5 border-r h-9;
-  border-color: hsl(var(--zendesk-border));
+  @apply flex items-center px-3 shrink-0;
+  height: 1.875rem;
+  background: hsl(var(--zendesk-views-bg));
+  border: 1px solid hsl(var(--zendesk-border));
+  color: hsl(var(--foreground));
+
+  &:not(:first-child) {
+    margin-left: -1px;
+  }
+
+  &:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  &:last-child {
+    border-radius: 0 4px 4px 0;
+  }
+
+  &:only-child {
+    border-radius: 4px;
+  }
 }
 
 .zendesk-breadcrumb-current {
-  background: hsl(var(--zendesk-table-header));
+  font-weight: 500;
+}
+
+.zendesk-breadcrumb-meta {
+  @apply flex items-center shrink-0;
+  padding: 0.1875rem 0;
+  border-left: 1px solid hsl(var(--zendesk-border));
 }
 
 .zendesk-panel-toggle {
-  @apply flex items-stretch shrink-0 border-l h-9;
+  @apply flex items-stretch shrink-0 border-l;
   border-color: hsl(var(--zendesk-border));
+  padding: 0.1875rem 0.375rem 0.1875rem 0;
 }
 
 .zendesk-panel-toggle-btn {
   @apply px-3.5 text-xs font-medium transition-colors;
-  border-right: 1px solid hsl(var(--zendesk-border));
+  height: 1.875rem;
+  border: 1px solid hsl(var(--zendesk-border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+
+  &:first-child {
+    border-radius: 4px 0 0 4px;
+  }
 
   &:last-child {
-    border-right: 0;
+    border-radius: 0 4px 4px 0;
+    border-left: 0;
   }
 
   &.active {
     background: hsl(var(--zendesk-views-bg));
-    @apply text-foreground;
+    color: hsl(var(--foreground));
+    z-index: 1;
   }
 
-  &:not(.active) {
-    background: hsl(var(--zendesk-table-header));
-    @apply text-muted-foreground;
-
-    &:hover {
-      @apply text-foreground;
-    }
+  &:not(.active):hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--zendesk-tab-hover) / 0.65);
   }
 }
 
 .zendesk-breadcrumb-link {
-  @apply text-muted-foreground hover:text-foreground transition-colors shrink-0;
+  @apply text-foreground shrink-0;
   text-decoration: none;
 
   &:hover {
-    text-decoration: underline;
+    text-decoration: none;
+    background: hsl(var(--zendesk-tab-hover));
   }
 }
 
 .zendesk-status-badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold text-white uppercase tracking-wider;
+  @apply inline-flex items-center px-1.5 py-px rounded-sm text-[10px] font-bold text-white uppercase tracking-wide leading-none;
 
   // Colored by status category (open | waiting | resolved); custom statuses
   // inherit the color of the category an admin assigns them to.
