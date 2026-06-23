@@ -215,7 +215,7 @@ export function useCreateConversationForm (options = {}) {
     highlightedIndex.value = -1
   }
 
-  const createConversation = form.handleSubmit(async (values) => {
+  const submitConversation = async (values, status) => {
     loading.value = true
     try {
       values.inbox_id = Number(values.inbox_id)
@@ -239,8 +239,12 @@ export function useCreateConversationForm (options = {}) {
         }
       }
 
+      if (status) {
+        await api.updateConversationStatus(conversationUUID, { status })
+      }
+
       if (onSuccess) {
-        await onSuccess(conversationUUID)
+        await onSuccess(conversationUUID, { status })
       }
 
       resetForm()
@@ -253,7 +257,10 @@ export function useCreateConversationForm (options = {}) {
     } finally {
       loading.value = false
     }
-  })
+  }
+
+  const createConversation = form.handleSubmit((values) => submitConversation(values))
+  const createConversationWithStatus = (status) => form.handleSubmit((values) => submitConversation(values, status))()
 
   return {
     inboxStore,
@@ -281,6 +288,7 @@ export function useCreateConversationForm (options = {}) {
     handleFileDelete,
     uploadFiles,
     createConversation,
+    createConversationWithStatus,
     resetForm,
     MACRO_CONTEXT
   }

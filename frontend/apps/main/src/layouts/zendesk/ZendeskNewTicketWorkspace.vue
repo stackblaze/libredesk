@@ -29,12 +29,13 @@
           </p>
         </div>
 
-        <form @submit="createConversation" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form @submit.prevent class="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div class="flex-1 flex flex-col min-h-0 px-4 py-3 overflow-hidden">
             <FormField v-slot="{ componentField }" name="content">
               <FormItem class="flex flex-col h-full min-h-0">
                 <FormControl class="flex-1 flex flex-col min-h-0">
                   <Editor
+                    ref="editorRef"
                     v-model:htmlContent="componentField.modelValue"
                     @update:htmlContent="(value) => componentField.onChange(value)"
                     :placeholder="t('editor.hint.newLineCtrlK')"
@@ -42,7 +43,7 @@
                     :autoFocus="false"
                     :enableInlineImages="true"
                     class="w-full flex-1 overflow-y-auto p-2 box min-h-0 zendesk-new-ticket-editor"
-                    @send="createConversation"
+                    @send="submitPrimaryStatus"
                     @filesDropped="uploadFiles"
                   />
 
@@ -66,15 +67,22 @@
             </FormField>
           </div>
 
-          <div class="zendesk-submit-bar flex items-center justify-between gap-3 px-4 shrink-0">
-            <ReplyBoxMenuBar
-              :handleFileUpload="handleFileUpload"
-              @emojiSelect="handleEmojiSelect"
-              :showSendButton="false"
+          <div class="zendesk-reply-stack shrink-0">
+            <div class="px-3 pb-1">
+              <ReplyBoxMenuBar
+                :handleFileUpload="handleFileUpload"
+                @emojiSelect="handleEmojiSelect"
+                :showSendButton="false"
+                :showFormatting="true"
+                :editorApi="editorRef"
+              />
+            </div>
+            <ZendeskSubmitBar
+              compose
+              :disabled="isDisabled"
+              :loading="loading"
+              @submit="createConversationWithStatus"
             />
-            <Button type="submit" :disabled="isDisabled" :is-loading="loading">
-              {{ t('globals.messages.submit') }}
-            </Button>
           </div>
         </form>
       </div>
@@ -83,10 +91,9 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Button } from '@shared-ui/components/ui/button'
 import { FormControl, FormField, FormItem, FormMessage } from '@shared-ui/components/ui/form'
 import Editor from '@/components/editor/TextEditor.vue'
 import CreateConversationFields from '@/features/conversation/CreateConversationFields.vue'
@@ -94,7 +101,11 @@ import ReplyBoxAttachmentPreview from '@/features/conversation/message/attachmen
 import MacroActionsPreview from '@/features/conversation/MacroActionsPreview.vue'
 import ReplyBoxMenuBar from '@/features/conversation/ReplyBoxMenuBar.vue'
 import ZendeskComposeChrome from '@main/layouts/zendesk/ZendeskComposeChrome.vue'
+import ZendeskSubmitBar from '@main/layouts/zendesk/ZendeskSubmitBar.vue'
 import { useCreateConversationForm } from '@main/composables/useCreateConversationForm'
+import { useZendeskPlayMode } from '@main/composables/useZendeskPlayMode'
+import { useZendeskTicketNav } from '@main/composables/useZendeskTicketNav'
+import { useConversationStore } from '@main/stores/conversation'
 import {
   useZendeskTabs,
   removeComposeTab,
@@ -109,12 +120,19 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { updateComposeTab } = useZendeskTabs()
+const conversationStore = useConversationStore()
+const { openNext, playActive, exitToList } = useZendeskPlayMode()
+const { hasNext, goToNext } = useZendeskTicketNav()
+const editorRef = ref(null)
+
+const primaryStatus = computed(
+  () => conversationStore.statusOptionsNoSnooze[0]?.label || t('zendesk.submit')
+)
 
 const {
   inboxStore,
   uStore,
   teamStore,
-  conversationStore,
   form,
   loading,
   searchResults,
@@ -134,14 +152,29 @@ const {
   handleFileUpload,
   handleFileDelete,
   uploadFiles,
-  createConversation,
+  createConversationWithStatus,
   MACRO_CONTEXT
 } = useCreateConversationForm({
   onSuccess: async (conversationUUID) => {
     removeComposeTab(props.composeId)
+
+    if (!openNext.value) {
+      await router.push(conversationRouteForContext(route, conversationUUID))
+      return
+    }
+    if (hasNext.value) {
+      goToNext()
+      return
+    }
+    if (playActive.value) {
+      exitToList()
+      return
+    }
     await router.push(conversationRouteForContext(route, conversationUUID))
   }
 })
+
+const submitPrimaryStatus = () => createConversationWithStatus(primaryStatus.value)
 
 watch([tabTitle, tabPreview], () => {
   updateComposeTab(props.composeId, {

@@ -8,8 +8,8 @@
     <div class="flex items-stretch">
       <Button
         class="rounded-r-none"
-        :disabled="!conversationStore.current"
-        :is-loading="submitting"
+        :disabled="submitDisabled"
+        :is-loading="isSubmitting"
         @click="submit(primaryStatus)"
       >
         {{ t('zendesk.submitAs', { status: primaryStatus }) }}
@@ -18,7 +18,7 @@
         <DropdownMenuTrigger as-child>
           <Button
             class="rounded-l-none border-l border-primary-foreground/30 px-2 [&[data-state=open]>svg]:rotate-180"
-            :disabled="!conversationStore.current"
+            :disabled="submitDisabled"
           >
             <ChevronUp class="size-4 text-primary-foreground transition-transform" />
           </Button>
@@ -56,6 +56,14 @@ import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import { useZendeskTicketNav } from '@main/composables/useZendeskTicketNav'
 import { useZendeskPlayMode } from '@main/composables/useZendeskPlayMode'
 
+const props = defineProps({
+  compose: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['submit'])
+
 const { t } = useI18n()
 const conversationStore = useConversationStore()
 const emitter = useEmitter()
@@ -65,11 +73,26 @@ const submitting = ref(false)
 
 const statusOptions = computed(() => conversationStore.statusOptionsNoSnooze)
 
-const primaryStatus = computed(
-  () => conversationStore.current?.status || statusOptions.value[0]?.label || t('zendesk.submit')
-)
+const primaryStatus = computed(() => {
+  if (props.compose) {
+    return statusOptions.value[0]?.label || t('zendesk.submit')
+  }
+  return conversationStore.current?.status || statusOptions.value[0]?.label || t('zendesk.submit')
+})
+
+const submitDisabled = computed(() => {
+  if (props.compose) return props.disabled
+  return !conversationStore.current
+})
+
+const isSubmitting = computed(() => (props.compose ? props.loading : submitting.value))
 
 const submit = (status) => {
+  if (submitDisabled.value) return
+  if (props.compose) {
+    emit('submit', status)
+    return
+  }
   if (!conversationStore.current) return
   submitting.value = true
   emitter.emit(EMITTER_EVENTS.CONVERSATION_SUBMIT_AS, status)
