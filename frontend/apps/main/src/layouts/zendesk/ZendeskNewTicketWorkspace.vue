@@ -1,5 +1,7 @@
 <template>
   <div class="flex flex-col h-full w-full min-h-0 min-w-0 bg-background">
+    <ZendeskComposeChrome :compose-id="composeId" />
+
     <div class="zendesk-ticket-workspace flex-1 min-h-0 min-w-0 context-collapsed">
       <aside class="zendesk-ticket-props p-4">
         <CreateConversationFields
@@ -18,8 +20,6 @@
       </aside>
 
       <div class="zendesk-ticket-center">
-        <ZendeskComposeChrome :compose-id="composeId" />
-
         <div class="px-4 py-2.5 border-b shrink-0 bg-background">
           <h2 class="zendesk-title truncate leading-snug">
             {{ form.values.subject?.trim() || t('conversation.newConversation') }}

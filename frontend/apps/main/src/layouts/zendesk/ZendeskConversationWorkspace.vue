@@ -7,15 +7,18 @@
 
     <div
       v-if="showContent"
-      class="zendesk-ticket-workspace flex-1 min-h-0 min-w-0"
-      :class="{ 'context-collapsed': contextCollapsed }"
+      class="zendesk-ticket-shell flex-1 min-h-0 min-w-0"
     >
-      <ZendeskTicketProperties />
+      <ZendeskTicketChrome />
 
-      <div class="zendesk-ticket-center">
-        <ZendeskTicketChrome />
+      <div
+        class="zendesk-ticket-workspace flex-1 min-h-0 min-w-0"
+        :class="{ 'context-collapsed': contextCollapsed }"
+      >
+        <ZendeskTicketProperties />
 
-        <div class="px-4 py-2.5 border-b shrink-0 bg-background">
+        <div class="zendesk-ticket-center">
+          <div class="px-4 py-2.5 border-b shrink-0 bg-background">
           <h2 class="zendesk-title truncate leading-snug">
             {{ conversationStore.current?.subject || t('zendesk.noSubject') }}
           </h2>
@@ -38,6 +41,7 @@
       </div>
 
       <ZendeskCustomerContext />
+      </div>
     </div>
   </div>
 </template>
