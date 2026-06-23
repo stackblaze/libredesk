@@ -21,6 +21,18 @@ html.zendesk-layout #app {
   overflow: hidden;
 }
 
+// Zendesk message thread: full-width, flat cards instead of chat bubbles.
+html.zendesk-layout {
+  .message-bubble.zendesk-message {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+  }
+}
+
 .zendesk-app {
   --zendesk-nav-bg: 210 29% 16%;
   --zendesk-nav-fg: 0 0% 100%;

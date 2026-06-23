@@ -941,6 +941,7 @@
   "zendesk.backToViews": "Views",
   "zendesk.ticketNumber": "Ticket #{number}",
   "zendesk.viaInbox": "Via {inbox}",
+  "zendesk.viaChannel": "via {channel}",
   "zendesk.next": "Next",
   "zendesk.addTab": "Add",
   "zendesk.closeTab": "Close tab",

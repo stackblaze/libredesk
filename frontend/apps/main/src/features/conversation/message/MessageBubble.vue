@@ -1,34 +1,71 @@
 <template>
-  <div class="flex flex-col text-left" :class="isOutgoing ? 'items-end' : 'items-start'">
+  <div
+    class="flex flex-col text-left"
+    :class="[isZendesk ? 'items-start w-full' : (isOutgoing ? 'items-end' : 'items-start')]"
+  >
     <!-- Sender Name -->
     <div
       v-if="!groupWithPrev"
-      class="mb-1 flex items-center gap-1"
-      :class="isOutgoing ? 'pr-[47px]' : 'pl-[47px]'"
+      class="mb-1 flex items-center gap-1.5"
+      :class="[isZendesk ? 'pl-[47px] w-full' : (isOutgoing ? 'pr-[47px]' : 'pl-[47px]')]"
     >
       <router-link
         v-if="!isOutgoing"
         :to="{ name: 'contact-detail', params: { id: message.author?.id } }"
-        class="cursor-pointer text-muted-foreground text-sm font-medium hover:underline hover:text-primary transition-colors duration-200"
+        class="cursor-pointer text-sm font-semibold hover:underline hover:text-primary transition-colors duration-200"
+        :class="isZendesk ? 'text-foreground' : 'text-muted-foreground font-medium'"
       >
         {{ getFullName }}
       </router-link>
       <router-link
         v-else-if="canManageUsers"
         :to="{ name: 'edit-agent', params: { id: message.author?.id } }"
-        class="cursor-pointer text-muted-foreground text-sm font-medium hover:underline hover:text-primary transition-colors duration-200"
+        class="cursor-pointer text-sm font-semibold hover:underline hover:text-primary transition-colors duration-200"
+        :class="isZendesk ? 'text-foreground' : 'text-muted-foreground font-medium'"
       >
         {{ getFullName }}
       </router-link>
-      <p v-else class="text-muted-foreground text-sm font-medium">
+      <p
+        v-else
+        class="text-sm font-semibold"
+        :class="isZendesk ? 'text-foreground' : 'text-muted-foreground font-medium'"
+      >
         {{ getFullName }}
       </p>
+
+      <!-- Zendesk: channel/reply indicator + right-aligned timestamp on the header line -->
+      <template v-if="isZendesk">
+        <StickyNote v-if="message.private" :size="13" class="text-amber-500 shrink-0" />
+        <CornerUpLeft v-else :size="13" class="text-muted-foreground shrink-0" />
+        <span v-if="channelLabel" class="text-muted-foreground text-xs shrink-0">
+          {{ t('zendesk.viaChannel', { channel: channelLabel }) }}
+        </span>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <span class="ml-auto text-muted-foreground text-xs whitespace-nowrap pr-1">
+              {{ formatMessageTimestamp(message.created_at) }}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{{ formatFullTimestamp(message.created_at) }}</p>
+          </TooltipContent>
+        </Tooltip>
+      </template>
     </div>
 
     <!-- Message Bubble -->
-    <div class="flex flex-row gap-2 w-full" :class="{ 'justify-end': isOutgoing }">
-      <!-- Avatar (left for incoming) -->
-      <template v-if="!isOutgoing">
+    <div class="flex flex-row gap-2 w-full" :class="{ 'justify-end': isOutgoing && !isZendesk }">
+      <!-- Avatar: left for incoming, and always left in Zendesk mode -->
+      <template v-if="isZendesk">
+        <div v-if="groupWithPrev" class="w-8 flex-shrink-0" />
+        <Avatar v-else class="w-8 h-8 flex-shrink-0">
+          <AvatarImage :src="getAvatar" />
+          <AvatarFallback class="font-medium">
+            {{ avatarFallback }}
+          </AvatarFallback>
+        </Avatar>
+      </template>
+      <template v-else-if="!isOutgoing">
         <router-link
           v-if="!groupWithPrev"
           :to="{ name: 'contact-detail', params: { id: message.author?.id } }"
@@ -44,10 +81,9 @@
         <div v-else class="w-8 flex-shrink-0" />
       </template>
 
-      <!-- Bubble Wrapper with max 80% width -->
+      <!-- Bubble Wrapper (full width in Zendesk, max 80% otherwise) -->
       <div
-        class="w-4/5"
-        :class="{ 'flex justify-end': isOutgoing }"
+        :class="[isZendesk ? 'w-full min-w-0' : 'w-4/5', { 'flex justify-end': isOutgoing && !isZendesk }]"
         style="contain: inline-size"
       >
         <div
@@ -148,8 +184,8 @@
         </div>
       </div>
 
-      <!-- Avatar (right for outgoing) -->
-      <template v-if="isOutgoing">
+      <!-- Avatar (right for outgoing, default layout only) -->
+      <template v-if="isOutgoing && !isZendesk">
         <div v-if="groupWithPrev" class="w-8 flex-shrink-0" />
         <router-link
           v-else-if="canManageUsers"
@@ -172,8 +208,8 @@
       </template>
     </div>
 
-    <!-- Timestamp tooltip -->
-    <div v-if="!groupWithNext" :class="isOutgoing ? 'pr-[47px]' : 'pl-[47px]'">
+    <!-- Timestamp tooltip (default layout; Zendesk shows it on the header line) -->
+    <div v-if="!groupWithNext && !isZendesk" :class="isOutgoing ? 'pr-[47px]' : 'pl-[47px]'">
       <Tooltip>
         <TooltipTrigger>
           <span class="text-muted-foreground text-xs mt-1">
@@ -193,7 +229,8 @@ import { computed, ref, onMounted, nextTick } from 'vue'
 import { useConversationStore } from '@main/stores/conversation'
 import { useUserStore } from '@main/stores/user'
 import { useI18n } from 'vue-i18n'
-import { Lock, Mail, RotateCcw, Check, Maximize2 } from 'lucide-vue-next'
+import { Lock, Mail, RotateCcw, Check, Maximize2, CornerUpLeft, StickyNote } from 'lucide-vue-next'
+import { useUiLayout, UI_LAYOUT_ZENDESK } from '@main/composables/useUiLayout'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared-ui/components/ui/tooltip'
 import { Spinner } from '@shared-ui/components/ui/spinner'
 import { formatMessageTimestamp, formatFullTimestamp } from '@shared-ui/utils/datetime.js'
@@ -251,6 +288,9 @@ const props = defineProps({
 const convStore = useConversationStore()
 const { t } = useI18n()
 const userStore = useUserStore()
+const { layout } = useUiLayout()
+
+const isZendesk = computed(() => layout.value === UI_LAYOUT_ZENDESK)
 
 const isSystemUser = computed(() => props.message.author?.email === 'System')
 const canManageUsers = computed(() => !isSystemUser.value && userStore.can('users:manage'))
@@ -262,6 +302,13 @@ const getFullName = computed(() => {
   const firstName = author.first_name ?? 'User'
   const lastName = author.last_name ?? ''
   return `${firstName} ${lastName}`.trim()
+})
+
+const CHANNEL_LABELS = { email: 'Email', livechat: 'Chat' }
+const channelLabel = computed(() => {
+  const ch = convStore.current?.inbox_channel
+  if (!ch) return ''
+  return CHANNEL_LABELS[ch] || ch.charAt(0).toUpperCase() + ch.slice(1)
 })
 
 const getAvatar = computed(() => {
@@ -284,15 +331,31 @@ const nonInlineAttachments = computed(() =>
   props.message.attachments.filter((attachment) => attachment.disposition !== 'inline')
 )
 
-const bubbleClasses = computed(() => ({
-  'bg-private': isOutgoing.value && props.message.private,
-  'border border-border': isOutgoing.value && !props.message.private,
-  'opacity-50 animate-pulse': isOutgoing.value && props.message.status === 'pending',
-  'border-destructive': isOutgoing.value && props.message.status === 'failed',
-  relative: isOutgoing.value,
-  'show-quoted-text': !isOutgoing.value && showQuotedText.value,
-  'hide-quoted-text': !isOutgoing.value && !showQuotedText.value
-}))
+const bubbleClasses = computed(() => {
+  // Zendesk mode: every message is a full-width left-aligned card. Public replies
+  // get a plain white card, internal notes keep the amber note background.
+  if (isZendesk.value) {
+    return {
+      'zendesk-message': true,
+      'bg-private border-border': props.message.private,
+      'bg-background border-border': !props.message.private,
+      'opacity-50 animate-pulse': isOutgoing.value && props.message.status === 'pending',
+      'border-destructive': isOutgoing.value && props.message.status === 'failed',
+      relative: true,
+      'show-quoted-text': !isOutgoing.value && showQuotedText.value,
+      'hide-quoted-text': !isOutgoing.value && !showQuotedText.value
+    }
+  }
+  return {
+    'bg-private': isOutgoing.value && props.message.private,
+    'border border-border': isOutgoing.value && !props.message.private,
+    'opacity-50 animate-pulse': isOutgoing.value && props.message.status === 'pending',
+    'border-destructive': isOutgoing.value && props.message.status === 'failed',
+    relative: isOutgoing.value,
+    'show-quoted-text': !isOutgoing.value && showQuotedText.value,
+    'hide-quoted-text': !isOutgoing.value && !showQuotedText.value
+  }
+})
 
 const isPrivateMessage = computed(() => isOutgoing.value && props.message.private)
 const showCheckCheck = computed(
