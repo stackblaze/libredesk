@@ -8,6 +8,7 @@ export const EMITTER_EVENTS = {
     CONVERSATION_SIDEBAR_TOGGLE: 'conversation-sidebar-toggle',
     SCROLL_TO_MESSAGE: 'scroll-to-message',
     OPEN_VIEW_FORM: 'open-view-form',
+    OPEN_CREATE_CONVERSATION: 'open-create-conversation',
     CONVERSATION_SUBMIT_AS: 'conversation-submit-as',
     CONVERSATION_SUBMITTED: 'conversation-submitted'
 }

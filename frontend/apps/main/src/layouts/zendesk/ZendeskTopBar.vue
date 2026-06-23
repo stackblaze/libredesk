@@ -1,10 +1,5 @@
 <template>
   <header class="zendesk-top-bar flex items-center gap-3 px-3 shrink-0">
-    <Button size="sm" class="h-8" @click="emit('create-conversation')">
-      <Plus class="size-4 mr-1" />
-      {{ t('zendesk.add') }}
-    </Button>
-
     <button
       type="button"
       class="zendesk-top-search flex items-center gap-2 flex-1 max-w-md h-8 px-3 text-sm text-muted-foreground"
@@ -33,15 +28,11 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { Plus, Search, LayoutGrid } from 'lucide-vue-next'
+import { Search, LayoutGrid } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import { useEmitter } from '@main/composables/useEmitter'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 
-const emit = defineEmits(['create-conversation'])
-
-const { t } = useI18n()
 const emitter = useEmitter()
 
 const shortcutHint = computed(() =>

@@ -39,9 +39,9 @@
         </button>
       </div>
     </div>
-    <button type="button" class="zendesk-tab-add shrink-0" @click="addTab">
+    <button type="button" class="zendesk-tab-add shrink-0" @click="openNewTicket">
       <Plus class="size-3.5 mr-1" />
-      {{ t('zendesk.addTab') }}
+      {{ t('zendesk.add') }}
     </button>
   </div>
 </template>
@@ -49,9 +49,16 @@
 <script setup>
 import { Mail, MessageSquare, X, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useEmitter } from '@main/composables/useEmitter'
+import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import { useZendeskTabs } from '@main/composables/useZendeskTabs'
 import { priorityDotClass } from '@main/composables/useConversationPriority'
 
 const { t } = useI18n()
-const { tabs, activeUuid, selectTab, closeTab, addTab } = useZendeskTabs()
+const emitter = useEmitter()
+const { tabs, activeUuid, selectTab, closeTab } = useZendeskTabs()
+
+const openNewTicket = () => {
+  emitter.emit(EMITTER_EVENTS.OPEN_CREATE_CONVERSATION)
+}
 </script>

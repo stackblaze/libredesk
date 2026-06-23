@@ -8,6 +8,10 @@
         </p>
       </div>
       <div class="flex items-center gap-2">
+        <button type="button" class="zendesk-add-btn shrink-0" @click="openNewTicket">
+          <Plus class="size-3.5 mr-1" />
+          {{ t('zendesk.add') }}
+        </button>
         <Button
           v-if="hasConversations"
           variant="default"
@@ -114,7 +118,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { MessageCircleQuestion, ChevronDown, Loader2, Play, ArrowDown, ArrowUp } from 'lucide-vue-next'
+import { MessageCircleQuestion, ChevronDown, Loader2, Play, ArrowDown, ArrowUp, Plus } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import {
@@ -125,6 +129,8 @@ import {
 } from '@shared-ui/components/ui/dropdown-menu'
 import { useConversationStore } from '@/stores/conversation'
 import { useBulkActionPermissions } from '@/composables/useBulkActionPermissions'
+import { useEmitter } from '@main/composables/useEmitter'
+import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import EmptyList from '@/features/conversation/list/ConversationEmptyList.vue'
 import ConversationBulkActionToolbar from '@/features/conversation/list/ConversationBulkActionToolbar.vue'
 import ConversationListItemSkeleton from '@/features/conversation/list/ConversationListItemSkeleton.vue'
@@ -136,6 +142,11 @@ const { canBulkAct } = useBulkActionPermissions()
 const route = useRoute()
 const { t } = useI18n()
 const { startPlay } = useZendeskPlayMode()
+const emitter = useEmitter()
+
+const openNewTicket = () => {
+  emitter.emit(EMITTER_EVENTS.OPEN_CREATE_CONVERSATION)
+}
 
 const hasSelection = computed(() => conversationStore.selectedCount > 0)
 const hasConversations = computed(() => conversationStore.conversationsList.length > 0)

@@ -208,7 +208,32 @@ html.zendesk-layout {
 }
 
 .zendesk-tab-add {
-  @apply flex items-center px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors;
+  @apply flex items-center px-3 py-2 text-xs text-muted-foreground transition-colors shrink-0;
+  min-height: 2.25rem;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--zendesk-border));
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: -1px;
+
+  &:hover {
+    @apply text-foreground;
+    background: hsl(0 0% 98%);
+  }
+}
+
+// Standalone "+ Add" (ticket list header) — same light tab-like look, not a primary button.
+.zendesk-add-btn {
+  @apply inline-flex items-center px-3 text-xs font-medium text-muted-foreground transition-colors;
+  height: 2rem;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--zendesk-border));
+  border-radius: 4px;
+
+  &:hover {
+    @apply text-foreground;
+    background: hsl(var(--zendesk-table-header));
+  }
 }
 
 .zendesk-ticket-breadcrumb {

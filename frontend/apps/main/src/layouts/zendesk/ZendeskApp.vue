@@ -3,7 +3,7 @@
     <ZendeskNavRail />
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-      <ZendeskTopBar @create-conversation="openCreateConversationDialog = true" />
+      <ZendeskTopBar />
 
       <div
         v-if="!isInboxRoute"
@@ -112,6 +112,7 @@ onMounted(() => {
   initToaster()
   listenViewRefresh()
   listenViewFormOpen()
+  listenCreateConversationOpen()
   initStores()
 })
 
@@ -138,6 +139,12 @@ const listenViewFormOpen = () => {
   emitter.on(EMITTER_EVENTS.OPEN_VIEW_FORM, () => {
     view.value = {}
     openCreateViewForm.value = true
+  })
+}
+
+const listenCreateConversationOpen = () => {
+  emitter.on(EMITTER_EVENTS.OPEN_CREATE_CONVERSATION, () => {
+    openCreateConversationDialog.value = true
   })
 }
 
