@@ -1,7 +1,7 @@
 <template>
   <AuthLayout>
-    <Card class="bg-card box">
-      <CardContent class="p-6 space-y-5">
+    <Card class="auth-card w-full rounded-xl border bg-card shadow-lg sm:shadow-sm">
+      <CardContent class="p-5 sm:p-6 space-y-5">
         <div class="space-y-1 text-center">
           <CardTitle class="text-2xl font-bold text-foreground">{{
             t('auth.resetPassword')

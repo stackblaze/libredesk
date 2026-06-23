@@ -1,17 +1,25 @@
 <template>
   <AuthLayout>
     <Card
-      class="bg-card box"
+      class="auth-card w-full rounded-xl border bg-card shadow-lg sm:shadow-sm"
       :class="{ 'animate-shake': shakeCard }"
       id="login-container"
       ref="cardRef"
     >
-      <CardContent class="p-6 space-y-5">
-        <div class="space-y-1 text-center">
-          <CardTitle class="text-2xl font-bold text-foreground">
-            {{ appSettingsStore.public_config?.['app.site_name'] || 'libredesk' }}
-          </CardTitle>
-          <p class="text-sm text-muted-foreground">{{ t('auth.signIn') }}</p>
+      <CardContent class="p-5 sm:p-6 space-y-5">
+        <div class="space-y-3 text-center">
+          <img
+            v-if="siteLogoUrl"
+            :src="siteLogoUrl"
+            :alt="siteName"
+            class="mx-auto h-10 w-auto max-w-[12rem] object-contain"
+          />
+          <div class="space-y-1">
+            <CardTitle class="text-xl sm:text-2xl font-bold text-foreground">
+              {{ siteName }}
+            </CardTitle>
+            <p class="text-sm text-muted-foreground">{{ t('auth.signIn') }}</p>
+          </div>
         </div>
 
         <div v-if="enabledOIDCProviders.length" class="space-y-3">
@@ -42,7 +50,7 @@
           </div>
         </div>
 
-        <form @submit.prevent="loginAction" class="space-y-3">
+        <form @submit.prevent="loginAction" class="space-y-4">
           <div class="space-y-2">
             <Label for="email" class="text-muted-foreground">{{
               t('globals.terms.email')
@@ -50,9 +58,11 @@
             <Input
               id="email"
               type="text"
+              inputmode="email"
               autocomplete="username"
               v-model.trim="loginForm.email"
               :class="{ 'border-destructive': emailHasError }"
+              class="h-11"
             />
           </div>
 
@@ -67,7 +77,7 @@
                 autocomplete="current-password"
                 v-model="loginForm.password"
                 :class="{ 'border-destructive': passwordHasError }"
-                class="pr-10"
+                class="h-11 pr-11"
               />
               <button
                 type="button"
@@ -91,7 +101,7 @@
           </div>
 
           <Button
-            class="w-full"
+            class="w-full h-11 text-base"
             :disabled="isLoading"
             type="submit"
           >
@@ -150,6 +160,14 @@ const loginForm = ref({
 })
 const oidcProviders = ref([])
 const appSettingsStore = useAppSettingsStore()
+
+const siteName = computed(
+  () => appSettingsStore.public_config?.['app.site_name'] || 'libredesk'
+)
+const siteLogoUrl = computed(() => {
+  const config = appSettingsStore.public_config
+  return config?.['app.logo_url'] || config?.['app.favicon_url'] || ''
+})
 
 // Demo build has the credentials prefilled.
 const isDemoBuild = import.meta.env.VITE_DEMO_BUILD === 'true'

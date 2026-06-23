@@ -1,10 +1,12 @@
 <template>
+  <Toaster class="pointer-events-auto" position="top-center" />
   <RouterView />
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { Toaster } from '@shared-ui/components/ui/sonner'
 import { EMITTER_EVENTS } from './constants/emitterEvents.js'
 import { useEmitter } from './composables/useEmitter'
 import { toast as sooner } from 'vue-sonner'
