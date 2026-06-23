@@ -5,13 +5,23 @@
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <ZendeskTopBar />
 
-      <div
-        v-if="!isInboxRoute"
-        class="flex-1 min-h-0 m-2 rounded-lg overflow-hidden bg-background border"
-      >
-        <AdminBanner v-if="route.path.startsWith('/admin')" />
-        <PageHeader v-if="!route.meta?.hidePageHeader" />
-        <RouterView class="flex-grow" />
+      <div v-if="!isInboxRoute" class="flex-1 min-h-0 min-w-0 flex">
+        <Sidebar
+          variant="zendesk"
+          :userTeams="userStore.teams"
+          :userViews="userViews"
+          :sharedViews="sharedViewStore.sharedViewList"
+          @create-view="createView"
+          @edit-view="editView"
+          @delete-view="deleteView"
+          @create-conversation="openCreateConversationDialog = true"
+        >
+          <div class="flex flex-col h-full min-h-0 flex-1 overflow-hidden bg-background border rounded-lg m-2">
+            <AdminBanner v-if="route.path.startsWith('/admin')" />
+            <PageHeader v-if="!route.meta?.hidePageHeader" />
+            <RouterView class="flex-grow min-h-0 overflow-auto" />
+          </div>
+        </Sidebar>
       </div>
 
       <div v-else class="flex-1 min-h-0 min-w-0 w-full flex flex-col">
@@ -50,6 +60,7 @@ import { initAudioContext } from '@shared-ui/composables/useNotificationSound'
 import PageHeader from '@main/components/layout/PageHeader.vue'
 import ViewForm from '@/features/view/ViewForm.vue'
 import AdminBanner from '@/components/banner/AdminBanner.vue'
+import Sidebar from '@main/components/sidebar/Sidebar.vue'
 import { toast as sooner } from 'vue-sonner'
 import Command from '@/features/command/CommandBox.vue'
 import CreateConversation from '@/features/conversation/CreateConversation.vue'
@@ -77,6 +88,7 @@ const { t } = useI18n()
 const openCreateViewForm = ref(false)
 const openCreateConversationDialog = ref(false)
 const view = ref({})
+const userViews = ref([])
 
 const lastInboxPath = useStorage('lastInboxPath', '')
 watch(
@@ -121,6 +133,7 @@ const initStores = async () => {
     await userStore.getCurrentUser()
   }
   await Promise.allSettled([
+    getUserViews(),
     sharedViewStore.loadSharedViews(),
     conversationStore.fetchStatuses(),
     conversationStore.fetchPriorities(),
@@ -133,6 +146,43 @@ const initStores = async () => {
     tagStore.fetchTags(),
     customAttributeStore.fetchCustomAttributes()
   ])
+}
+
+const createView = () => {
+  view.value = {}
+  openCreateViewForm.value = true
+}
+
+const editView = (v) => {
+  view.value = { ...v }
+  openCreateViewForm.value = true
+}
+
+const deleteView = async (viewToRemove) => {
+  try {
+    await api.deleteView(viewToRemove.id)
+    emitter.emit(EMITTER_EVENTS.REFRESH_LIST, { model: 'view' })
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      description: t('globals.messages.deletedSuccessfully')
+    })
+  } catch (error) {
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: 'destructive',
+      description: handleHTTPError(error).message
+    })
+  }
+}
+
+const getUserViews = async () => {
+  try {
+    const response = await api.getCurrentUserViews()
+    userViews.value = response.data.data
+  } catch (error) {
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: 'destructive',
+      description: handleHTTPError(error).message
+    })
+  }
 }
 
 const listenViewFormOpen = () => {
@@ -168,6 +218,7 @@ const listenViewRefresh = () => {
 const refreshViews = async (data) => {
   openCreateViewForm.value = false
   if (data?.model === 'view') {
+    await getUserViews()
     const openID = route.params.viewID
     if (openID) {
       conversationStore.resetConversations()
