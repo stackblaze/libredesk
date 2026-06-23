@@ -30,6 +30,14 @@ html.zendesk-layout {
     box-shadow: none;
     border-radius: 8px;
     padding: 0.625rem 0.875rem;
+
+    // Message body text inherits the browser default (16px) otherwise; pin it
+    // to Zendesk's ~14px reading size with comfortable line height.
+    .native-html,
+    .native-html p {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
   }
 
   // Customer (incoming) messages get a subtle blue highlight, like Zendesk.
@@ -353,16 +361,18 @@ html.zendesk-layout {
   }
 }
 
-// Ticket workspace: wider side columns, narrower conversation column (~28 / 44 / 28).
+// Ticket workspace: fixed narrow side panels, flexible wide conversation center
+// (like Zendesk). Using fixed rem widths instead of fr keeps the side columns
+// compact on wide screens so the conversation fills the remaining space.
 .zendesk-ticket-workspace {
   display: grid;
-  grid-template-columns: minmax(17rem, 1.25fr) minmax(22rem, 1.75fr) minmax(17rem, 1.25fr);
+  grid-template-columns: 18rem minmax(0, 1fr) 20rem;
   min-height: 0;
   min-width: 0;
   width: 100%;
 
   &.context-collapsed {
-    grid-template-columns: minmax(17rem, 1.25fr) minmax(22rem, 1.75fr) 2.5rem;
+    grid-template-columns: 18rem minmax(0, 1fr) 2.5rem;
   }
 }
 
