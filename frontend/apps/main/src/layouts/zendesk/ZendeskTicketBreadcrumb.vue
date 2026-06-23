@@ -1,13 +1,13 @@
 <template>
-  <div class="zendesk-ticket-breadcrumb flex items-stretch justify-between shrink-0">
+  <div class="zendesk-ticket-breadcrumb flex items-stretch justify-between shrink-0 border-b">
     <nav class="flex items-stretch min-w-0 h-full text-sm" aria-label="breadcrumb">
       <router-link :to="listRoute" class="zendesk-breadcrumb-segment zendesk-breadcrumb-link">
         {{ viewLabel }}
       </router-link>
-      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem] font-medium text-foreground">
+      <span class="zendesk-breadcrumb-segment truncate max-w-[14rem] text-foreground">
         {{ requesterName }}
       </span>
-      <span class="zendesk-breadcrumb-segment flex items-center gap-2 min-w-0">
+      <span class="zendesk-breadcrumb-segment zendesk-breadcrumb-current flex items-center gap-2 min-w-0">
         <span
           v-if="status"
           class="zendesk-status-badge shrink-0"
@@ -15,7 +15,7 @@
         >
           {{ status }}
         </span>
-        <span v-if="ticketNumber" class="text-muted-foreground shrink-0 whitespace-nowrap">
+        <span v-if="ticketNumber" class="text-foreground shrink-0 whitespace-nowrap">
           {{ t('zendesk.ticketNumber', { number: ticketNumber }) }}
         </span>
       </span>
@@ -26,18 +26,40 @@
         <ZendeskSlaIndicator :conversation="conversationStore.current" />
       </span>
     </nav>
-    <div class="flex items-center px-3 shrink-0 border-l gap-3" style="border-color: hsl(var(--zendesk-border))">
-      <ZendeskTicketViewers />
-      <Button variant="ghost" size="sm" class="h-7 text-xs" @click="emit('next')" :disabled="!hasNext">
-        {{ t('zendesk.next') }}
-        <ArrowRight class="size-3.5 ml-1" />
-      </Button>
+
+    <div class="flex items-stretch shrink-0">
+      <div class="flex items-center px-3 border-l gap-2 h-9" style="border-color: hsl(var(--zendesk-border))">
+        <ZendeskTicketViewers />
+        <Button variant="ghost" size="sm" class="h-7 text-xs hidden lg:inline-flex" @click="emit('next')" :disabled="!hasNext">
+          {{ t('zendesk.next') }}
+          <ArrowRight class="size-3.5 ml-1" />
+        </Button>
+      </div>
+      <div class="zendesk-panel-toggle">
+        <button
+          type="button"
+          class="zendesk-panel-toggle-btn"
+          :class="{ active: !contextCollapsed }"
+          @click="contextCollapsed = false"
+        >
+          {{ t('zendesk.user') }}
+        </button>
+        <button
+          type="button"
+          class="zendesk-panel-toggle-btn"
+          :class="{ active: contextCollapsed }"
+          @click="contextCollapsed = true"
+        >
+          {{ t('zendesk.apps') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useStorage } from '@vueuse/core'
 import { ArrowRight } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@shared-ui/components/ui/button'
@@ -60,6 +82,7 @@ const { t } = useI18n()
 const { viewLabel, listRoute } = useInboxViewContext()
 const { categoryClass } = useStatusCategory()
 const conversationStore = useConversationStore()
+const contextCollapsed = useStorage('libredesk_zendesk_context_collapsed', false)
 
 const statusClass = computed(() => categoryClass(props.status))
 

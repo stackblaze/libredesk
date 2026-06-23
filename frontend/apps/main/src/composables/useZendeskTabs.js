@@ -12,6 +12,20 @@ const CONVERSATION_ROUTE_NAMES = new Set([
   'view-inbox-conversation'
 ])
 
+function stripHtml (value) {
+  return (value || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function contactNameFrom (contact) {
+  if (!contact) return ''
+  return `${contact.first_name || ''} ${contact.last_name || ''}`.trim()
+}
+
+function messagePreviewFrom (listItem, current) {
+  const raw = current?.last_message || listItem?.last_message || ''
+  return stripHtml(raw)
+}
+
 export function useZendeskTabs () {
   const tabs = useStorage('libredesk_zendesk_tabs', [])
   const route = useRoute()
@@ -27,6 +41,7 @@ export function useZendeskTabs () {
 
     const listItem = conversationStore.conversationsList.find((c) => c.uuid === uuid)
     const current = conversationStore.current?.uuid === uuid ? conversationStore.current : null
+    const contact = current?.contact || listItem?.contact
 
     return {
       uuid,
@@ -35,6 +50,8 @@ export function useZendeskTabs () {
       inbox_channel: current?.inbox_channel || listItem?.inbox_channel || '',
       priority: current?.priority || listItem?.priority || '',
       status: current?.status || listItem?.status || '',
+      contact_name: contactNameFrom(contact) || conversationStore.getContactFullName(uuid) || '',
+      message_preview: messagePreviewFrom(listItem, current),
       routeName: route.name,
       routeParams: { ...route.params }
     }
@@ -64,7 +81,11 @@ export function useZendeskTabs () {
       conversationStore.current?.reference_number,
       conversationStore.current?.status,
       conversationStore.current?.priority,
-      conversationStore.current?.inbox_channel
+      conversationStore.current?.inbox_channel,
+      conversationStore.current?.contact?.first_name,
+      conversationStore.current?.contact?.last_name,
+      conversationStore.current?.last_message,
+      conversationStore.conversationsList.find((c) => c.uuid === route.params.uuid)?.last_message
     ],
     syncActiveTab,
     { immediate: true }

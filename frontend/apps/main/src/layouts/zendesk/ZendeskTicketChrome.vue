@@ -1,6 +1,5 @@
 <template>
   <div class="zendesk-ticket-chrome shrink-0">
-    <ZendeskTicketTabs />
     <ZendeskTicketBreadcrumb
       :requester-name="conversationStore.currentContactName"
       :status="conversationStore.current?.status"
@@ -14,7 +13,6 @@
 <script setup>
 import { useConversationStore } from '@main/stores/conversation'
 import { useZendeskTicketNav } from '@main/composables/useZendeskTicketNav'
-import ZendeskTicketTabs from './ZendeskTicketTabs.vue'
 import ZendeskTicketBreadcrumb from './ZendeskTicketBreadcrumb.vue'
 
 const conversationStore = useConversationStore()

@@ -960,6 +960,8 @@
   "zendesk.viewersAria": "{count} other agent viewing this ticket | {count} other agents viewing this ticket",
   "zendesk.viewerFallback": "Agent #{id}",
   "zendesk.next": "Next",
+  "zendesk.user": "User",
+  "zendesk.apps": "Apps",
   "zendesk.addTab": "Add",
   "zendesk.closeTab": "Close tab",
   "zendesk.submitAs": "Submit as {status}",

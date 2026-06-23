@@ -1,13 +1,13 @@
 <template>
-  <div class="zendesk-tab-bar flex items-end shrink-0 min-w-0">
-    <div class="flex items-end min-w-0 overflow-x-auto">
+  <div class="zendesk-tab-bar">
+    <div class="zendesk-tab-scroll">
       <div
         v-for="tab in tabs"
         :key="tab.uuid"
         class="zendesk-tab group"
         :class="{ active: tab.uuid === activeUuid }"
       >
-        <button type="button" class="flex items-center gap-2 min-w-0 flex-1 text-left" @click="selectTab(tab)">
+        <button type="button" class="flex items-center gap-2 min-w-0 flex-1 text-left h-full" @click="selectTab(tab)">
           <span class="relative shrink-0">
             <component
               :is="tab.inbox_channel === 'livechat' ? MessageSquare : Mail"
@@ -20,18 +20,19 @@
               :class="priorityDotClass(tab.priority)"
             />
           </span>
-          <span class="flex flex-col min-w-0 flex-1 leading-tight">
-            <span class="truncate text-xs font-medium">
-              {{ tab.subject || t('zendesk.noSubject') }}
+          <span class="flex flex-col min-w-0 flex-1 leading-tight gap-0.5">
+            <span class="zendesk-tab-title">
+              {{ tab.contact_name || tab.subject || t('zendesk.noSubject') }}
             </span>
-            <span v-if="tab.reference_number" class="text-[11px] text-muted-foreground truncate">
-              #{{ tab.reference_number }}
+            <span class="zendesk-tab-preview">
+              {{ tab.message_preview || t('zendesk.noMessagePreview') }}
             </span>
           </span>
         </button>
         <button
           type="button"
-          class="zendesk-tab-close shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+          class="zendesk-tab-close"
+          :class="tab.uuid === activeUuid ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'"
           :aria-label="t('zendesk.closeTab')"
           @click="closeTab(tab.uuid)"
         >
@@ -39,8 +40,8 @@
         </button>
       </div>
     </div>
-    <button type="button" class="zendesk-tab-add shrink-0" @click="openNewTicket">
-      <Plus class="size-3.5 mr-1" />
+    <button type="button" class="zendesk-tab-add" @click="openNewTicket">
+      <Plus class="size-3.5" />
       {{ t('zendesk.add') }}
     </button>
   </div>
