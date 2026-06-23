@@ -5,9 +5,16 @@
       class="h-0.5 shrink-0 bg-primary/40 animate-pulse"
     />
 
-    <div v-if="showContent" class="flex flex-1 min-h-0 min-w-0 w-full">
+    <div
+      v-if="showContent"
+      class="zendesk-ticket-workspace flex-1 min-h-0 min-w-0"
+      :class="{ 'context-collapsed': contextCollapsed }"
+    >
       <ZendeskTicketProperties />
-      <div class="flex flex-col flex-1 min-w-0 w-full border-r">
+
+      <div class="zendesk-ticket-center">
+        <ZendeskTicketChrome />
+
         <div class="px-4 py-2.5 border-b shrink-0 bg-background">
           <h2 class="zendesk-title truncate leading-snug">
             {{ conversationStore.current?.subject || t('zendesk.noSubject') }}
@@ -19,20 +26,25 @@
             {{ t('zendesk.viaInbox', { inbox: conversationStore.current.inbox_name }) }}
           </p>
         </div>
+
         <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
           <MessageList class="flex-1 overflow-y-auto" />
+        </div>
+
+        <div class="zendesk-reply-stack shrink-0">
           <ReplyBox />
+          <ZendeskSubmitBar />
         </div>
       </div>
+
       <ZendeskCustomerContext />
     </div>
-
-    <ZendeskSubmitBar v-if="showContent" />
   </div>
 </template>
 
 <script setup>
 import { computed, watch, onMounted } from 'vue'
+import { useStorage } from '@vueuse/core'
 import { useDocumentVisibility } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useConversationStore } from '@main/stores/conversation'
@@ -40,6 +52,7 @@ import MessageList from '@/features/conversation/message/MessageList.vue'
 import ReplyBox from '@/features/conversation/ReplyBox.vue'
 import ZendeskTicketProperties from './ZendeskTicketProperties.vue'
 import ZendeskCustomerContext from './ZendeskCustomerContext.vue'
+import ZendeskTicketChrome from './ZendeskTicketChrome.vue'
 import ZendeskSubmitBar from './ZendeskSubmitBar.vue'
 
 const props = defineProps({
@@ -48,6 +61,7 @@ const props = defineProps({
 
 const { t } = useI18n()
 const conversationStore = useConversationStore()
+const contextCollapsed = useStorage('libredesk_zendesk_context_collapsed', false)
 
 const showContent = computed(
   () => conversationStore.current || conversationStore.conversation.loading

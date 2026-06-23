@@ -75,7 +75,7 @@
     </DialogContent>
   </Dialog>
 
-  <div class="text-foreground bg-background">
+  <div class="text-foreground bg-background" :class="{ 'zendesk-reply-root': isZendeskLayout }">
     <!-- Fullscreen editor -->
     <Dialog :open="isEditorFullscreen" @update:open="isEditorFullscreen = false">
       <DialogContent
@@ -116,8 +116,11 @@
 
     <!-- Main Editor non-fullscreen -->
     <div
-      class="bg-background text-card-foreground box m-2 px-2 pt-2 flex flex-col"
-      :class="{ '!bg-private': messageType === 'private_note' }"
+      class="bg-background text-card-foreground flex flex-col"
+      :class="[
+        isZendeskLayout ? 'zendesk-reply-box' : 'box m-2 px-2 pt-2',
+        { '!bg-private': messageType === 'private_note' }
+      ]"
       v-if="!isEditorFullscreen"
     >
       <ReplyBoxContent
@@ -215,7 +218,8 @@ const { layout } = useUiLayout()
 
 // In Zendesk mode the composer's inline Send is hidden; the bottom submit bar
 // is the single submit control (avoids the duplicate-submit confusion).
-const showSendButton = computed(() => layout.value !== UI_LAYOUT_ZENDESK)
+const isZendeskLayout = computed(() => layout.value === UI_LAYOUT_ZENDESK)
+const showSendButton = computed(() => !isZendeskLayout.value)
 
 // Setup file upload composable
 const {

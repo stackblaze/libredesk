@@ -1,5 +1,5 @@
 <template>
-  <aside class="zendesk-ticket-props w-60 shrink-0 p-4 space-y-1">
+  <aside class="zendesk-ticket-props p-4 space-y-1 min-w-0 min-h-0 overflow-y-auto">
     <div class="prop-field">
       <p class="prop-label">{{ t('zendesk.requester') }}</p>
       <p class="text-sm font-medium truncate">

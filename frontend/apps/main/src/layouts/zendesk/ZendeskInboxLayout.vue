@@ -12,7 +12,6 @@
       </div>
     </template>
     <div v-else class="flex flex-col flex-1 min-w-0 w-full h-full min-h-0">
-      <ZendeskTicketChrome />
       <router-view class="flex-1 min-w-0 w-full min-h-0" />
     </div>
   </div>
@@ -29,7 +28,6 @@ import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import api from '@main/api'
 import ZendeskViewsPane from './ZendeskViewsPane.vue'
 import ZendeskConversationTable from './ZendeskConversationTable.vue'
-import ZendeskTicketChrome from './ZendeskTicketChrome.vue'
 
 const route = useRoute()
 const userStore = useUserStore()

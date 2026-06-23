@@ -2,13 +2,13 @@
   <button
     v-if="collapsed"
     type="button"
-    class="w-10 shrink-0 border-l bg-background flex items-start justify-center pt-3 hover:bg-muted/50"
+    class="zendesk-ticket-context-collapsed shrink-0 border-l bg-background flex items-start justify-center pt-3 hover:bg-muted/50 min-h-0"
     :title="t('conversation.sidebar.previousConvo')"
     @click="toggle"
   >
     <PanelRightOpen class="size-4 text-muted-foreground" />
   </button>
-  <aside v-else class="w-72 shrink-0 border-l overflow-y-auto bg-background p-4">
+  <aside v-else class="zendesk-ticket-context p-4 min-w-0 min-h-0 overflow-y-auto bg-background border-l">
     <ConversationSideBarContact />
     <Accordion type="multiple" collapsible class="mt-4">
       <AccordionItem value="previous">
