@@ -191,6 +191,14 @@ html.zendesk-layout {
   }
 }
 
+.zendesk-bulk-selected-badge {
+  @apply inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-medium tabular-nums;
+}
+
+.zendesk-bulk-bar {
+  border-color: hsl(var(--zendesk-border));
+}
+
 .zendesk-sort-th {
   @apply inline-flex items-center gap-1 uppercase tracking-wider font-semibold transition-colors;
 

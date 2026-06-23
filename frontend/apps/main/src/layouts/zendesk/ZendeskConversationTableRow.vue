@@ -1,7 +1,7 @@
 <template>
   <tr
     class="cursor-pointer"
-    :class="{ selected: isCurrent }"
+    :class="{ selected: isCurrent || isSelected }"
     @click="openConversation"
     @mouseenter="onRowEnter"
     @mouseleave="onRowLeave"

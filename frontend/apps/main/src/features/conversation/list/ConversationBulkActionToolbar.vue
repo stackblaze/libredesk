@@ -2,16 +2,36 @@
   <div
     role="toolbar"
     :aria-label="t('conversation.bulkActions.toolbar')"
-    class="p-2 flex items-center gap-1 bg-muted/30"
+    :class="variant === 'zendesk' ? 'zendesk-bulk-bar px-4 h-12 border-b shrink-0 flex items-center gap-2 bg-background' : 'p-2 flex items-center gap-1 bg-muted/30'"
   >
     <Checkbox
       :checked="conversationStore.allSelected"
       @update:checked="toggleSelectAll"
       :aria-label="t('conversation.bulkActions.selectAll')"
-      class="ml-1 mr-1"
+      :class="variant === 'zendesk' ? 'mr-1' : 'ml-1 mr-1'"
     />
+
+    <!-- Set Status (Zendesk: labeled dropdown so it is not confused with the list filter) -->
+    <DropdownMenu v-if="canUpdateStatus && variant === 'zendesk'">
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" :disabled="bulkLoading">
+          {{ t('actions.setStatus') }}
+          <ChevronDown class="size-4 ml-1 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          v-for="status in conversationStore.statusOptionsNoSnooze"
+          :key="status.value"
+          @click="bulkUpdateStatus(status.label)"
+        >
+          {{ status.label }}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
     <span
-      class="text-xs font-medium whitespace-nowrap tabular-nums inline-block min-w-20 mr-1"
+      :class="variant === 'zendesk' ? 'zendesk-bulk-selected-badge' : 'text-xs font-medium whitespace-nowrap tabular-nums inline-block min-w-20 mr-1'"
       aria-live="polite"
     >
       {{ t('conversation.bulkActions.selected', conversationStore.selectedCount, { count: conversationStore.selectedCount }) }}
@@ -82,8 +102,8 @@
       </template>
     </SelectComboBox>
 
-    <!-- Set Status -->
-    <DropdownMenu v-if="canUpdateStatus">
+    <!-- Set Status (default layout: icon button) -->
+    <DropdownMenu v-if="canUpdateStatus && variant !== 'zendesk'">
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -111,7 +131,7 @@
     <Button
       variant="ghost"
       size="icon"
-      class="ml-auto"
+      :class="variant === 'zendesk' ? 'ml-auto' : 'ml-auto'"
       :aria-label="t('conversation.bulkActions.clearSelection')"
       @click="conversationStore.clearSelection()"
     >
@@ -123,7 +143,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { UserPlus, Users, Tag, CircleDot, Loader2, X } from 'lucide-vue-next'
+import { UserPlus, Users, Tag, CircleDot, Loader2, X, ChevronDown } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import {
@@ -143,6 +163,14 @@ import { EMITTER_EVENTS } from '@/constants/emitterEvents'
 import { useBulkActionPermissions } from '@/composables/useBulkActionPermissions'
 import api from '@/api'
 
+defineProps({
+  variant: {
+    type: String,
+    default: 'default',
+    validator: (v) => ['default', 'zendesk'].includes(v)
+  }
+})
+
 const conversationStore = useConversationStore()
 const usersStore = useUsersStore()
 const teamsStore = useTeamStore()
@@ -154,6 +182,7 @@ const bulkLoading = ref(false)
 const { canAssignAgent, canAssignTeam, canUpdateStatus, canUpdateTags } = useBulkActionPermissions()
 
 onMounted(() => {
+  if (canUpdateStatus.value) conversationStore.fetchStatuses()
   if (canAssignAgent.value) usersStore.fetchUsers()
   if (canAssignTeam.value) teamsStore.fetchTeams()
   if (canUpdateTags.value) tagStore.fetchTags()
@@ -178,8 +207,9 @@ const tagItems = computed(() =>
   tagStore.tagNames.map((name) => ({ label: name, value: name }))
 )
 
-const runBulkAction = async (actionFn) => {
+const runBulkAction = async (actionFn, options = {}) => {
   const uuids = [...conversationStore.selectedUUIDs]
+  const count = uuids.length
   bulkLoading.value = true
   const results = await Promise.allSettled(uuids.map((uuid) => actionFn(uuid)))
   bulkLoading.value = false
@@ -197,9 +227,11 @@ const runBulkAction = async (actionFn) => {
     })
   } else {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-      description: t('conversation.bulkActions.successToast')
+      description: options.successMessage || t('conversation.bulkActions.successToast')
     })
   }
+
+  return { count, hasFailures }
 }
 
 const onAssigneeSelect = (assigneeType, item) => {
@@ -216,6 +248,12 @@ const onTagSelect = (item) => {
 }
 
 const bulkUpdateStatus = (status) => {
-  runBulkAction((uuid) => api.updateConversationStatus(uuid, { status }))
+  const count = conversationStore.selectedCount
+  runBulkAction(
+    (uuid) => api.updateConversationStatus(uuid, { status }),
+    {
+      successMessage: t('conversation.bulkActions.statusSuccess', { count, status })
+    }
+  )
 }
 </script>

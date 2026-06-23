@@ -9,25 +9,6 @@
           {{ t('conversation.newConversation') }}
         </span>
       </nav>
-
-      <div class="zendesk-breadcrumb-meta flex items-stretch shrink-0">
-        <div class="zendesk-panel-toggle">
-          <button
-            type="button"
-            class="zendesk-panel-toggle-btn active"
-            disabled
-          >
-            {{ t('zendesk.user') }}
-          </button>
-          <button
-            type="button"
-            class="zendesk-panel-toggle-btn"
-            disabled
-          >
-            {{ t('zendesk.apps') }}
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>

@@ -1,5 +1,10 @@
 <template>
   <div class="flex flex-col h-full bg-background overflow-hidden">
+    <ConversationBulkActionToolbar
+      v-if="hasSelection && canBulkAct"
+      variant="zendesk"
+    />
+
     <div class="flex items-center justify-between px-4 h-14 border-b shrink-0">
       <div class="min-w-0">
         <h1 class="zendesk-title truncate">{{ listTitle }}</h1>
@@ -21,7 +26,7 @@
           <Play class="size-4 mr-1" />
           {{ t('zendesk.play') }}
         </Button>
-        <DropdownMenu v-if="!route.params.viewID">
+        <DropdownMenu v-if="!route.params.viewID && !hasSelection">
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               {{ conversationStore.getListStatus || t('globals.messages.filter') }}
@@ -38,7 +43,6 @@
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ConversationBulkActionToolbar v-if="hasSelection && canBulkAct" />
       </div>
     </div>
 

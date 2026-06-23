@@ -35,31 +35,12 @@
           <ArrowRight class="size-3.5 ml-1" />
         </Button>
       </div>
-      <div class="zendesk-panel-toggle">
-        <button
-          type="button"
-          class="zendesk-panel-toggle-btn"
-          :class="{ active: !contextCollapsed }"
-          @click="contextCollapsed = false"
-        >
-          {{ t('zendesk.user') }}
-        </button>
-        <button
-          type="button"
-          class="zendesk-panel-toggle-btn"
-          :class="{ active: contextCollapsed }"
-          @click="contextCollapsed = true"
-        >
-          {{ t('zendesk.apps') }}
-        </button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useStorage } from '@vueuse/core'
 import { ArrowRight } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@shared-ui/components/ui/button'
@@ -82,7 +63,6 @@ const { t } = useI18n()
 const { viewLabel, listRoute } = useInboxViewContext()
 const { categoryClass } = useStatusCategory()
 const conversationStore = useConversationStore()
-const contextCollapsed = useStorage('libredesk_zendesk_context_collapsed', false)
 
 const statusClass = computed(() => categoryClass(props.status))
 
