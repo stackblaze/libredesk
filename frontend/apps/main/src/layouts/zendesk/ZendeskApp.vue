@@ -54,7 +54,6 @@ import { useSharedViewStore } from '@main/stores/sharedView'
 import { useTagStore } from '@main/stores/tag'
 import { useCustomAttributeStore } from '@main/stores/customAttributes'
 import { useIdleDetection } from '@main/composables/useIdleDetection'
-import { useNotificationStore } from '@main/stores/notification'
 import { initAudioContext } from '@shared-ui/composables/useNotificationSound'
 import PageHeader from '@main/components/layout/PageHeader.vue'
 import ViewForm from '@/features/view/ViewForm.vue'
@@ -81,7 +80,6 @@ const macroStore = useMacroStore()
 const sharedViewStore = useSharedViewStore()
 const tagStore = useTagStore()
 const customAttributeStore = useCustomAttributeStore()
-const notificationStore = useNotificationStore()
 const { t } = useI18n()
 
 const openCreateViewForm = ref(false)
@@ -117,11 +115,6 @@ const unlockAudio = () => {
 }
 document.addEventListener('click', unlockAudio)
 document.addEventListener('touchstart', unlockAudio)
-
-watch([() => notificationStore.unreadCount, () => route.fullPath], ([count]) => {
-  const base = document.title.replace(/^\(\d+\)\s*/, '')
-  document.title = count > 0 ? `(${count}) ${base}` : base
-})
 
 onMounted(() => {
   initToaster()

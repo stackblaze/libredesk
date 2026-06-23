@@ -146,7 +146,6 @@ import { useSharedViewStore } from './stores/sharedView'
 import { useTagStore } from './stores/tag'
 import { useCustomAttributeStore } from './stores/customAttributes'
 import { useIdleDetection } from './composables/useIdleDetection'
-import { useNotificationStore } from './stores/notification'
 import { initAudioContext } from '@shared-ui/composables/useNotificationSound'
 import PageHeader from './components/layout/PageHeader.vue'
 import ViewForm from '@/features/view/ViewForm.vue'
@@ -204,14 +203,6 @@ const view = ref({})
 const openCreateViewForm = ref(false)
 const openCreateConversationDialog = ref(false)
 const { t } = useI18n()
-const notificationStore = useNotificationStore()
-
-// Update browser tab title with unread notification count.
-// Watch both unreadCount and route so the prefix is preserved after navigation.
-watch([() => notificationStore.unreadCount, () => route.fullPath], ([count]) => {
-  const base = document.title.replace(/^\(\d+\)\s*/, '')
-  document.title = count > 0 ? `(${count}) ${base}` : base
-})
 
 initWS()
 useIdleDetection()
