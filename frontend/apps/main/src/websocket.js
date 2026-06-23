@@ -122,6 +122,9 @@ export class WebSocketClient {
         [WS_EVENT.NEW_NOTIFICATION]: () => this.notificationStore.addNotification(data.data),
         [WS_EVENT.AGENT_AVAILABILITY_UPDATE]: () =>
           this.usersStore.setAvailability(data.data.agent_id, data.data.availability_status),
+        [WS_EVENT.CONVERSATION_VIEWERS]: () => {
+          this.convStore.setConversationViewers(data.data.conversation_uuid, data.data.viewer_ids || [])
+        },
       }
 
       const handler = handlers[data.type]

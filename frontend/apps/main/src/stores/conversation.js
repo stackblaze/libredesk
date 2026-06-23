@@ -32,6 +32,7 @@ export const useConversationStore = defineStore('conversation', () => {
   const isViewingConversation = (uuid) => router.currentRoute.value.params.uuid === uuid
 
   const selectedUUIDs = ref(new Set())
+  const viewersByUUID = reactive({})
 
   const priorityOptions = computed(() => {
     return priorities.value.map(p => ({ label: p.name, value: p.id }))
@@ -45,6 +46,19 @@ export const useConversationStore = defineStore('conversation', () => {
       value: s.id
     }))
   )
+
+  function setConversationViewers (uuid, viewerIds) {
+    if (!uuid) return
+    viewersByUUID[uuid] = Array.isArray(viewerIds) ? [...viewerIds] : []
+  }
+
+  const otherViewersOnCurrent = computed(() => {
+    const uuid = conversation.data?.uuid
+    if (!uuid) return []
+    const ids = viewersByUUID[uuid] || []
+    const selfId = Number(userStore.userID)
+    return ids.filter((id) => Number(id) !== selfId)
+  })
 
   let lastClickedUUID = null
 
@@ -1118,6 +1132,8 @@ export const useConversationStore = defineStore('conversation', () => {
     fetchNextConversations,
     mergeMessageUpdate,
     updateAssigneeLastSeen,
+    setConversationViewers,
+    otherViewersOnCurrent,
     markAsUnread,
     incrementUnread,
     updateConversationMessage,

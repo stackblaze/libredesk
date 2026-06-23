@@ -12,6 +12,7 @@ const (
 	MessageTypeTyping                 = "typing"
 	MessageTypeListSubscribeReplace   = "list_subscribe_replace"
 	MessageTypeAgentAvailability      = "agent_availability_update"
+	MessageTypeConversationViewers    = "conversation_viewers"
 )
 
 // WSMessage represents a WS message.
@@ -42,4 +43,10 @@ type TypingMessage struct {
 	ConversationUUID string `json:"conversation_uuid"`
 	IsTyping         bool   `json:"is_typing"`
 	IsPrivateMessage bool   `json:"is_private_message"`
+}
+
+// ConversationViewers lists agents currently viewing a conversation (open-tab subscribe).
+type ConversationViewers struct {
+	ConversationUUID string `json:"conversation_uuid"`
+	ViewerIDs        []int  `json:"viewer_ids"`
 }

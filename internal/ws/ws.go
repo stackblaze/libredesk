@@ -2,6 +2,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -89,8 +90,9 @@ func (h *Hub) SubscribeListReplace(client *Client, uuids []string) {
 // SubscribeOpenConv sets the client's single open-conversation sub, replacing any previous one.
 func (h *Hub) SubscribeOpenConv(client *Client, uuid string) {
 	h.subsMu.Lock()
-	defer h.subsMu.Unlock()
+	var prevUUID string
 	if prev, ok := h.clientOpenSub[client]; ok && prev != uuid {
+		prevUUID = prev
 		delete(h.convSubsOpen[prev], client)
 		if len(h.convSubsOpen[prev]) == 0 {
 			delete(h.convSubsOpen, prev)
@@ -101,6 +103,12 @@ func (h *Hub) SubscribeOpenConv(client *Client, uuid string) {
 		h.convSubsOpen[uuid] = make(map[*Client]struct{})
 	}
 	h.convSubsOpen[uuid][client] = struct{}{}
+	h.subsMu.Unlock()
+
+	if prevUUID != "" {
+		h.broadcastConversationViewers(prevUUID)
+	}
+	h.broadcastConversationViewers(uuid)
 }
 
 // ListSubscribers returns the union of list-source and open-source subscribers for a conversation.
@@ -129,7 +137,7 @@ func (h *Hub) ListSubscribers(uuid string) []*Client {
 // ClearClientSubs drops all of a client's list and open subscriptions.
 func (h *Hub) ClearClientSubs(client *Client) {
 	h.subsMu.Lock()
-	defer h.subsMu.Unlock()
+	var leftOpenUUID string
 	for uuid := range h.clientListSubs[client] {
 		delete(h.convSubsList[uuid], client)
 		if len(h.convSubsList[uuid]) == 0 {
@@ -138,11 +146,59 @@ func (h *Hub) ClearClientSubs(client *Client) {
 	}
 	delete(h.clientListSubs, client)
 	if prev, ok := h.clientOpenSub[client]; ok {
+		leftOpenUUID = prev
 		delete(h.convSubsOpen[prev], client)
 		if len(h.convSubsOpen[prev]) == 0 {
 			delete(h.convSubsOpen, prev)
 		}
 		delete(h.clientOpenSub, client)
+	}
+	h.subsMu.Unlock()
+
+	if leftOpenUUID != "" {
+		h.broadcastConversationViewers(leftOpenUUID)
+	}
+}
+
+// broadcastConversationViewers notifies agents with a ticket open who else is viewing it.
+func (h *Hub) broadcastConversationViewers(uuid string) {
+	if uuid == "" {
+		return
+	}
+
+	h.subsMu.RLock()
+	openSet := h.convSubsOpen[uuid]
+	if len(openSet) == 0 {
+		h.subsMu.RUnlock()
+		return
+	}
+
+	viewerIDSet := make(map[int]struct{}, len(openSet))
+	subscribers := make([]*Client, 0, len(openSet))
+	for c := range openSet {
+		viewerIDSet[c.ID] = struct{}{}
+		subscribers = append(subscribers, c)
+	}
+	viewerIDs := make([]int, 0, len(viewerIDSet))
+	for id := range viewerIDSet {
+		viewerIDs = append(viewerIDs, id)
+	}
+	h.subsMu.RUnlock()
+
+	payload, err := json.Marshal(models.Message{
+		Type: models.MessageTypeConversationViewers,
+		Data: models.ConversationViewers{
+			ConversationUUID: uuid,
+			ViewerIDs:        viewerIDs,
+		},
+	})
+	if err != nil {
+		h.lo.Error("marshal conversation viewers", "error", err)
+		return
+	}
+
+	for _, c := range subscribers {
+		c.SendMessage(payload, websocket.TextMessage)
 	}
 }
 

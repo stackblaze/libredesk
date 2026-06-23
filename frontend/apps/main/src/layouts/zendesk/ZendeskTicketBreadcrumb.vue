@@ -26,7 +26,8 @@
         <ZendeskSlaIndicator :conversation="conversationStore.current" />
       </span>
     </nav>
-    <div class="flex items-center px-3 shrink-0 border-l" style="border-color: hsl(var(--zendesk-border))">
+    <div class="flex items-center px-3 shrink-0 border-l gap-3" style="border-color: hsl(var(--zendesk-border))">
+      <ZendeskTicketViewers />
       <Button variant="ghost" size="sm" class="h-7 text-xs" @click="emit('next')" :disabled="!hasNext">
         {{ t('zendesk.next') }}
         <ArrowRight class="size-3.5 ml-1" />
@@ -44,6 +45,7 @@ import { useInboxViewContext } from '@main/composables/useInboxViewContext'
 import { useStatusCategory } from '@main/composables/useStatusCategory'
 import { useConversationStore } from '@main/stores/conversation'
 import ZendeskSlaIndicator from './ZendeskSlaIndicator.vue'
+import ZendeskTicketViewers from './ZendeskTicketViewers.vue'
 
 const props = defineProps({
   requesterName: { type: String, default: '' },

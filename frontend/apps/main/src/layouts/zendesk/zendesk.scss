@@ -241,6 +241,13 @@ html.zendesk-layout {
   border-color: hsl(var(--zendesk-border));
 }
 
+.zendesk-ticket-viewers {
+  .size-7 {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+}
+
 .zendesk-breadcrumb-segment {
   @apply flex items-center px-3 border-r h-9;
   border-color: hsl(var(--zendesk-border));
