@@ -28,10 +28,18 @@ describe('Admin setup and outgoing conversation', () => {
     cy.login()
   })
 
+  const visitDefaultLayout = (path) => {
+    cy.visit(path, {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('libredesk_ui_layout', 'default')
+      }
+    })
+  }
+
   it('creates an email inbox that sends through MailHog', () => {
     cy.intercept('POST', '**/api/v1/inboxes').as('createInbox')
 
-    cy.visit('/admin/inboxes/new')
+    visitDefaultLayout('/admin/inboxes/new')
     cy.contains('Create an email inbox').click()
     cy.contains('Configure IMAP and SMTP manually').click()
 
@@ -56,7 +64,7 @@ describe('Admin setup and outgoing conversation', () => {
   it('creates a team', () => {
     cy.intercept('POST', '**/api/v1/teams').as('createTeam')
 
-    cy.visit('/admin/teams/teams/new')
+    visitDefaultLayout('/admin/teams/teams/new')
 
     // Emoji is required. Pick it first so the picker overlay is closed (by the
     // next click) before filling the rest of the form.
@@ -76,7 +84,7 @@ describe('Admin setup and outgoing conversation', () => {
   it('creates an agent', () => {
     cy.intercept('POST', '**/api/v1/agents').as('createAgent')
 
-    cy.visit('/admin/teams/agents/new')
+    visitDefaultLayout('/admin/teams/agents/new')
 
     cy.get('input[name="first_name"]').type(agentFirstName)
     cy.get('input[name="email"]').type(agentEmail)
@@ -92,7 +100,7 @@ describe('Admin setup and outgoing conversation', () => {
   it('creates an outgoing conversation from the new inbox', () => {
     cy.intercept('POST', '**/api/v1/conversations').as('createConversation')
 
-    cy.visit('/inboxes/assigned')
+    visitDefaultLayout('/inboxes/assigned')
     cy.contains('New conversation').click()
 
     cy.get('[role="dialog"]').within(() => {
@@ -123,12 +131,16 @@ describe('Admin setup and outgoing conversation', () => {
 
     cy.intercept('POST', `**/api/v1/conversations/${conversationUuid}/messages`).as('sendReply')
 
-    cy.visit(`/inboxes/all/conversation/${conversationUuid}`)
+    visitDefaultLayout(`/inboxes/all/conversation/${conversationUuid}`)
     cy.get('.tiptap.ProseMirror').first().click().type(replyBody)
     cy.contains('button', /^Send$/).click() // exact: avoid the adjacent "Send and set status" split button
 
-    cy.wait('@sendReply').its('response.statusCode').should('eq', 200)
-    cy.contains(replyBody).should('exist')
+    cy.wait('@sendReply').then(({ response }) => {
+      expect(response.statusCode).to.eq(200)
+      const text = response.body?.data?.text_content || response.body?.data?.content || ''
+      expect(text).to.include(replyBody)
+    })
+    cy.contains('.message-bubble', replyBody, { timeout: 15000 }).should('be.visible')
 
     // Outgoing mail is dispatched asynchronously; poll MailHog until it shows up.
     // Only runs in CI where MAILHOG_URL is set.

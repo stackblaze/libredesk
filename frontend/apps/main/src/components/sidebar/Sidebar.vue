@@ -103,11 +103,13 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@main/stores/user'
 import { useConversationStore } from '@main/stores/conversation'
 
-defineProps({
+const props = defineProps({
   userTeams: { type: Array, default: () => [] },
   userViews: { type: Array, default: () => [] },
-  sharedViews: { type: Array, default: () => [] }
+  sharedViews: { type: Array, default: () => [] },
+  variant: { type: String, default: 'default' }
 })
+
 const userStore = useUserStore()
 const conversationStore = useConversationStore()
 const settingsStore = useAppSettingsStore()
@@ -233,10 +235,17 @@ const hoveredViewId = ref(null)
 // Track delete confirmation dialog state
 const isDeleteOpen = ref(false)
 const viewToDelete = ref(null)
+
+const isZendesk = computed(() => props.variant === 'zendesk')
+const secondarySidebarClass = computed(() =>
+  isZendesk.value ? 'sidebar-secondary sidebar-secondary-zendesk zendesk-views-pane' : 'sidebar-secondary'
+)
+const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanvas'))
 </script>
 
 <template>
   <SidebarProvider
+    :class="{ 'sidebar-wrapper-zendesk': isZendesk }"
     style="--sidebar-width: 14rem"
     :default-open="sidebarOpen"
     v-on:update:open="sidebarOpen = $event"
@@ -245,7 +254,7 @@ const viewToDelete = ref(null)
     <template
       v-if="route.matched.some((record) => record.name && record.name.startsWith('contact'))"
     >
-      <Sidebar collapsible="offcanvas" class="sidebar-secondary">
+      <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -281,7 +290,7 @@ const viewToDelete = ref(null)
         route.matched.some((record) => record.name && record.name.startsWith('reports'))
       "
     >
-      <Sidebar collapsible="offcanvas" class="sidebar-secondary">
+      <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -312,7 +321,7 @@ const viewToDelete = ref(null)
 
     <!-- Admin Sidebar -->
     <template v-if="route.matched.some((record) => record.name && record.name.startsWith('admin'))">
-      <Sidebar collapsible="offcanvas" class="sidebar-secondary">
+      <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -378,7 +387,7 @@ const viewToDelete = ref(null)
 
     <!-- Account sidebar -->
     <template v-if="isActiveParent('/account')">
-      <Sidebar collapsible="offcanvas" class="sidebar-secondary">
+      <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -412,7 +421,7 @@ const viewToDelete = ref(null)
 
     <!-- Inbox sidebar -->
     <template v-if="route.path && isInboxRoute(route.path)">
-      <Sidebar collapsible="offcanvas" class="sidebar-secondary">
+      <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -614,7 +623,7 @@ const viewToDelete = ref(null)
     </template>
 
     <!-- Main Content Area -->
-    <SidebarInset class="bg-canvas !min-h-0 !h-full">
+    <SidebarInset :class="isZendesk ? 'bg-transparent !min-h-0 flex-1 min-w-0 !h-full' : 'bg-canvas !min-h-0 !h-full'">
       <slot></slot>
     </SidebarInset>
   </SidebarProvider>
@@ -644,6 +653,22 @@ const viewToDelete = ref(null)
   top: 0.40rem !important;
   bottom: 0.35rem !important;
   height: auto !important;
+}
+
+:deep(.sidebar-secondary-zendesk) {
+  @apply border-r ml-0 rounded-none shrink-0 w-56;
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+:deep(.sidebar-wrapper-zendesk.group\/sidebar-wrapper) {
+  min-height: 0 !important;
+  height: 100% !important;
+  flex: 1;
+  min-width: 0;
+  display: flex;
 }
 
 /* Override SidebarProvider height */

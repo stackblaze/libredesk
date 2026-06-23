@@ -437,8 +437,9 @@ const processSend = async (skipContactEmailCheck = false, skipMissingTagsCheck =
         echo_id: isPrivate ? '' : tempUUID
       })
 
-      // Private notes are sent immediately so replace immediately.
-      if (isPrivate && response?.data?.data) {
+      // Replace the optimistic pending bubble with the server message so the
+      // thread updates without waiting on websocket echo delivery.
+      if (response?.data?.data) {
         conversationStore.replacePendingMessage(convUUID, tempUUID, response.data.data)
       }
     } catch (error) {
