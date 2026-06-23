@@ -54,20 +54,38 @@ html.zendesk-layout {
 }
 
 .zendesk-app {
-  // Zendesk agent rail: #002f36 bg, #879296 icons
+  // Zendesk agent rail: #002f36 bg, #879296 icons (same in light & dark)
   --zendesk-nav-bg: 187 100% 11%;
   --zendesk-nav-fg: 0 0% 98%;
   --zendesk-nav-muted: 197 8% 56%;
   --zendesk-nav-active: 197 8% 56%;
+  // Light-mode surfaces — overridden by `.dark .zendesk-app` below.
+  --zendesk-canvas: 210 11% 98%;
   --zendesk-views-bg: 0 0% 100%;
   --zendesk-views-active: 200 80% 95%;
   --zendesk-table-header: 0 0% 96%;
   --zendesk-border: 220 13% 91%;
+  --zendesk-tab-bar-bg: 220 14% 93%;
+  --zendesk-tab-inactive: 220 14% 90%;
+  --zendesk-tab-hover: 0 0% 98%;
   --zendesk-status-new: 32 95% 44%;
   --zendesk-status-open: 0 72% 51%;
   --zendesk-status-waiting: 38 92% 50%;
   --zendesk-status-resolved: 142 64% 38%;
   font-family: var(--zendesk-font);
+}
+
+// Dark-mode surfaces. The agent rail and status colors stay as-is; only the
+// light panel/border/tab tokens are remapped onto the neutral dark palette.
+.dark .zendesk-app {
+  --zendesk-canvas: 240 7% 9%;
+  --zendesk-views-bg: 240 5% 13%;
+  --zendesk-views-active: 205 40% 22%;
+  --zendesk-table-header: 240 5% 15%;
+  --zendesk-border: 240 5% 18%;
+  --zendesk-tab-bar-bg: 240 6% 10%;
+  --zendesk-tab-inactive: 240 5% 14%;
+  --zendesk-tab-hover: 240 5% 18%;
 }
 
 // Shared type scale — keep all Zendesk panels on the same headings/labels.
@@ -209,7 +227,7 @@ html.zendesk-layout {
 
 .zendesk-tab-bar {
   @apply gap-0 min-h-[2.25rem];
-  background: hsl(220 14% 93%);
+  background: hsl(var(--zendesk-tab-bar-bg));
   border-bottom: 1px solid hsl(var(--zendesk-border));
 }
 
@@ -217,13 +235,13 @@ html.zendesk-layout {
   @apply relative flex items-center gap-1 px-1.5 py-1 mr-px transition-colors;
   min-width: 9rem;
   max-width: 13rem;
-  background: hsl(220 14% 90%);
+  background: hsl(var(--zendesk-tab-inactive));
   border: 1px solid hsl(var(--zendesk-border));
   border-bottom: none;
   border-radius: 4px 4px 0 0;
 
   &:hover {
-    background: hsl(0 0% 98%);
+    background: hsl(var(--zendesk-tab-hover));
   }
 
   &.active {
@@ -235,7 +253,7 @@ html.zendesk-layout {
 }
 
 .zendesk-tab-close {
-  @apply p-0.5 rounded hover:bg-black/10 text-muted-foreground;
+  @apply p-0.5 rounded hover:bg-foreground/10 text-muted-foreground;
 }
 
 .zendesk-tab-add {
@@ -249,7 +267,7 @@ html.zendesk-layout {
 
   &:hover {
     @apply text-foreground;
-    background: hsl(0 0% 98%);
+    background: hsl(var(--zendesk-tab-hover));
   }
 }
 
@@ -345,7 +363,8 @@ html.zendesk-layout {
 }
 
 .zendesk-tab-priority {
-  @apply absolute -top-1 -right-1 ring-1 ring-white;
+  @apply absolute -top-1 -right-1 ring-1;
+  --tw-ring-color: hsl(var(--zendesk-tab-inactive));
 }
 
 .zendesk-ticket-props {

@@ -1,5 +1,5 @@
 <template>
-  <div class="zendesk-app flex w-full min-w-0 h-screen min-h-0 overflow-hidden bg-[#f8f9f9]">
+  <div class="zendesk-app flex w-full min-w-0 h-screen min-h-0 overflow-hidden bg-[hsl(var(--zendesk-canvas))]">
     <ZendeskNavRail />
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
