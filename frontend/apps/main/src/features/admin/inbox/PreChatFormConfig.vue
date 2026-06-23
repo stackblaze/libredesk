@@ -142,7 +142,7 @@
 <script>
 export const getDefaultPrechatFields = () => [
   { key: 'name', type: 'text', label: 'Full name', placeholder: 'Enter your name', required: true, enabled: true, order: 1, is_default: true },
-  { key: 'email', type: 'email', label: 'Work email', placeholder: 'you@company.com', required: true, enabled: true, order: 2, is_default: true }
+  { key: 'email', type: 'email', label: 'Email', placeholder: 'you@example.com', required: true, enabled: true, order: 2, is_default: true }
 ]
 </script>
 

@@ -90,7 +90,12 @@ const { startTyping, stopTyping } = useTypingIndicator((isTyping) => {
 })
 
 const initChatConversation = async (messageText) => {
-  const resp = await api.initChatConversation({ message: messageText })
+  const payload = { message: messageText }
+  if (chatStore.pendingFormData) {
+    payload.form_data = chatStore.pendingFormData
+  }
+  const resp = await api.initChatConversation(payload)
+  chatStore.pendingFormData = null
   const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } = resp.data.data
   conversation.business_hours_id = business_hours_id
   conversation.working_hours_utc_offset = working_hours_utc_offset

@@ -8,7 +8,6 @@
       v-if="showPreChatForm"
       @submit="handlePreChatFormSubmit"
       :exclude-default-fields="!!userStore.userSessionToken"
-      :is-submitting="isInitializing"
       class="flex-1 min-h-0"
     />
 
@@ -33,8 +32,6 @@ import { ref, computed } from 'vue'
 import { useWidgetStore } from '../store/widget.js'
 import { useUserStore } from '../store/user.js'
 import { useChatStore } from '../store/chat.js'
-import { handleHTTPError } from '@shared-ui/utils/http.js'
-import api, { saveSession } from '@widget/api/index.js'
 import WidgetError from '@widget/components/WidgetError.vue'
 import ChatHeader from '@widget/components/ChatHeader.vue'
 import ChatMessages from '@widget/components/ChatMessages.vue'
@@ -46,7 +43,6 @@ const userStore = useUserStore()
 const chatStore = useChatStore()
 const errorMessage = ref('')
 const preChatFormSubmitted = ref(false)
-const isInitializing = ref(false)
 const config = computed(() => widgetStore.config)
 
 // Determine if pre-chat form should be shown
@@ -91,40 +87,13 @@ const handleError = (message) => {
   }
 }
 
-// Handle pre-chat form submission - init chat with form data (first message typed after)
-const handlePreChatFormSubmit = async ({ formData }) => {
+// Handle pre-chat form submission. The conversation is created lazily once the
+// visitor sends their first message, so here we only stash the collected form
+// data and reveal the message composer.
+const handlePreChatFormSubmit = ({ formData }) => {
   const hasFormData = Object.keys(formData).length > 0
-
-  // Auto-submit with no fields (e.g., returning user) - skip to chat
-  if (!hasFormData) {
-    preChatFormSubmitted.value = true
-    return
-  }
-
-  isInitializing.value = true
+  chatStore.pendingFormData = hasFormData ? formData : null
   errorMessage.value = ''
-
-  try {
-    const payload = { form_data: formData }
-
-    const resp = await api.initChatConversation(payload)
-    const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } = resp.data.data
-    conversation.business_hours_id = business_hours_id
-    conversation.working_hours_utc_offset = working_hours_utc_offset
-
-    if (!userStore.userSessionToken && session_token) {
-      saveSession(session_token, user, userStore, true)
-    }
-
-    chatStore.addConversationToList(conversation)
-    chatStore.setCurrentConversation(conversation)
-    chatStore.replaceMessages(messages)
-
-    preChatFormSubmitted.value = true
-  } catch (error) {
-    errorMessage.value = handleHTTPError(error).message
-  } finally {
-    isInitializing.value = false
-  }
+  preChatFormSubmitted.value = true
 }
 </script>
