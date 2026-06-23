@@ -1,0 +1,221 @@
+name: Pipeline
+
+# Single pipeline for the repo: run the frontend + Go test suites, and only
+# once both pass build & publish the Docker image and roll it out to prod.
+# Replaces the separate CI / Go / Docker workflows so a push to main produces
+# one ordered run instead of several competing for the single self-hosted runner.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  frontend:
+    name: Frontend & E2E
+    runs-on: [self-hosted, kubero]
+    services:
+      db:
+        image: postgres:17-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: libredesk
+          POSTGRES_PASSWORD: libredesk
+          POSTGRES_DB: libredesk
+        options: >-
+          --health-cmd="pg_isready -U libredesk"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      mailhog:
+        image: mailhog/mailhog
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.24.3"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9.15.3
+
+      - name: Install cypress deps
+        run: sudo apt-get update && sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth xvfb
+
+      - name: Build binary and frontend
+        run: make build
+
+      - name: Configure app
+        run: |
+          cp config.sample.toml config.toml
+          sed -i 's/host = "db"/host = "127.0.0.1"/' config.toml
+          sed -i 's/address = "redis:6379"/address = "localhost:6379"/' config.toml
+
+      - name: Run unit tests for frontend
+        run: cd frontend && pnpm test:run
+
+      - name: Install db schema and run tests
+        env:
+          LIBREDESK_SYSTEM_USER_PASSWORD: "StrongPass!123"
+          # E2E runs over plain HTTP, so the Secure session/csrf cookies must be off
+          # or real login + writes would be rejected.
+          LIBREDESK_APP__SERVER__DISABLE_SECURE_COOKIES: "true"
+          CYPRESS_SYSTEM_PASSWORD: "StrongPass!123"
+          CYPRESS_MAILHOG_URL: "http://localhost:8025"
+        run: |
+          ./libredesk --install --idempotent-install --yes --config ./config.toml
+          ./libredesk --upgrade --yes --config ./config.toml
+          ./libredesk --config ./config.toml &
+          sleep 10
+          cd frontend
+          pnpm run test:e2e:ci
+
+  go:
+    name: Go tests
+    runs-on: [self-hosted, kubero]
+    # Run inside the Go toolchain image so the build deps come from the image,
+    # not the host runner. golang:1.25 matches the `go 1.25.0` directive in go.mod.
+    container:
+      image: golang:1.25-bookworm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install build deps (make, node, pnpm)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends make ca-certificates curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y --no-install-recommends nodejs
+          npm install -g pnpm@9.15.3
+
+      - name: Install dependencies
+        run: go get -v ./...
+
+      - name: Run tests
+        run: make test
+
+      # The container runs as root; hand the shared checkout back to the host
+      # runner user (uid 1000) so subsequent host-based jobs can clean it.
+      - name: Restore workspace ownership
+        if: always()
+        run: chown -R 1000:1000 "$GITHUB_WORKSPACE" || true
+
+  docker:
+    name: Build & Publish Docker image
+    # Only build/publish on a real push to main (or manual dispatch); PRs stop
+    # after the test jobs above.
+    needs: [frontend, go]
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, kubero]
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${VERSION}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+            type=raw,value=${{ steps.version.outputs.version }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.ci
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            LIBREDESK_VERSION=${{ steps.version.outputs.version }}
+            VITE_APP_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Published image" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ env.IMAGE }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    # Roll the freshly built image out to prod (kubero-prod / ns libredesk).
+    # Only on main builds; uses a namespace-scoped ServiceAccount (patch the
+    # single libredesk Deployment, nothing else).
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, kubero]
+    steps:
+      - name: Deploy to prod
+        env:
+          IMAGE_REF: ${{ env.IMAGE }}@${{ needs.docker.outputs.digest }}
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_PROD_B64 }}
+        run: |
+          set -euo pipefail
+          KCFG="$RUNNER_TEMP/kubeconfig"
+          trap 'rm -f "$KCFG"' EXIT
+          printf '%s' "$KUBECONFIG_B64" | base64 -d > "$KCFG"
+          export KUBECONFIG="$KCFG"
+          echo "Rolling out image: $IMAGE_REF"
+          kubectl -n libredesk set image deploy/libredesk libredesk="$IMAGE_REF"
+          kubectl -n libredesk rollout status deploy/libredesk --timeout=300s
+          echo "### Deployed to prod" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$IMAGE_REF" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

@@ -337,8 +337,11 @@ const bubbleClasses = computed(() => {
   if (isZendesk.value) {
     return {
       'zendesk-message': true,
+      // Internal notes: amber. Customer (incoming) messages: subtle highlight.
+      // Agent replies: plain white card.
       'bg-private border-border': props.message.private,
-      'bg-background border-border': !props.message.private,
+      'zendesk-message-customer': !props.message.private && !isOutgoing.value,
+      'bg-background border-border': !props.message.private && isOutgoing.value,
       'opacity-50 animate-pulse': isOutgoing.value && props.message.status === 'pending',
       'border-destructive': isOutgoing.value && props.message.status === 'failed',
       relative: true,
