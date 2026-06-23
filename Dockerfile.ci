@@ -7,24 +7,31 @@
 FROM node:20-bookworm AS frontend
 RUN npm install -g pnpm@9.15.3
 WORKDIR /app/frontend
+# Install deps before copying source so lockfile-only changes bust this layer.
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN --mount=type=cache,id=libredesk-pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 COPY frontend/ ./
 ARG VITE_APP_VERSION=dev
 ENV VITE_APP_VERSION=${VITE_APP_VERSION}
-RUN pnpm install --frozen-lockfile \
-    && pnpm build:main \
-    && pnpm build:widget
+RUN pnpm build:main && pnpm build:widget
 
 # ---- Backend build ----
 FROM golang:1.25-bookworm AS backend
 WORKDIR /src
 COPY go.mod go.sum ./
-RUN go mod download
-RUN go install github.com/knadh/stuffbin/...@latest
+RUN --mount=type=cache,id=libredesk-gomod,target=/go/pkg/mod \
+    go mod download
+RUN --mount=type=cache,id=libredesk-gomod,target=/go/pkg/mod \
+    --mount=type=cache,id=libredesk-gobuild,target=/root/.cache/go-build \
+    go install github.com/knadh/stuffbin/...@latest
 COPY . .
 # Bring in the compiled frontend assets.
 COPY --from=frontend /app/frontend/dist ./frontend/dist
 ARG LIBREDESK_VERSION=v0.0.0
-RUN CGO_ENABLED=0 go build -a \
+RUN --mount=type=cache,id=libredesk-gomod,target=/go/pkg/mod \
+    --mount=type=cache,id=libredesk-gobuild,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build \
       -ldflags="-X 'main.buildString=${LIBREDESK_VERSION}' -X 'main.versionString=${LIBREDESK_VERSION}' -X 'github.com/abhinavxd/libredesk/internal/version.Version=${LIBREDESK_VERSION}' -s -w" \
       -o libredesk cmd/*.go
 # Stuff static assets (frontend/dist i18n schema.sql static) into the binary.

@@ -4,3 +4,7 @@ frontend/dist
 libredesk
 *.bin
 .github
+frontend/cypress/videos
+frontend/cypress/screenshots
+coverage
+**/.vite
