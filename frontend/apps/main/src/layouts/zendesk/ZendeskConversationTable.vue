@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full bg-background overflow-hidden">
     <div class="flex items-center justify-between px-4 h-12 border-b shrink-0">
-      <h1 class="text-lg font-normal">{{ listTitle }}</h1>
+      <h1 class="zendesk-title">{{ listTitle }}</h1>
       <div class="flex items-center gap-2">
         <Button
           v-if="hasConversations"

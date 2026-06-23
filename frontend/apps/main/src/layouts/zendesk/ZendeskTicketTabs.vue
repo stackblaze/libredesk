@@ -24,7 +24,7 @@
             <span class="truncate text-xs font-medium">
               {{ tab.subject || t('zendesk.noSubject') }}
             </span>
-            <span v-if="tab.reference_number" class="text-[10px] text-muted-foreground truncate">
+            <span v-if="tab.reference_number" class="text-[11px] text-muted-foreground truncate">
               #{{ tab.reference_number }}
             </span>
           </span>

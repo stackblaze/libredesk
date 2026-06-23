@@ -1,7 +1,7 @@
 <template>
   <aside class="zendesk-views-pane w-56 shrink-0 flex flex-col h-full overflow-hidden">
     <div class="flex items-center justify-between px-3 py-3 border-b shrink-0">
-      <span class="font-semibold text-sm">{{ t('zendesk.views') }}</span>
+      <span class="zendesk-title">{{ t('zendesk.views') }}</span>
       <Button variant="ghost" size="icon" class="size-7" @click="refreshList">
         <RefreshCw class="size-4" :class="{ 'animate-spin': refreshing }" />
       </Button>
@@ -26,7 +26,7 @@
       </button>
 
       <div v-if="userTeams.length" class="mt-2 pt-2 border-t">
-        <p class="px-3 py-1 text-xs font-medium text-muted-foreground uppercase">
+        <p class="zendesk-eyebrow px-3 py-1">
           {{ t('globals.terms.teamInbox', 2) }}
         </p>
         <button
@@ -43,7 +43,7 @@
 
       <div v-if="userViews.length && userStore.can(permissions.VIEW_MANAGE)" class="mt-2 pt-2 border-t">
         <div class="flex items-center justify-between px-3 py-1">
-          <p class="text-xs font-medium text-muted-foreground uppercase">
+          <p class="zendesk-eyebrow">
             {{ t('globals.terms.view', 2) }}
           </p>
           <Button variant="ghost" size="icon" class="size-6" @click="openCreateView">
@@ -63,7 +63,7 @@
       </div>
 
       <div v-if="sharedViews.length" class="mt-2 pt-2 border-t">
-        <p class="px-3 py-1 text-xs font-medium text-muted-foreground uppercase">
+        <p class="zendesk-eyebrow px-3 py-1">
           {{ t('globals.terms.sharedView', 2) }}
         </p>
         <button

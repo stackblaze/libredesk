@@ -2,6 +2,14 @@
 html.zendesk-layout {
   width: 100%;
   min-width: 100%;
+  // Applied on <html> (not just .zendesk-app) so teleported UI — dropdowns,
+  // dialogs, tooltips, command palette — share the same typeface.
+  --zendesk-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--zendesk-font);
+}
+
+html.zendesk-layout body {
+  font-family: var(--zendesk-font);
 }
 
 html.zendesk-layout,
@@ -26,7 +34,20 @@ html.zendesk-layout #app {
   --zendesk-status-open: 0 72% 51%;
   --zendesk-status-waiting: 38 92% 50%;
   --zendesk-status-resolved: 142 64% 38%;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--zendesk-font);
+}
+
+// Shared type scale — keep all Zendesk panels on the same headings/labels.
+.zendesk-title {
+  @apply text-base font-semibold tracking-tight text-foreground;
+}
+
+.zendesk-eyebrow {
+  @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+}
+
+.zendesk-meta {
+  @apply text-xs text-muted-foreground;
 }
 
 .zendesk-nav-rail {
@@ -35,7 +56,7 @@ html.zendesk-layout #app {
 }
 
 .zendesk-nav-item {
-  @apply flex flex-col items-center justify-center gap-1 py-3 px-2 text-[10px] rounded-md mx-1 transition-colors;
+  @apply flex flex-col items-center justify-center gap-1 py-3 px-2 text-[11px] font-medium rounded-md mx-1 transition-colors;
   color: hsl(var(--zendesk-nav-muted));
 
   &:hover {
@@ -70,7 +91,7 @@ html.zendesk-layout #app {
 .zendesk-table {
   th {
     background: hsl(var(--zendesk-table-header));
-    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide px-3 py-2 text-left border-b;
+    @apply text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 text-left border-b;
     border-color: hsl(var(--zendesk-border));
   }
 
@@ -147,7 +168,7 @@ html.zendesk-layout #app {
 }
 
 .zendesk-status-badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white uppercase tracking-wide;
+  @apply inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold text-white uppercase tracking-wider;
 
   // Colored by status category (open | waiting | resolved); custom statuses
   // inherit the color of the category an admin assigns them to.

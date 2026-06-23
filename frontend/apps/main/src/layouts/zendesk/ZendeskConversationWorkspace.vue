@@ -9,12 +9,12 @@
       <ZendeskTicketProperties />
       <div class="flex flex-col flex-1 min-w-0 w-full border-r">
         <div class="px-4 py-2.5 border-b shrink-0 bg-background">
-          <h2 class="text-base font-semibold truncate leading-snug">
+          <h2 class="zendesk-title truncate leading-snug">
             {{ conversationStore.current?.subject || t('zendesk.noSubject') }}
           </h2>
           <p
             v-if="conversationStore.current?.inbox_name"
-            class="text-xs text-muted-foreground mt-0.5"
+            class="zendesk-meta mt-0.5"
           >
             {{ t('zendesk.viaInbox', { inbox: conversationStore.current.inbox_name }) }}
           </p>
