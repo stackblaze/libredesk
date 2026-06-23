@@ -215,6 +215,10 @@ UPDATE users
 SET enabled = $3, updated_at = NOW()
 WHERE id = $1 AND type = $2;
 
+-- name: delete-contact
+DELETE FROM users
+WHERE id = $1 AND type IN ('contact', 'visitor');
+
 -- name: update-contact
 UPDATE users
 SET first_name = COALESCE($2, first_name),

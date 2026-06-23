@@ -92,6 +92,21 @@ func (u *Manager) UpdateContact(id int, user models.User) error {
 	return nil
 }
 
+// DeleteContact permanently deletes a contact or visitor. Related conversations,
+// messages and notes are removed automatically via ON DELETE CASCADE.
+func (u *Manager) DeleteContact(id int) error {
+	res, err := u.q.DeleteContact.Exec(id)
+	if err != nil {
+		u.lo.Error("error deleting contact", "id", id, "error", err)
+		return envelope.NewError(envelope.GeneralError, u.i18n.T("globals.messages.somethingWentWrong"), nil)
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return envelope.NewError(envelope.NotFoundError, u.i18n.T("validation.notFoundUser"), nil)
+	}
+	return nil
+}
+
 // GetAllContacts returns a list of all contacts.
 func (u *Manager) GetContacts(page, pageSize int, order, orderBy string, filtersJSON, location string) ([]models.UserCompact, error) {
 	if pageSize > maxListPageSize {

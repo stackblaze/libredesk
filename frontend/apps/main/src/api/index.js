@@ -212,6 +212,7 @@ const blockContact = (id, data) => http.put(`/api/v1/contacts/${id}/block`, data
     'Content-Type': 'application/json'
   }
 })
+const deleteContact = (id) => http.delete(`/api/v1/contacts/${id}`)
 const getTeam = (id) => http.get(`/api/v1/teams/${id}`)
 const getTeams = () => http.get('/api/v1/teams')
 const updateTeam = (id, data) => http.put(`/api/v1/teams/${id}`, data, {
@@ -662,6 +663,7 @@ export default {
   getContact,
   updateContact,
   blockContact,
+  deleteContact,
   getCustomAttributes,
   createCustomAttribute,
   updateCustomAttribute,

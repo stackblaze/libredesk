@@ -178,6 +178,37 @@ func handleUpdateContact(r *fastglue.Request) error {
 	return r.SendEnvelope(contact)
 }
 
+// handleDeleteContact permanently deletes a contact and all of their associated
+// data (conversations, messages, notes) via database cascade.
+func handleDeleteContact(r *fastglue.Request) error {
+	var (
+		app   = r.Context.(*App)
+		id, _ = strconv.Atoi(r.RequestCtx.UserValue("id").(string))
+		auser = r.RequestCtx.UserValue("user").(amodels.User)
+	)
+	if id <= 0 {
+		return r.SendErrorEnvelope(fasthttp.StatusBadRequest, app.i18n.T("globals.messages.somethingWentWrong"), nil, envelope.InputError)
+	}
+
+	contact, err := app.user.GetContactOrVisitor(id, "")
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+
+	app.lo.Info("deleting contact", "contact_id", id, "actor_id", auser.ID)
+
+	if err := app.user.DeleteContact(id); err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+
+	// Best-effort cleanup of the contact's avatar file.
+	if contact.AvatarURL.Valid && contact.AvatarURL.String != "" {
+		app.media.Delete(filepath.Base(contact.AvatarURL.String))
+	}
+
+	return r.SendEnvelope(true)
+}
+
 // handleGetContactNotes returns all notes for a contact.
 func handleGetContactNotes(r *fastglue.Request) error {
 	var (

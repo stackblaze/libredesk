@@ -82,6 +82,7 @@ type queries struct {
 	GetUserByExternalID           *sqlx.Stmt `query:"get-user-by-external-id"`
 	GetUsersCompact               string     `query:"get-users-compact"`
 	UpdateContact                 *sqlx.Stmt `query:"update-contact"`
+	DeleteContact                 *sqlx.Stmt `query:"delete-contact"`
 	UpdateContactBasicInfo        *sqlx.Stmt `query:"update-contact-basic-info"`
 	UpdateAgent                   *sqlx.Stmt `query:"update-agent"`
 	UpdateCustomAttributes        *sqlx.Stmt `query:"update-custom-attributes"`

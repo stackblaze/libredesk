@@ -47,7 +47,7 @@
               {{ contact.created_at ? format(new Date(contact.created_at), 'PPP') : 'N/A' }}
             </div>
 
-            <div class="w-30 pt-3">
+            <div class="flex items-center gap-2 pt-3">
               <Button
                 :variant="contact.enabled ? 'destructive' : 'outline'"
                 @click="showBlockConfirmation = true"
@@ -56,6 +56,15 @@
                 <ShieldOffIcon v-if="contact.enabled" size="18" />
                 <ShieldCheckIcon v-else size="18" />
                 {{ t(contact.enabled ? 'globals.messages.block' : 'globals.messages.unblock') }}
+              </Button>
+              <Button
+                v-if="userStore.can('contacts:delete')"
+                variant="outline"
+                @click="showDeleteConfirmation = true"
+                size="sm"
+              >
+                <Trash2Icon size="18" />
+                {{ t('contact.deleteContact') }}
               </Button>
             </div>
           </div>
@@ -92,13 +101,30 @@
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog :open="showDeleteConfirmation" @update:open="showDeleteConfirmation = $event">
+        <DialogContent class="sm:max-w-md">
+          <DialogHeader class="gap-y-3">
+            <DialogTitle>{{ t('contact.deleteContact') }}</DialogTitle>
+            <DialogDescription>{{ t('contact.deletionConfirmation') }}</DialogDescription>
+          </DialogHeader>
+          <div class="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" @click="showDeleteConfirmation = false">
+              {{ t('globals.messages.cancel') }}
+            </Button>
+            <Button variant="destructive" :disabled="deleting" @click="confirmDelete">
+              {{ t('globals.messages.delete') }}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </ContactDetail>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { format } from 'date-fns'
 import { useI18n } from 'vue-i18n'
 import { useForm } from 'vee-validate'
@@ -114,7 +140,7 @@ import {
   DialogDescription
 } from '@shared-ui/components/ui/dialog'
 import { useUserStore } from '../../stores/user'
-import { ShieldOffIcon, ShieldCheckIcon, IdCardIcon, CalendarIcon } from 'lucide-vue-next'
+import { ShieldOffIcon, ShieldCheckIcon, IdCardIcon, CalendarIcon, Trash2Icon } from 'lucide-vue-next'
 import ContactDetail from '@/layouts/contact/ContactDetail.vue'
 import api from '../../api'
 import ContactForm from '@/features/contact/ContactForm.vue'
@@ -129,9 +155,12 @@ import { Spinner } from '@shared-ui/components/ui/spinner'
 const { t } = useI18n()
 const emitter = useEmitter()
 const route = useRoute()
+const router = useRouter()
 const formLoading = ref(false)
 const contact = ref(null)
 const showBlockConfirmation = ref(false)
+const showDeleteConfirmation = ref(false)
+const deleting = ref(false)
 const userStore = useUserStore()
 
 const form = useForm({
@@ -167,6 +196,20 @@ const getInitials = computed(() => {
 async function confirmToggleBlock() {
   showBlockConfirmation.value = false
   await toggleBlock()
+}
+
+async function confirmDelete() {
+  deleting.value = true
+  try {
+    await api.deleteContact(contact.value.id)
+    emitToast(t('contact.deletedSuccessfully'))
+    showDeleteConfirmation.value = false
+    router.push({ name: 'contacts' })
+  } catch (err) {
+    showError(err)
+  } finally {
+    deleting.value = false
+  }
 }
 
 async function toggleBlock() {
