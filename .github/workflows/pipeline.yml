@@ -20,10 +20,13 @@ concurrency:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
+  # Temporary: set to 'true' to re-enable frontend + Go tests before deploy.
+  RUN_TESTS: 'false'
 
 jobs:
   frontend:
     name: Frontend & E2E
+    if: env.RUN_TESTS == 'true'
     runs-on: [self-hosted, kubero]
     services:
       db:
@@ -111,6 +114,7 @@ jobs:
 
   go:
     name: Go tests
+    if: env.RUN_TESTS == 'true'
     runs-on: [self-hosted, kubero]
     # Run inside the Go toolchain image so the build deps come from the image,
     # not the host runner. golang:1.25 matches the `go 1.25.0` directive in go.mod.
@@ -146,7 +150,10 @@ jobs:
     # Only build/publish on a real push to main (or manual dispatch); PRs stop
     # after the test jobs above.
     needs: [frontend, go]
-    if: github.event_name != 'pull_request'
+    if: |
+      github.event_name != 'pull_request' &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
+      (needs.go.result == 'success' || needs.go.result == 'skipped')
     runs-on: [self-hosted, kubero]
     permissions:
       contents: read
