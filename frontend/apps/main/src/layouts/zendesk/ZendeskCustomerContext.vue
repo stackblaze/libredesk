@@ -1,5 +1,14 @@
 <template>
-  <aside class="w-72 shrink-0 border-l overflow-y-auto bg-background p-4">
+  <button
+    v-if="collapsed"
+    type="button"
+    class="w-10 shrink-0 border-l bg-background flex items-start justify-center pt-3 hover:bg-muted/50"
+    :title="t('conversation.sidebar.previousConvo')"
+    @click="toggle"
+  >
+    <PanelRightOpen class="size-4 text-muted-foreground" />
+  </button>
+  <aside v-else class="w-72 shrink-0 border-l overflow-y-auto bg-background p-4">
     <ConversationSideBarContact />
     <Accordion type="multiple" collapsible class="mt-4">
       <AccordionItem value="previous">
@@ -13,6 +22,9 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
+import { useStorage } from '@vueuse/core'
+import { PanelRightOpen } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import {
   Accordion,
@@ -20,8 +32,21 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@shared-ui/components/ui/accordion'
+import { useEmitter } from '@main/composables/useEmitter'
+import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'
 import ConversationSideBarContact from '@/features/conversation/sidebar/ConversationSideBarContact.vue'
 import PreviousConversations from '@/features/conversation/sidebar/PreviousConversations.vue'
 
 const { t } = useI18n()
+const emitter = useEmitter()
+
+// Persisted so the pane stays collapsed/expanded across tickets and reloads.
+const collapsed = useStorage('libredesk_zendesk_context_collapsed', false)
+
+const toggle = () => {
+  collapsed.value = !collapsed.value
+}
+
+onMounted(() => emitter.on(EMITTER_EVENTS.CONVERSATION_SIDEBAR_TOGGLE, toggle))
+onUnmounted(() => emitter.off(EMITTER_EVENTS.CONVERSATION_SIDEBAR_TOGGLE, toggle))
 </script>
