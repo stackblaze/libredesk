@@ -169,25 +169,12 @@
               </FormItem>
             </FormField>
           </div>
-
-          <!-- Message textarea (always last) -->
-          <div class="space-y-2">
-            <label class="text-sm font-medium">
-              {{ $t('globals.terms.message') }}
-              <span class="text-destructive">*</span>
-            </label>
-            <Textarea
-              v-model="messageText"
-              :placeholder="$t('globals.terms.typeMessage')"
-              class="w-full min-h-32 max-h-48 resize-none"
-            />
-          </div>
         </form>
       </div>
 
       <!-- Submit button - fixed at bottom -->
       <div class="p-4 border-t">
-        <Button @click="submitForm" class="w-full" :disabled="!requiredFieldsFilled || !meta.valid || !messageText.trim() || props.isSubmitting">
+        <Button @click="submitForm" class="w-full" :disabled="!requiredFieldsFilled || !meta.valid || props.isSubmitting">
           <div
             v-if="props.isSubmitting"
             class="w-4 h-4 border-2 border-background border-t-current rounded-full animate-spin mr-2"
@@ -205,7 +192,6 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Button } from '@shared-ui/components/ui/button'
 import { Input } from '@shared-ui/components/ui/input'
-import { Textarea } from '@shared-ui/components/ui/textarea'
 import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import {
   Select,
@@ -239,7 +225,6 @@ const props = defineProps({
 const emit = defineEmits(['submit'])
 const { t } = useI18n()
 const widgetStore = useWidgetStore()
-const messageText = ref('')
 const formRef = ref(null)
 
 const config = computed(() => widgetStore.config?.prechat_form || {})
@@ -302,7 +287,7 @@ const submitForm = handleSubmit((values) => {
     }
   })
 
-  emit('submit', { formData: filteredValues, message: messageText.value.trim() })
+  emit('submit', { formData: filteredValues })
 })
 
 // Get options for list fields
@@ -336,7 +321,7 @@ watch(
   showForm,
   (newValue) => {
     if (!newValue) {
-      emit('submit', { formData: {}, message: '' })
+      emit('submit', { formData: {} })
     }
   },
   { immediate: true }

@@ -91,10 +91,12 @@ const handleError = (message) => {
   }
 }
 
-// Handle pre-chat form submission - init chat with form data and message
-const handlePreChatFormSubmit = async ({ formData, message }) => {
-  // Auto-submit with no message (e.g., all fields excluded) - just skip to chat
-  if (!message) {
+// Handle pre-chat form submission - init chat with form data (first message typed after)
+const handlePreChatFormSubmit = async ({ formData }) => {
+  const hasFormData = Object.keys(formData).length > 0
+
+  // Auto-submit with no fields (e.g., returning user) - skip to chat
+  if (!hasFormData) {
     preChatFormSubmitted.value = true
     return
   }
@@ -103,13 +105,7 @@ const handlePreChatFormSubmit = async ({ formData, message }) => {
   errorMessage.value = ''
 
   try {
-    const payload = {
-      message: message
-    }
-
-    if (Object.keys(formData).length > 0) {
-      payload.form_data = formData
-    }
+    const payload = { form_data: formData }
 
     const resp = await api.initChatConversation(payload)
     const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } = resp.data.data
