@@ -26,7 +26,8 @@
       <button
         v-else
         type="button"
-        class="zendesk-nav-item w-full !py-2"
+        class="zendesk-nav-item w-full"
+        :title="userStore.getFullName"
       >
         <div class="relative">
           <Avatar class="h-7 w-7 rounded">

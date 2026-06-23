@@ -46,10 +46,11 @@ html.zendesk-layout {
 }
 
 .zendesk-app {
-  --zendesk-nav-bg: 210 29% 16%;
-  --zendesk-nav-fg: 0 0% 100%;
-  --zendesk-nav-muted: 210 15% 70%;
-  --zendesk-nav-active: 200 70% 45%;
+  // Zendesk agent rail: #002f36 bg, #879296 icons
+  --zendesk-nav-bg: 187 100% 11%;
+  --zendesk-nav-fg: 0 0% 98%;
+  --zendesk-nav-muted: 197 8% 56%;
+  --zendesk-nav-active: 197 8% 56%;
   --zendesk-views-bg: 0 0% 100%;
   --zendesk-views-active: 200 80% 95%;
   --zendesk-table-header: 0 0% 96%;
@@ -80,17 +81,39 @@ html.zendesk-layout {
 }
 
 .zendesk-nav-item {
-  @apply flex flex-col items-center justify-center gap-1 py-3 px-2 text-[11px] font-medium rounded-md mx-1 transition-colors;
+  @apply relative flex flex-col items-center justify-center py-3.5 px-0 mx-0 transition-colors;
   color: hsl(var(--zendesk-nav-muted));
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke-width: 1.5;
+  }
 
   &:hover {
     color: hsl(var(--zendesk-nav-fg));
-    background: hsl(0 0% 100% / 0.08);
+    background: transparent;
   }
 
   &.active {
     color: hsl(var(--zendesk-nav-fg));
-    background: hsl(var(--zendesk-nav-active));
+    background: transparent;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 1.125rem;
+      background: hsl(var(--zendesk-nav-fg));
+      border-radius: 0 2px 2px 0;
+    }
   }
 }
 

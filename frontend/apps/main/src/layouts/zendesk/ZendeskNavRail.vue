@@ -1,12 +1,13 @@
 <template>
-  <nav class="zendesk-nav-rail w-14 shrink-0 flex flex-col h-full py-2">
+  <nav class="zendesk-nav-rail w-12 shrink-0 flex flex-col h-full">
     <router-link
       :to="lastInboxPath || { name: 'inboxes' }"
       class="zendesk-nav-item"
       :class="{ active: route.path.startsWith('/inboxes') }"
+      :title="t('globals.terms.inbox', 2)"
     >
-      <Inbox class="size-5" />
-      <span>{{ t('globals.terms.inbox', 2) }}</span>
+      <Inbox class="size-5" aria-hidden="true" />
+      <span class="sr-only">{{ t('globals.terms.inbox', 2) }}</span>
     </router-link>
 
     <router-link
@@ -14,9 +15,10 @@
       :to="{ name: 'contacts' }"
       class="zendesk-nav-item"
       :class="{ active: route.path.startsWith('/contacts') }"
+      :title="t('globals.terms.contact', 2)"
     >
-      <BookUser class="size-5" />
-      <span>{{ t('globals.terms.contact', 2) }}</span>
+      <Users class="size-5" aria-hidden="true" />
+      <span class="sr-only">{{ t('globals.terms.contact', 2) }}</span>
     </router-link>
 
     <router-link
@@ -24,9 +26,10 @@
       :to="{ name: 'reports' }"
       class="zendesk-nav-item"
       :class="{ active: route.path.startsWith('/reports') }"
+      :title="t('globals.terms.report', 2)"
     >
-      <FileLineChart class="size-5" />
-      <span>{{ t('globals.terms.report', 2) }}</span>
+      <BarChart3 class="size-5" aria-hidden="true" />
+      <span class="sr-only">{{ t('globals.terms.report', 2) }}</span>
     </router-link>
 
     <router-link
@@ -34,12 +37,13 @@
       :to="{ name: userStore.can('general_settings:manage') ? 'general' : 'admin' }"
       class="zendesk-nav-item"
       :class="{ active: route.path.startsWith('/admin') }"
+      :title="t('globals.terms.admin')"
     >
-      <Shield class="size-5" />
-      <span>{{ t('globals.terms.admin') }}</span>
+      <Settings class="size-5" aria-hidden="true" />
+      <span class="sr-only">{{ t('globals.terms.admin') }}</span>
     </router-link>
 
-    <div class="mt-auto flex flex-col gap-1 pb-2">
+    <div class="mt-auto flex flex-col pb-2">
       <ZendeskNotificationBell />
       <SidebarNavUser zendesk />
     </div>
@@ -50,7 +54,7 @@
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { Inbox, Shield, FileLineChart, BookUser } from 'lucide-vue-next'
+import { Inbox, Settings, BarChart3, Users } from 'lucide-vue-next'
 import { useUserStore } from '@main/stores/user'
 import ZendeskNotificationBell from './ZendeskNotificationBell.vue'
 import SidebarNavUser from '@main/components/sidebar/SidebarNavUser.vue'

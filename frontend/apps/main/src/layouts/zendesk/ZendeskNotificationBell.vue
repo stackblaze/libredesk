@@ -1,11 +1,11 @@
 <template>
   <Popover v-model:open="isOpen">
     <PopoverTrigger as-child>
-      <button type="button" class="zendesk-nav-item w-full !py-2 relative">
-        <Bell class="size-5" />
+      <button type="button" class="zendesk-nav-item w-full relative" :title="t('globals.terms.notification', 2)">
+        <Bell class="size-5" aria-hidden="true" />
         <span
           v-if="notificationStore.unreadCount > 0"
-          class="absolute top-1 right-2 inline-flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground"
+          class="absolute top-2 right-0.5 inline-flex size-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-medium text-destructive-foreground"
         >
           {{ notificationStore.unreadCount > 99 ? '99' : notificationStore.unreadCount }}
         </span>
