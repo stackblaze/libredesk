@@ -195,6 +195,12 @@ const routes = [
             meta: { titleKey: 'globals.terms.general' }
           },
           {
+            path: 'ai',
+            name: 'ai-settings',
+            component: () => import('@main/views/admin/ai/AISettings.vue'),
+            meta: { titleKey: 'admin.ai.settings' }
+          },
+          {
             path: 'business-hours',
             component: () => import('@main/views/admin/business-hours/BusinessHours.vue'),
             meta: { titleKey: 'globals.terms.businessHour', titleCount: 2 },
@@ -594,6 +600,31 @@ router.beforeEach((to, from, next) => {
     : ''
   document.title = `${pageTitle} - ${siteName}`
   next()
+})
+
+const CHUNK_RELOAD_KEY = 'libredesk-chunk-reload'
+
+const isChunkLoadError = (error) => {
+  const message = error?.message || String(error)
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk .* failed/i.test(message)
+}
+
+router.onError((error, to) => {
+  if (!isChunkLoadError(error)) {
+    throw error
+  }
+
+  const reloaded = sessionStorage.getItem(CHUNK_RELOAD_KEY)
+  if (reloaded === to.fullPath) {
+    throw error
+  }
+
+  sessionStorage.setItem(CHUNK_RELOAD_KEY, to.fullPath)
+  window.location.assign(to.fullPath)
+})
+
+router.isReady().then(() => {
+  sessionStorage.removeItem(CHUNK_RELOAD_KEY)
 })
 
 export default router

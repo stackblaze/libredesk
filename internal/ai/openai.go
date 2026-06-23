@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -14,13 +15,18 @@ import (
 
 type OpenAIClient struct {
 	apikey string
+	model  string
 	lo     *logf.Logger
 	client *http.Client
 }
 
-func NewOpenAIClient(apiKey string, lo *logf.Logger) *OpenAIClient {
+func NewOpenAIClient(apiKey, model string, lo *logf.Logger) *OpenAIClient {
+	if strings.TrimSpace(model) == "" {
+		model = DefaultOpenAIModel
+	}
 	return &OpenAIClient{
 		apikey: apiKey,
+		model:  model,
 		lo:     lo,
 		client: &http.Client{Timeout: 10 * time.Second},
 	}
@@ -32,15 +38,24 @@ func (o *OpenAIClient) SendPrompt(payload PromptPayload) (string, error) {
 		return "", ErrApiKeyNotSet
 	}
 
+	maxTokens := payload.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = 1024
+	}
+	temperature := payload.Temperature
+	if temperature <= 0 {
+		temperature = 0.7
+	}
+
 	apiURL := "https://api.openai.com/v1/chat/completions"
 	requestBody := map[string]interface{}{
-		"model": "gpt-4o-mini",
+		"model": o.model,
 		"messages": []map[string]string{
 			{"role": "system", "content": payload.SystemPrompt},
 			{"role": "user", "content": payload.UserPrompt},
 		},
-		"max_tokens":  1024,
-		"temperature": 0.7,
+		"max_tokens":  maxTokens,
+		"temperature": temperature,
 	}
 
 	bodyBytes, err := json.Marshal(requestBody)

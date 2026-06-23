@@ -701,7 +701,7 @@ CREATE INDEX index_user_notifications_on_conversation_id ON user_notifications(c
 
 INSERT INTO ai_providers
 ("name", provider, config, is_default)
-VALUES('openai', 'openai', '{"api_key": ""}'::jsonb, true);
+VALUES('openai', 'openai', '{"api_key": "", "model": "gpt-4o-mini"}'::jsonb, true);
 
 -- Default AI prompts
 INSERT INTO ai_prompts ("key", "content", title)

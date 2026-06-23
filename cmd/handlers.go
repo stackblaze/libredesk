@@ -241,7 +241,9 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 
 	// AI completions.
 	g.GET("/api/v1/ai/prompts", auth(handleGetAIPrompts))
+	g.GET("/api/v1/ai/provider", perm(handleGetAIProvider, "ai:manage"))
 	g.POST("/api/v1/ai/completion", auth(handleAICompletion))
+	g.POST("/api/v1/ai/draft-reply", auth(handleAIDraftReply))
 	g.PUT("/api/v1/ai/provider", perm(handleUpdateAIProvider, "ai:manage"))
 
 	// Custom attributes.

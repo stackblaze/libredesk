@@ -96,6 +96,12 @@ export const adminNavItems = [
         permission: 'automations:manage',
         isTitleKeyPlural: true,
         icon: 'Workflow'
+      },
+      {
+        titleKey: 'admin.ai.settings',
+        href: '/admin/ai',
+        permission: 'ai:manage',
+        icon: 'Bot'
       }
     ]
   },

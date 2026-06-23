@@ -8,7 +8,7 @@
       class="bg-background p-1 box will-change-transform"
     >
       <div class="flex space-x-1 items-center">
-        <DropdownMenu v-if="aiPrompts.length > 0">
+        <DropdownMenu v-if="aiPrompts.length > 0 || enableDraftReply">
           <DropdownMenuTrigger>
             <Button size="sm" variant="ghost" class="flex items-center justify-center">
               <span class="flex items-center">
@@ -19,6 +19,13 @@
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem
+              v-if="enableDraftReply"
+              @select="emit('draftReplyRequested')"
+            >
+              {{ $t('ai.draftReply') }}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="enableDraftReply && aiPrompts.length > 0" />
             <DropdownMenuItem
               v-for="prompt in aiPrompts"
               :key="prompt.key"
@@ -139,6 +146,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@shared-ui/components/ui/dropdown-menu'
 import { Input } from '@shared-ui/components/ui/input'
@@ -197,10 +205,14 @@ const props = defineProps({
   enableInlineImages: {
     type: Boolean,
     default: false
+  },
+  enableDraftReply: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['send', 'aiPromptSelected', 'mentionsChanged', 'filesDropped'])
+const emit = defineEmits(['send', 'aiPromptSelected', 'draftReplyRequested', 'mentionsChanged', 'filesDropped'])
 
 const emitPrompt = (key) => emit('aiPromptSelected', key)
 

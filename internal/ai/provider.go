@@ -15,6 +15,8 @@ const (
 
 // PromptPayload represents the structured input for an LLM provider.
 type PromptPayload struct {
-	SystemPrompt string `json:"system_prompt"`
-	UserPrompt   string `json:"user_prompt"`
+	SystemPrompt string  `json:"system_prompt"`
+	UserPrompt   string  `json:"user_prompt"`
+	MaxTokens    int     `json:"max_tokens"`
+	Temperature  float64 `json:"temperature"`
 }

@@ -75,6 +75,34 @@
     </DialogContent>
   </Dialog>
 
+  <Dialog :open="showDraftReplyDialog" @update:open="showDraftReplyDialog = $event">
+    <DialogContent class="sm:max-w-lg">
+      <DialogHeader class="space-y-2">
+        <DialogTitle>{{ $t('ai.draftReplyTitle') }}</DialogTitle>
+        <DialogDescription>
+          {{ $t('ai.draftReplyDescription') }}
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-2">
+        <label class="text-sm font-medium">{{ $t('ai.draftReplyInstructions') }}</label>
+        <Textarea
+          v-model="draftReplyInstructions"
+          rows="4"
+          :placeholder="$t('ai.draftReplyInstructionsPlaceholder')"
+          :disabled="isDraftReplyGenerating"
+        />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showDraftReplyDialog = false" :disabled="isDraftReplyGenerating">
+          {{ $t('globals.messages.cancel') }}
+        </Button>
+        <Button @click="submitDraftReply" :is-loading="isDraftReplyGenerating" :disabled="isDraftReplyGenerating">
+          {{ $t('ai.draftReplyGenerate') }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
   <div class="text-foreground bg-background" :class="{ 'zendesk-reply-root': isZendeskLayout }">
     <!-- Fullscreen editor -->
     <Dialog :open="isEditorFullscreen" @update:open="isEditorFullscreen = false">
@@ -90,7 +118,7 @@
           :aiPrompts="aiPrompts"
           :showSendButton="showSendButton"
           :isSending="isSending"
-          :isDraftLoading="isDraftLoading"
+          :isDraftLoading="isDraftLoading || isDraftReplyGenerating"
           :uploadingFiles="uploadingFiles"
           :uploadedFiles="mediaFiles"
           v-model:htmlContent="htmlContent"
@@ -109,6 +137,7 @@
           @fileDelete="handleFileDelete"
           @filesDropped="uploadFiles"
           @aiPromptSelected="handleAiPromptSelected"
+          @draftReplyRequested="openDraftReplyDialog"
           class="h-full flex-grow"
         />
       </DialogContent>
@@ -129,7 +158,7 @@
         :aiPrompts="aiPrompts"
         :showSendButton="showSendButton"
         :isSending="isSending"
-        :isDraftLoading="isDraftLoading"
+        :isDraftLoading="isDraftLoading || isDraftReplyGenerating"
         :uploadingFiles="uploadingFiles"
         :uploadedFiles="mediaFiles"
         v-model:htmlContent="htmlContent"
@@ -148,6 +177,7 @@
         @fileDelete="handleFileDelete"
         @filesDropped="uploadFiles"
         @aiPromptSelected="handleAiPromptSelected"
+        @draftReplyRequested="openDraftReplyDialog"
       />
     </div>
   </div>
@@ -187,6 +217,7 @@ import {
   DialogTitle
 } from '@shared-ui/components/ui/dialog'
 import { Input } from '@shared-ui/components/ui/input'
+import { Textarea } from '@shared-ui/components/ui/textarea'
 import { useEmitter } from '@main/composables/useEmitter'
 import { useFileUpload } from '@main/composables/useFileUpload'
 import { hasInlineImage, hasPendingInlineUpload } from '@main/composables/useInlineImageUpload'
@@ -248,6 +279,9 @@ const {
 // Rest of existing state
 const openAIKeyPrompt = ref(false)
 const isOpenAIKeyUpdating = ref(false)
+const showDraftReplyDialog = ref(false)
+const draftReplyInstructions = ref('')
+const isDraftReplyGenerating = ref(false)
 const isEditorFullscreen = ref(false)
 const isSending = ref(false)
 const messageType = useStorage('replyBoxMessageType', 'reply')
@@ -288,6 +322,45 @@ const handleAiPromptSelected = async (key) => {
       variant: 'destructive',
       description: handleHTTPError(error).message
     })
+  }
+}
+
+const openDraftReplyDialog = () => {
+  draftReplyInstructions.value = ''
+  showDraftReplyDialog.value = true
+}
+
+const submitDraftReply = async () => {
+  const instructions = draftReplyInstructions.value.trim()
+  if (!instructions) {
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: 'destructive',
+      description: t('ai.draftReplyInstructionsRequired')
+    })
+    return
+  }
+
+  const convUUID = conversationStore.current?.uuid
+  if (!convUUID) return
+
+  try {
+    isDraftReplyGenerating.value = true
+    const resp = await api.aiDraftReply({
+      conversation_uuid: convUUID,
+      instructions
+    })
+    htmlContent.value = resp.data.data.replace(/\n/g, '<br>')
+    showDraftReplyDialog.value = false
+  } catch (error) {
+    if (error.response?.status === 400 && userStore.can('ai:manage')) {
+      openAIKeyPrompt.value = true
+    }
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: 'destructive',
+      description: handleHTTPError(error).message
+    })
+  } finally {
+    isDraftReplyGenerating.value = false
   }
 }
 

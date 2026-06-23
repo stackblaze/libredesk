@@ -449,7 +449,13 @@ const updateSharedView = (id, data) =>
 const deleteSharedView = (id) => http.delete(`/api/v1/shared-views/${id}`)
 
 const getAiPrompts = () => http.get('/api/v1/ai/prompts')
+const getAIProvider = () => http.get('/api/v1/ai/provider')
 const aiCompletion = (data) => http.post('/api/v1/ai/completion', data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+const aiDraftReply = (data) => http.post('/api/v1/ai/draft-reply', data, {
   headers: {
     'Content-Type': 'application/json'
   }
@@ -654,7 +660,9 @@ export default {
   updateSharedView,
   deleteSharedView,
   getAiPrompts,
+  getAIProvider,
   aiCompletion,
+  aiDraftReply,
   searchConversations,
   searchMessages,
   searchContacts,

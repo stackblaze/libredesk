@@ -20,3 +20,11 @@ type Prompt struct {
 	Key       string    `db:"key" json:"key"`
 	Content   string    `db:"content" json:"content,omitempty"`
 }
+
+// ProviderSettings is the public AI provider configuration exposed to admins.
+type ProviderSettings struct {
+	Provider   string `json:"provider"`
+	Model      string `json:"model"`
+	APIKeySet  bool   `json:"api_key_set"`
+	APIKeyHint string `json:"api_key_hint"`
+}

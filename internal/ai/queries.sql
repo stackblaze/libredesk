@@ -15,3 +15,6 @@ SET config = jsonb_set(
     to_jsonb($1::text)
 ) 
 WHERE provider = 'openai';
+
+-- name: update-default-provider-config
+UPDATE ai_providers SET config = $1::jsonb, updated_at = NOW() WHERE is_default IS TRUE;

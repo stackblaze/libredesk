@@ -97,8 +97,10 @@
         :disabled="isDraftLoading"
         :enableMentions="messageType === 'private_note'"
         :enableInlineImages="conversationStore.current.inbox_channel === 'email'"
+        :enableDraftReply="messageType === 'reply' && aiPrompts.length > 0"
         :getSuggestions="getSuggestions"
         @aiPromptSelected="handleAiPromptSelected"
+        @draftReplyRequested="handleDraftReplyRequested"
         @send="handleSend"
         @mentionsChanged="handleMentionsChanged"
         @filesDropped="handleFilesDropped"
@@ -252,7 +254,8 @@ const emit = defineEmits([
   'inlineImageUpload',
   'fileDelete',
   'filesDropped',
-  'aiPromptSelected'
+  'aiPromptSelected',
+  'draftReplyRequested'
 ])
 
 const conversationStore = useConversationStore()
@@ -359,6 +362,10 @@ const handleEmojiSelect = (emoji) => {
 
 const handleAiPromptSelected = (key) => {
   emit('aiPromptSelected', key)
+}
+
+const handleDraftReplyRequested = () => {
+  emit('draftReplyRequested')
 }
 
 // Watch and update macro view based on message type this filters our macros.
