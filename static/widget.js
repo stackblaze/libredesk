@@ -201,10 +201,10 @@
                 this.defaultIcon = document.createElement('img');
                 this.defaultIcon.src = launcher.logo_url;
                 this.defaultIcon.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    object-fit: cover;
+                    width: 72%;
+                    height: 72%;
+                    border-radius: 0;
+                    object-fit: contain;
                 `;
                 this.iconContainer.appendChild(this.defaultIcon);
             }

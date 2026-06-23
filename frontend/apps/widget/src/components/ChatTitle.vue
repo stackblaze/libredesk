@@ -1,11 +1,19 @@
 <template>
-  <div class="flex items-center justify-center gap-3">
-    <Avatar class="size-10">
-      <AvatarImage :src="chatTitle.avatarUrl" />
+  <div class="flex items-center justify-center gap-2 min-w-0">
+    <Avatar
+      :class="chatTitle.hasAssignee ? 'size-8 shrink-0' : 'size-7 shrink-0 rounded-md bg-muted/20'"
+    >
+      <AvatarImage
+        :src="chatTitle.avatarUrl"
+        :class="chatTitle.hasAssignee ? 'object-cover' : 'object-contain p-1'"
+      />
       <AvatarFallback>{{ chatTitle.avatarFallback }}</AvatarFallback>
     </Avatar>
-    <div class="flex flex-col">
-      <h3 class="text-base font-bold text-foreground">
+    <div class="flex flex-col min-w-0">
+      <h3
+        class="font-semibold text-foreground truncate"
+        :class="chatTitle.hasAssignee ? 'text-base font-bold' : 'text-sm'"
+      >
         {{ chatTitle.name }}
       </h3>
       <p class="text-xs text-muted-foreground">
@@ -117,7 +125,7 @@ const chatTitle = computed(() => {
   // Default brand values
   return {
     name: config.brand_name,
-    avatarUrl: config.launcher?.logo_url || '',
+    avatarUrl: config.logo_url || config.launcher?.logo_url || '',
     avatarFallback: config.brand_name.charAt(0).toUpperCase(),
     availability_status: null,
     hasAssignee: false
