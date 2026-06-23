@@ -20,13 +20,12 @@ concurrency:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
-  # Temporary: set to 'true' to re-enable frontend + Go tests before deploy.
-  RUN_TESTS: 'false'
 
 jobs:
   frontend:
     name: Frontend & E2E
-    if: env.RUN_TESTS == 'true'
+    # TEMP: set to `true` to re-enable frontend + E2E tests before deploy.
+    if: false
     runs-on: [self-hosted, kubero]
     services:
       db:
@@ -114,7 +113,8 @@ jobs:
 
   go:
     name: Go tests
-    if: env.RUN_TESTS == 'true'
+    # TEMP: set to `true` to re-enable Go tests before deploy.
+    if: false
     runs-on: [self-hosted, kubero]
     # Run inside the Go toolchain image so the build deps come from the image,
     # not the host runner. golang:1.25 matches the `go 1.25.0` directive in go.mod.
