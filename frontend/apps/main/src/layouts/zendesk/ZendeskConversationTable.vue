@@ -3,6 +3,15 @@
     <div class="flex items-center justify-between px-4 h-12 border-b shrink-0">
       <h1 class="text-lg font-normal">{{ listTitle }}</h1>
       <div class="flex items-center gap-2">
+        <Button
+          v-if="hasConversations"
+          variant="default"
+          size="sm"
+          @click="startPlay"
+        >
+          <Play class="size-4 mr-1" />
+          {{ t('zendesk.play') }}
+        </Button>
         <DropdownMenu v-if="!route.params.viewID">
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
@@ -40,6 +49,7 @@
             <th class="w-28">{{ t('globals.terms.status') }}</th>
             <th>{{ t('globals.terms.subject') }}</th>
             <th class="w-44">{{ t('zendesk.requester') }}</th>
+            <th class="w-32">{{ t('zendesk.slaColumn') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -79,7 +89,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { MessageCircleQuestion, ChevronDown, Loader2 } from 'lucide-vue-next'
+import { MessageCircleQuestion, ChevronDown, Loader2, Play } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import {
   DropdownMenu,
@@ -93,11 +103,13 @@ import EmptyList from '@/features/conversation/list/ConversationEmptyList.vue'
 import ConversationBulkActionToolbar from '@/features/conversation/list/ConversationBulkActionToolbar.vue'
 import ConversationListItemSkeleton from '@/features/conversation/list/ConversationListItemSkeleton.vue'
 import ZendeskConversationTableRow from './ZendeskConversationTableRow.vue'
+import { useZendeskPlayMode } from '@main/composables/useZendeskPlayMode'
 
 const conversationStore = useConversationStore()
 const { canBulkAct } = useBulkActionPermissions()
 const route = useRoute()
 const { t } = useI18n()
+const { startPlay } = useZendeskPlayMode()
 
 const hasSelection = computed(() => conversationStore.selectedCount > 0)
 const hasConversations = computed(() => conversationStore.conversationsList.length > 0)

@@ -18,12 +18,28 @@
       </span>
     </td>
     <td>
-      <span class="text-[#1f73b7] hover:underline">
-        {{ conversation.subject || t('zendesk.noSubject') }}
-      </span>
+      <div class="flex items-center gap-2 min-w-0">
+        <span
+          v-if="conversation.priority"
+          class="zendesk-priority-dot shrink-0"
+          :class="priorityClass"
+          :title="conversation.priority"
+        />
+        <component
+          :is="channelIcon"
+          class="size-3.5 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <span class="text-[#1f73b7] hover:underline truncate">
+          {{ conversation.subject || t('zendesk.noSubject') }}
+        </span>
+      </div>
     </td>
     <td class="text-muted-foreground">
       {{ contactFullName }}
+    </td>
+    <td>
+      <ZendeskSlaIndicator :conversation="conversation" />
     </td>
   </tr>
 </template>
@@ -32,10 +48,13 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Mail, MessageSquare } from 'lucide-vue-next'
 import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import { useConversationStore } from '@main/stores/conversation'
 import { useBulkActionPermissions } from '@/composables/useBulkActionPermissions'
 import { useStatusCategory } from '@main/composables/useStatusCategory'
+import { priorityDotClass } from '@main/composables/useConversationPriority'
+import ZendeskSlaIndicator from './ZendeskSlaIndicator.vue'
 
 const props = defineProps({
   conversation: { type: Object, required: true },
@@ -51,6 +70,10 @@ const { canBulkAct } = useBulkActionPermissions()
 const { categoryClass } = useStatusCategory()
 
 const statusClass = computed(() => categoryClass(props.conversation.status))
+const priorityClass = computed(() => priorityDotClass(props.conversation.priority))
+const channelIcon = computed(() =>
+  props.conversation.inbox_channel === 'livechat' ? MessageSquare : Mail
+)
 
 const conversationRoute = computed(() => {
   const baseRoute = route.params.teamID

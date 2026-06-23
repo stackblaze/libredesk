@@ -8,7 +8,18 @@
         :class="{ active: tab.uuid === activeUuid }"
       >
         <button type="button" class="flex items-center gap-2 min-w-0 flex-1 text-left" @click="selectTab(tab)">
-          <Ticket class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span class="relative shrink-0">
+            <component
+              :is="tab.inbox_channel === 'livechat' ? MessageSquare : Mail"
+              class="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span
+              v-if="tab.priority"
+              class="zendesk-priority-dot zendesk-tab-priority"
+              :class="priorityDotClass(tab.priority)"
+            />
+          </span>
           <span class="flex flex-col min-w-0 flex-1 leading-tight">
             <span class="truncate text-xs font-medium">
               {{ tab.subject || t('zendesk.noSubject') }}
@@ -36,9 +47,10 @@
 </template>
 
 <script setup>
-import { Ticket, X, Plus } from 'lucide-vue-next'
+import { Mail, MessageSquare, X, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useZendeskTabs } from '@main/composables/useZendeskTabs'
+import { priorityDotClass } from '@main/composables/useConversationPriority'
 
 const { t } = useI18n()
 const { tabs, activeUuid, selectTab, closeTab, addTab } = useZendeskTabs()

@@ -53,6 +53,7 @@ import Command from '@/features/command/CommandBox.vue'
 import CreateConversation from '@/features/conversation/CreateConversation.vue'
 import ZendeskNavRail from './ZendeskNavRail.vue'
 import { useI18n } from 'vue-i18n'
+import { useZendeskShortcuts } from '@main/composables/useZendeskShortcuts'
 import api from '@main/api'
 
 const route = useRoute()
@@ -89,6 +90,7 @@ const isInboxRoute = computed(() => route.path.startsWith('/inboxes'))
 
 initWS()
 useIdleDetection()
+useZendeskShortcuts()
 
 const unlockAudio = () => {
   initAudioContext()

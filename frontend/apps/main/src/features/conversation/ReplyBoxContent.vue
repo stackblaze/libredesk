@@ -129,6 +129,7 @@
       :handleFileUpload="handleFileUpload"
       :isSending="isSending"
       :enableSend="enableSend"
+      :showSendButton="showSendButton"
       :handleSend="handleSend"
       :handleSendAndSetStatus="handleSendAndSetStatus"
       @emojiSelect="handleEmojiSelect"
@@ -234,6 +235,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false
+  },
+  showSendButton: {
+    type: Boolean,
+    default: true
   }
 })
 

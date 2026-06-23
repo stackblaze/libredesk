@@ -32,6 +32,9 @@ export function useZendeskTabs () {
       uuid,
       subject: current?.subject || listItem?.subject || '',
       reference_number: current?.reference_number || listItem?.reference_number || '',
+      inbox_channel: current?.inbox_channel || listItem?.inbox_channel || '',
+      priority: current?.priority || listItem?.priority || '',
+      status: current?.status || listItem?.status || '',
       routeName: route.name,
       routeParams: { ...route.params }
     }
@@ -58,7 +61,10 @@ export function useZendeskTabs () {
       route.name,
       route.params.uuid,
       conversationStore.current?.subject,
-      conversationStore.current?.reference_number
+      conversationStore.current?.reference_number,
+      conversationStore.current?.status,
+      conversationStore.current?.priority,
+      conversationStore.current?.inbox_channel
     ],
     syncActiveTab,
     { immediate: true }

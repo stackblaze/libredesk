@@ -26,6 +26,8 @@
       </div>
       <ZendeskCustomerContext />
     </div>
+
+    <ZendeskSubmitBar v-if="showContent" />
   </div>
 </template>
 
@@ -38,6 +40,7 @@ import MessageList from '@/features/conversation/message/MessageList.vue'
 import ReplyBox from '@/features/conversation/ReplyBox.vue'
 import ZendeskTicketProperties from './ZendeskTicketProperties.vue'
 import ZendeskCustomerContext from './ZendeskCustomerContext.vue'
+import ZendeskSubmitBar from './ZendeskSubmitBar.vue'
 
 const props = defineProps({
   uuid: String

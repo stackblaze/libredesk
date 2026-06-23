@@ -168,6 +168,39 @@ html.zendesk-layout #app {
   }
 }
 
+.zendesk-submit-bar {
+  @apply h-14 border-t bg-background;
+  border-color: hsl(var(--zendesk-border));
+}
+
+.zendesk-priority-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+
+  &.priority-low {
+    background: hsl(142 64% 38%);
+  }
+
+  &.priority-medium {
+    background: hsl(38 92% 50%);
+  }
+
+  &.priority-high {
+    background: hsl(0 72% 51%);
+  }
+
+  &.priority-urgent {
+    background: hsl(330 81% 46%);
+  }
+
+  &.priority-none {
+    background: hsl(var(--zendesk-border));
+  }
+}
+
+.zendesk-tab-priority {
+  @apply absolute -top-1 -right-1 ring-1 ring-white;
+}
+
 .zendesk-ticket-props {
   @apply border-r bg-background overflow-y-auto;
   border-color: hsl(var(--zendesk-border));

@@ -7,5 +7,7 @@ export const EMITTER_EVENTS = {
     SET_NESTED_COMMAND: 'set-nested-command',
     CONVERSATION_SIDEBAR_TOGGLE: 'conversation-sidebar-toggle',
     SCROLL_TO_MESSAGE: 'scroll-to-message',
-    OPEN_VIEW_FORM: 'open-view-form'
+    OPEN_VIEW_FORM: 'open-view-form',
+    CONVERSATION_SUBMIT_AS: 'conversation-submit-as',
+    CONVERSATION_SUBMITTED: 'conversation-submitted'
 }

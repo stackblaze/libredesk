@@ -19,6 +19,12 @@
           {{ t('zendesk.ticketNumber', { number: ticketNumber }) }}
         </span>
       </span>
+      <span
+        v-if="hasSla"
+        class="zendesk-breadcrumb-segment shrink-0"
+      >
+        <ZendeskSlaIndicator :conversation="conversationStore.current" />
+      </span>
     </nav>
     <div class="flex items-center px-3 shrink-0 border-l" style="border-color: hsl(var(--zendesk-border))">
       <Button variant="ghost" size="sm" class="h-7 text-xs" @click="emit('next')" :disabled="!hasNext">
@@ -36,6 +42,8 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@shared-ui/components/ui/button'
 import { useInboxViewContext } from '@main/composables/useInboxViewContext'
 import { useStatusCategory } from '@main/composables/useStatusCategory'
+import { useConversationStore } from '@main/stores/conversation'
+import ZendeskSlaIndicator from './ZendeskSlaIndicator.vue'
 
 const props = defineProps({
   requesterName: { type: String, default: '' },
@@ -49,6 +57,12 @@ const emit = defineEmits(['next'])
 const { t } = useI18n()
 const { viewLabel, listRoute } = useInboxViewContext()
 const { categoryClass } = useStatusCategory()
+const conversationStore = useConversationStore()
 
 const statusClass = computed(() => categoryClass(props.status))
+
+const hasSla = computed(() => {
+  const c = conversationStore.current
+  return !!(c?.first_response_deadline_at || c?.resolution_deadline_at || c?.next_response_deadline_at)
+})
 </script>

@@ -88,6 +88,7 @@
           v-if="isEditorFullscreen"
           :isFullscreen="true"
           :aiPrompts="aiPrompts"
+          :showSendButton="showSendButton"
           :isSending="isSending"
           :isDraftLoading="isDraftLoading"
           :uploadingFiles="uploadingFiles"
@@ -123,6 +124,7 @@
         ref="replyBoxContentRef"
         :isFullscreen="false"
         :aiPrompts="aiPrompts"
+        :showSendButton="showSendButton"
         :isSending="isSending"
         :isDraftLoading="isDraftLoading"
         :uploadingFiles="uploadingFiles"
@@ -149,8 +151,9 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, toRaw } from 'vue'
+import { ref, watch, computed, toRaw, onMounted, onUnmounted } from 'vue'
 import { useStorage } from '@vueuse/core'
+import { useUiLayout, UI_LAYOUT_ZENDESK } from '@main/composables/useUiLayout'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'
 import { MACRO_CONTEXT } from '@main/constants/conversation'
@@ -208,6 +211,11 @@ const conversationStore = useConversationStore()
 const inboxStore = useInboxStore()
 const emitter = useEmitter()
 const userStore = useUserStore()
+const { layout } = useUiLayout()
+
+// In Zendesk mode the composer's inline Send is hidden; the bottom submit bar
+// is the single submit control (avoids the duplicate-submit confusion).
+const showSendButton = computed(() => layout.value !== UI_LAYOUT_ZENDESK)
 
 // Setup file upload composable
 const {
@@ -465,11 +473,20 @@ const processSend = async (skipContactEmailCheck = false, skipMissingTagsCheck =
     emailErrors.value = []
     mentions.value = []
     if (statusToSet) conversationStore.updateStatus(statusToSet)
+    emitter.emit(EMITTER_EVENTS.CONVERSATION_SUBMITTED, {
+      uuid: convUUID,
+      status: statusToSet || null
+    })
   }
   isSending.value = false
 }
 
 const processSendAndSetStatus = (status) => processSend(false, false, status)
+
+// Zendesk submit bar drives the composer via the emitter.
+const handleExternalSubmit = (status) => processSendAndSetStatus(status)
+onMounted(() => emitter.on(EMITTER_EVENTS.CONVERSATION_SUBMIT_AS, handleExternalSubmit))
+onUnmounted(() => emitter.off(EMITTER_EVENTS.CONVERSATION_SUBMIT_AS, handleExternalSubmit))
 
 /**
  * Watches for changes in the conversation's macro id and update message content.
