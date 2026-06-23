@@ -44,7 +44,7 @@
               v-if="conversationStore.current"
               :model-value="conversationStore.current.tags || []"
               @update:modelValue="onTagsChange"
-              :items="tags.map((tag) => ({ label: tag, value: tag }))"
+              :items="tagItems"
               :placeholder="t('placeholders.selectTags')"
             />
           </div>
@@ -158,29 +158,29 @@ const usersStore = useUsersStore()
 const teamsStore = useTeamStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
-const tags = ref([])
 const accordionState = useStorage('conversation-sidebar-accordion', [])
 const { t } = useI18n()
 customAttributeStore.fetchCustomAttributes()
 
 onMounted(async () => {
-  await fetchTags()
+  await tagStore.fetchTags()
 })
 
-const onTagsChange = (newTags) => {
+const tagItems = computed(() =>
+  tagStore.tagNames.map((tag) => ({ label: tag, value: tag }))
+)
+
+const onTagsChange = async (newTags) => {
   const conv = conversationStore.current
   if (!conv) return
   const current = conv.tags || []
   if (newTags.length === current.length && newTags.every((t) => current.includes(t))) return
-  conversationStore.updateConversationTags(conv.uuid, TAG_ACTION.SET, newTags)
+  await conversationStore.updateConversationTags(conv.uuid, TAG_ACTION.SET, newTags)
+  tagStore.invalidateTags()
+  await tagStore.fetchTags({ force: true })
 }
 
 const priorityOptions = computed(() => conversationStore.priorityOptions)
-
-const fetchTags = async () => {
-  await tagStore.fetchTags()
-  tags.value = tagStore.tags.map((item) => item.name)
-}
 
 const handleAssignedUserChange = (id) => {
   conversationStore.updateAssignee('user', {

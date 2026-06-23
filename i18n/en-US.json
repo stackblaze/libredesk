@@ -1104,6 +1104,8 @@
   "status.new": "New status",
   "tag.edit": "Edit tag",
   "tag.new": "New tag",
+  "tag.createNamed": "Create tag \"{name}\"",
+  "tag.typeToCreate": "Type a tag name and press Enter",
   "team.edit": "Edit team",
   "team.new": "New team",
   "template.cannotDeleteBuiltInTemplate": "Cannot delete built-in template",

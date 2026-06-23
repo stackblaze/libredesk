@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { SelectTag } from '@shared-ui/components/ui/select'
 import SelectComboBox from '@main/components/combobox/SelectCombobox.vue'
@@ -90,14 +90,14 @@ const conversationStore = useConversationStore()
 const usersStore = useUsersStore()
 const teamsStore = useTeamStore()
 const tagStore = useTagStore()
-const tags = ref([])
 
 onMounted(async () => {
   await tagStore.fetchTags()
-  tags.value = tagStore.tags.map((item) => item.name)
 })
 
-const tagItems = computed(() => tags.value.map((tag) => ({ label: tag, value: tag })))
+const tagItems = computed(() =>
+  tagStore.tagNames.map((tag) => ({ label: tag, value: tag }))
+)
 const priorityOptions = computed(() => conversationStore.priorityOptions)
 const statusOptions = computed(() =>
   conversationStore.statusOptions.map((s) => ({ value: s.label, label: s.label }))
@@ -138,9 +138,11 @@ const selectStatus = (status) => {
   conversationStore.updateStatus(status.value)
 }
 
-const onTagsChange = (newTags) => {
+const onTagsChange = async (newTags) => {
   const conv = conversationStore.current
   if (!conv) return
-  conversationStore.updateConversationTags(conv.uuid, TAG_ACTION.SET, newTags)
+  await conversationStore.updateConversationTags(conv.uuid, TAG_ACTION.SET, newTags)
+  tagStore.invalidateTags()
+  await tagStore.fetchTags({ force: true })
 }
 </script>

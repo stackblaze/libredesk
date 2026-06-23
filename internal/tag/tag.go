@@ -3,6 +3,7 @@ package tag
 
 import (
 	"embed"
+	"strings"
 
 	"github.com/abhinavxd/libredesk/internal/dbutil"
 	"github.com/abhinavxd/libredesk/internal/envelope"
@@ -74,6 +75,23 @@ func (t *Manager) Create(name string) (models.Tag, error) {
 		return tag, envelope.NewError(envelope.GeneralError, t.i18n.T("globals.messages.somethingWentWrong"), nil)
 	}
 	return tag, nil
+}
+
+// EnsureExist creates tags that do not already exist (idempotent).
+func (t *Manager) EnsureExist(names []string) error {
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if _, err := t.Create(name); err != nil {
+			if e, ok := err.(envelope.Error); ok && e.ErrorType == envelope.ConflictError {
+				continue
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 // Delete deletes a tag by ID.

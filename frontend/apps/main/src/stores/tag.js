@@ -14,8 +14,8 @@ export const useTagStore = defineStore('tags', () => {
         value: String(tag.id),
     })))
 
-    const fetchTags = async () => {
-        if (tags.value.length) return
+    const fetchTags = async ({ force = false } = {}) => {
+        if (!force && tags.value.length > 0) return
         try {
             const response = await api.getTags()
             tags.value = response?.data?.data || []
@@ -27,10 +27,15 @@ export const useTagStore = defineStore('tags', () => {
         }
     }
 
+    const invalidateTags = () => {
+        tags.value = []
+    }
+
     return {
         tags,
         tagOptions,
         tagNames,
         fetchTags,
+        invalidateTags,
     }
 })

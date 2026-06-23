@@ -660,6 +660,12 @@ func handleUpdateConversationtags(r *fastglue.Request) error {
 		return sendErrorEnvelope(r, err)
 	}
 
+	if len(tagNames) > 0 {
+		if err := app.tag.EnsureExist(tagNames); err != nil {
+			return sendErrorEnvelope(r, err)
+		}
+	}
+
 	if err := app.conversation.SetConversationTags(uuid, action, tagNames, user); err != nil {
 		return sendErrorEnvelope(r, err)
 	}
