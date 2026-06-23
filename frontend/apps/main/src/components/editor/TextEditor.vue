@@ -47,6 +47,14 @@
         <Button
           size="sm"
           variant="ghost"
+          @click.prevent="editor?.chain().focus().toggleUnderline().run()"
+          :class="{ 'bg-secondary': editor?.isActive('underline') }"
+        >
+          <UnderlineIcon size="14" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
           @click.prevent="editor?.chain().focus().toggleBulletList().run()"
           :class="{ 'bg-secondary': editor?.isActive('bulletList') }"
         >
@@ -114,12 +122,13 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, reactive, watch, onUnmounted } from 'vue'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/vue-3'
 import {
   ChevronDown,
   Bold,
   Italic,
+  Underline as UnderlineIcon,
   Bot,
   List,
   ListOrdered,
@@ -145,6 +154,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import ResizableImage from './extensions/ResizableImage'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
 import Mention from '@tiptap/extension-mention'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
@@ -285,6 +295,7 @@ const buildExtensions = () => {
     }),
     Placeholder.configure({ placeholder: () => props.placeholder }),
     Link,
+    Underline,
     CustomTable.configure({ resizable: false }),
     TableRow,
     CustomTableCell,
@@ -363,12 +374,48 @@ const editor = useEditor({
     if (props.enableMentions) {
       emit('mentionsChanged', extractMentions())
     }
+
+    syncFormatState()
   },
+  onSelectionUpdate: () => syncFormatState(),
   onBlur: () => {
     // Stop typing when editor loses focus
     stopTyping()
   }
 })
+
+// Reactive snapshot of which marks/nodes are active, so a persistent toolbar
+// (e.g. the Zendesk reply bar) can highlight buttons without polling the editor.
+const formatState = reactive({
+  bold: false,
+  italic: false,
+  underline: false,
+  bulletList: false,
+  orderedList: false,
+  link: false
+})
+
+const syncFormatState = () => {
+  const e = editor.value
+  if (!e) return
+  formatState.bold = e.isActive('bold')
+  formatState.italic = e.isActive('italic')
+  formatState.underline = e.isActive('underline')
+  formatState.bulletList = e.isActive('bulletList')
+  formatState.orderedList = e.isActive('orderedList')
+  formatState.link = e.isActive('link')
+}
+
+// Imperative formatting API exposed to parent toolbars.
+const format = {
+  bold: () => editor.value?.chain().focus().toggleBold().run(),
+  italic: () => editor.value?.chain().focus().toggleItalic().run(),
+  underline: () => editor.value?.chain().focus().toggleUnderline().run(),
+  bulletList: () => editor.value?.chain().focus().toggleBulletList().run(),
+  orderedList: () => editor.value?.chain().focus().toggleOrderedList().run(),
+  clear: () => editor.value?.chain().focus().unsetAllMarks().clearNodes().run(),
+  link: () => openLinkModal()
+}
 
 watch(
   htmlContent,
@@ -420,7 +467,7 @@ const focus = () => {
   editor.value?.commands.focus()
 }
 
-defineExpose({ focus, extractMentions })
+defineExpose({ focus, extractMentions, format, formatState })
 </script>
 
 <style lang="scss">

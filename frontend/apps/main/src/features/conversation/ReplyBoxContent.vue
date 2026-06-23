@@ -130,6 +130,8 @@
       :isSending="isSending"
       :enableSend="enableSend"
       :showSendButton="showSendButton"
+      :showFormatting="!showSendButton"
+      :editorApi="editorRef"
       :handleSend="handleSend"
       :handleSendAndSetStatus="handleSendAndSetStatus"
       @emojiSelect="handleEmojiSelect"
