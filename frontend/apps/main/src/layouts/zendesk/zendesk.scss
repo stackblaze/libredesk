@@ -24,6 +24,8 @@ html.zendesk-layout #app {
   --zendesk-border: 220 13% 91%;
   --zendesk-status-new: 32 95% 44%;
   --zendesk-status-open: 0 72% 51%;
+  --zendesk-status-waiting: 38 92% 50%;
+  --zendesk-status-resolved: 142 64% 38%;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -147,15 +149,21 @@ html.zendesk-layout #app {
 .zendesk-status-badge {
   @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white uppercase tracking-wide;
 
-  &.status-new {
-    background: hsl(var(--zendesk-status-new));
-  }
-
-  &.status-open {
+  // Colored by status category (open | waiting | resolved); custom statuses
+  // inherit the color of the category an admin assigns them to.
+  &.category-open {
     background: hsl(var(--zendesk-status-open));
   }
 
-  &.status-default {
+  &.category-waiting {
+    background: hsl(var(--zendesk-status-waiting));
+  }
+
+  &.category-resolved {
+    background: hsl(var(--zendesk-status-resolved));
+  }
+
+  &.category-default {
     @apply bg-muted text-muted-foreground;
   }
 }

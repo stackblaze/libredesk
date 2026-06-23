@@ -35,6 +35,7 @@ import { useI18n } from 'vue-i18n'
 import { Checkbox } from '@shared-ui/components/ui/checkbox'
 import { useConversationStore } from '@main/stores/conversation'
 import { useBulkActionPermissions } from '@/composables/useBulkActionPermissions'
+import { useStatusCategory } from '@main/composables/useStatusCategory'
 
 const props = defineProps({
   conversation: { type: Object, required: true },
@@ -47,13 +48,9 @@ const router = useRouter()
 const { t } = useI18n()
 const conversationStore = useConversationStore()
 const { canBulkAct } = useBulkActionPermissions()
+const { categoryClass } = useStatusCategory()
 
-const statusClass = computed(() => {
-  const s = (props.conversation.status || '').toLowerCase()
-  if (s === 'new') return 'status-new'
-  if (s === 'open') return 'status-open'
-  return 'status-default'
-})
+const statusClass = computed(() => categoryClass(props.conversation.status))
 
 const conversationRoute = computed(() => {
   const baseRoute = route.params.teamID

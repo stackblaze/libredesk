@@ -35,6 +35,7 @@ import { ArrowRight } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@shared-ui/components/ui/button'
 import { useInboxViewContext } from '@main/composables/useInboxViewContext'
+import { useStatusCategory } from '@main/composables/useStatusCategory'
 
 const props = defineProps({
   requesterName: { type: String, default: '' },
@@ -47,11 +48,7 @@ const emit = defineEmits(['next'])
 
 const { t } = useI18n()
 const { viewLabel, listRoute } = useInboxViewContext()
+const { categoryClass } = useStatusCategory()
 
-const statusClass = computed(() => {
-  const s = (props.status || '').toLowerCase()
-  if (s === 'new') return 'status-new'
-  if (s === 'open') return 'status-open'
-  return 'status-default'
-})
+const statusClass = computed(() => categoryClass(props.status))
 </script>
