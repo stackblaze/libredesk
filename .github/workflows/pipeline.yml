@@ -14,7 +14,9 @@ on:
 
 concurrency:
   group: pipeline-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs to save the single runner, but never cancel a
+  # main run mid-flight — those build & deploy to prod and must complete.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
