@@ -14,7 +14,7 @@
           @create-view="createView"
           @edit-view="editView"
           @delete-view="deleteView"
-          @create-conversation="openCreateConversationDialog = true"
+          @create-conversation="openNewConversation"
         >
           <div class="flex flex-col h-full min-h-0 flex-1 overflow-hidden bg-background border rounded-lg m-2">
             <AdminBanner v-if="route.path.startsWith('/admin')" />
@@ -31,7 +31,6 @@
   </div>
 
   <Command />
-  <CreateConversation v-model="openCreateConversationDialog" v-if="openCreateConversationDialog" />
   <ViewForm v-model:openDialog="openCreateViewForm" v-model:view="view" />
 </template>
 
@@ -63,11 +62,11 @@ import AdminBanner from '@/components/banner/AdminBanner.vue'
 import Sidebar from '@main/components/sidebar/Sidebar.vue'
 import { toast as sooner } from 'vue-sonner'
 import Command from '@/features/command/CommandBox.vue'
-import CreateConversation from '@/features/conversation/CreateConversation.vue'
 import ZendeskNavRail from './ZendeskNavRail.vue'
 import ZendeskTopBar from './ZendeskTopBar.vue'
 import { useI18n } from 'vue-i18n'
 import { useZendeskShortcuts } from '@main/composables/useZendeskShortcuts'
+import { useZendeskTabs } from '@main/composables/useZendeskTabs'
 import api from '@main/api'
 
 const route = useRoute()
@@ -86,9 +85,13 @@ const notificationStore = useNotificationStore()
 const { t } = useI18n()
 
 const openCreateViewForm = ref(false)
-const openCreateConversationDialog = ref(false)
 const view = ref({})
 const userViews = ref([])
+const { openNewTab } = useZendeskTabs()
+
+const openNewConversation = () => {
+  openNewTab()
+}
 
 const lastInboxPath = useStorage('lastInboxPath', '')
 watch(
@@ -194,7 +197,7 @@ const listenViewFormOpen = () => {
 
 const listenCreateConversationOpen = () => {
   emitter.on(EMITTER_EVENTS.OPEN_CREATE_CONVERSATION, () => {
-    openCreateConversationDialog.value = true
+    openNewTab()
   })
 }
 

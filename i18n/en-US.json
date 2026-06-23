@@ -966,6 +966,8 @@
   "zendesk.latestComment": "Latest comment",
   "zendesk.noMessagePreview": "No message preview",
   "zendesk.add": "Add",
+  "zendesk.newTicketDraft": "New ticket",
+  "zendesk.newTicketHint": "Fill in requester details on the left, then compose your message and submit.",
   "zendesk.searchPlaceholder": "Search",
   "zendesk.noSubject": "(No subject)",
   "zendesk.backToViews": "Views",

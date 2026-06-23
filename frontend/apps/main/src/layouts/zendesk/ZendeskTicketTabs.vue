@@ -10,7 +10,7 @@
         <button type="button" class="flex items-center gap-2 min-w-0 flex-1 text-left h-full" @click="selectTab(tab)">
           <span class="relative shrink-0">
             <component
-              :is="tab.inbox_channel === 'livechat' ? MessageSquare : Mail"
+              :is="tab.is_compose ? PenLine : (tab.inbox_channel === 'livechat' ? MessageSquare : Mail)"
               class="size-4 text-muted-foreground"
               aria-hidden="true"
             />
@@ -20,12 +20,12 @@
               :class="priorityDotClass(tab.priority)"
             />
           </span>
-          <span class="flex flex-col min-w-0 flex-1 leading-tight gap-0.5">
+            <span class="flex flex-col min-w-0 flex-1 leading-tight gap-0.5">
             <span class="zendesk-tab-title">
-              {{ tab.contact_name || tab.subject || t('zendesk.noSubject') }}
+              {{ tab.is_compose ? (tab.contact_name || t('conversation.newConversation')) : (tab.contact_name || tab.subject || t('zendesk.noSubject')) }}
             </span>
             <span class="zendesk-tab-preview">
-              {{ tab.message_preview || t('zendesk.noMessagePreview') }}
+              {{ tab.message_preview || (tab.is_compose ? t('zendesk.newTicketDraft') : t('zendesk.noMessagePreview')) }}
             </span>
           </span>
         </button>
@@ -48,18 +48,15 @@
 </template>
 
 <script setup>
-import { Mail, MessageSquare, X, Plus } from 'lucide-vue-next'
+import { Mail, MessageSquare, X, Plus, PenLine } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useEmitter } from '@main/composables/useEmitter'
-import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import { useZendeskTabs } from '@main/composables/useZendeskTabs'
 import { priorityDotClass } from '@main/composables/useConversationPriority'
 
 const { t } = useI18n()
-const emitter = useEmitter()
-const { tabs, activeUuid, selectTab, closeTab } = useZendeskTabs()
+const { tabs, activeUuid, selectTab, closeTab, openNewTab } = useZendeskTabs()
 
 const openNewTicket = () => {
-  emitter.emit(EMITTER_EVENTS.OPEN_CREATE_CONVERSATION)
+  openNewTab()
 }
 </script>

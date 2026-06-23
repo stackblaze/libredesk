@@ -518,6 +518,12 @@ html.zendesk-layout {
   border-right: 1px solid hsl(var(--zendesk-border));
 }
 
+html.zendesk-layout {
+  .zendesk-new-ticket-editor {
+    min-height: 14rem;
+  }
+}
+
 .zendesk-ticket-context {
   border-color: hsl(var(--zendesk-border));
 }

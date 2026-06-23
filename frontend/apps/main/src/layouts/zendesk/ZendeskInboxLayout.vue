@@ -29,6 +29,8 @@ import api from '@main/api'
 import ZendeskViewsPane from './ZendeskViewsPane.vue'
 import ZendeskConversationTable from './ZendeskConversationTable.vue'
 
+import { TICKET_ROUTE_NAMES } from '@main/composables/useZendeskTabs'
+
 const route = useRoute()
 const userStore = useUserStore()
 const sharedViewStore = useSharedViewStore()
@@ -38,13 +40,7 @@ const userViews = ref([])
 const userTeams = computed(() => userStore.teams || [])
 const sharedViews = computed(() => sharedViewStore.sharedViewList || [])
 
-const conversationRouteNames = new Set([
-  'inbox-conversation',
-  'team-inbox-conversation',
-  'view-inbox-conversation'
-])
-
-const hasConversation = computed(() => conversationRouteNames.has(route.name))
+const hasConversation = computed(() => TICKET_ROUTE_NAMES.has(route.name))
 
 onMounted(async () => {
   await loadUserViews()

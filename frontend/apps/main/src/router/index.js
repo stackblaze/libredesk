@@ -76,6 +76,13 @@ const routes = [
             meta: { titleKey: 'globals.terms.teamInbox' },
             children: [
               {
+                path: 'new/:composeId',
+                name: 'team-inbox-new-conversation',
+                component: () => import('@main/views/conversation/NewConversationShell.vue'),
+                props: true,
+                meta: { titleKey: 'conversation.newConversation', hidePageHeader: true }
+              },
+              {
                 path: 'conversation/:uuid',
                 name: 'team-inbox-conversation',
                 component: () => import('@main/views/conversation/ConversationDetailShell.vue'),
@@ -99,6 +106,13 @@ const routes = [
             component: () => import('@main/views/inbox/InboxView.vue'),
             meta: { titleKey: 'globals.terms.view' },
             children: [
+              {
+                path: 'new/:composeId',
+                name: 'view-inbox-new-conversation',
+                component: () => import('@main/views/conversation/NewConversationShell.vue'),
+                props: true,
+                meta: { titleKey: 'conversation.newConversation', hidePageHeader: true }
+              },
               {
                 path: 'conversation/:uuid',
                 name: 'view-inbox-conversation',
@@ -139,6 +153,16 @@ const routes = [
               }
             },
             children: [
+              {
+                path: 'new/:composeId',
+                name: 'inbox-new-conversation',
+                component: () => import('@main/views/conversation/NewConversationShell.vue'),
+                props: true,
+                meta: {
+                  titleKey: 'conversation.newConversation',
+                  hidePageHeader: true
+                }
+              },
               {
                 path: 'conversation/:uuid',
                 name: 'inbox-conversation',

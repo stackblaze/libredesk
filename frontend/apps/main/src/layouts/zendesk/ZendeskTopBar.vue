@@ -50,18 +50,13 @@ import { Button } from '@shared-ui/components/ui/button'
 import { useEmitter } from '@main/composables/useEmitter'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import ZendeskTicketTabs from './ZendeskTicketTabs.vue'
+import { TICKET_ROUTE_NAMES } from '@main/composables/useZendeskTabs'
 
 const route = useRoute()
 const { t } = useI18n()
 const emitter = useEmitter()
 
-const CONVERSATION_ROUTE_NAMES = new Set([
-  'inbox-conversation',
-  'team-inbox-conversation',
-  'view-inbox-conversation'
-])
-
-const isConversationRoute = computed(() => CONVERSATION_ROUTE_NAMES.has(route.name))
+const isConversationRoute = computed(() => TICKET_ROUTE_NAMES.has(route.name))
 
 const shortcutHint = computed(() =>
   navigator.platform?.toLowerCase().includes('mac') ? '\u2318K' : 'Ctrl K'
