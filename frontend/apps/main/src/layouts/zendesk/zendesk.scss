@@ -487,9 +487,10 @@ html.zendesk-layout {
     padding: 0.375rem 0.75rem 0.25rem;
     border-top: 1px solid hsl(var(--zendesk-border));
 
-    // Cap editor height so the reply area doesn't dominate the center column.
+    // Reply composer — enough room to draft without dominating the column.
     .flex.flex-col.h-full {
-      max-height: 12rem;
+      min-height: 11rem;
+      max-height: 20rem;
     }
 
     // Reply / Private note header row — minimal vertical padding.
@@ -535,10 +536,11 @@ html.zendesk-layout {
     .editor-wrapper {
       font-size: 0.8125rem;
       line-height: 1.45;
+      min-height: 4.5rem;
     }
 
     .tiptap.ProseMirror {
-      min-height: 3rem;
+      min-height: 5.5rem;
       font-size: inherit;
       line-height: inherit;
       padding: 0.375rem 0;
