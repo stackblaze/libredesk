@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
+import { toast } from 'vue-sonner'
 import App from './App.vue'
 import api from './api/index.js'
 import '@shared-ui/assets/styles/main.scss'
@@ -59,3 +60,47 @@ async function initWidget () {
 }
 
 initWidget()
+
+// Register the widget service worker (PWA install + static asset caching).
+// Scoped to /widget so it never interferes with the main app. Production only.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/widget/sw.js', { scope: '/widget' })
+
+      const promptUpdate = (worker) => {
+        if (!worker) return
+        toast('A new version of Libredesk Chat is available.', {
+          duration: Infinity,
+          action: {
+            label: 'Reload',
+            onClick: () => worker.postMessage('SKIP_WAITING')
+          }
+        })
+      }
+
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        promptUpdate(registration.waiting)
+      }
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
+        if (!newWorker) return
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            promptUpdate(newWorker)
+          }
+        })
+      })
+
+      let refreshing = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+      })
+    } catch (error) {
+      console.error('Widget service worker registration failed: ', error)
+    }
+  })
+}

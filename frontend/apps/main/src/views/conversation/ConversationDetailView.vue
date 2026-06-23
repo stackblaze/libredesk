@@ -4,8 +4,26 @@
       v-if="isLoading"
       class="conv-progress absolute inset-x-0 top-0 h-0.5 z-50 pointer-events-none"
     />
+
+    <!-- Mobile: full-width conversation + slide-over sidebar -->
+    <div
+      v-if="isMobile && showContent"
+      class="h-full transition-opacity duration-200"
+      :class="{ 'opacity-60': isDimmed }"
+      :inert="isDimmed"
+    >
+      <Conversation />
+      <Sheet :open="mobileSidebarOpen" @update:open="mobileSidebarOpen = $event">
+        <SheetContent side="right" class="w-[min(100vw,24rem)] p-0">
+          <div class="h-full overflow-y-auto overflow-x-hidden">
+            <ConversationSideBar />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+
     <ResizablePanelGroup
-      v-if="showContent"
+      v-else-if="showContent"
       direction="horizontal"
       class="h-full transition-opacity duration-200"
       :class="{ 'opacity-60': isDimmed }"
@@ -23,7 +41,7 @@
       <!-- Sidebar Panel (collapsible) -->
       <ResizablePanel
         ref="sidebarPanelRef"
-:default-size="panelSizes[1]"
+        :default-size="panelSizes[1]"
         :min-size="15"
         :max-size="40"
         :collapsible="true"
@@ -37,9 +55,9 @@
       </ResizablePanel>
     </ResizablePanelGroup>
 
-    <!-- Toggle button when sidebar is collapsed -->
+    <!-- Toggle button when sidebar is collapsed (desktop only) -->
     <button
-      v-if="showContent && !sidebarOpen"
+      v-if="showContent && !sidebarOpen && !isMobile"
       @click="toggleSidebar"
       class="absolute right-0 top-16 p-2 rounded-l-full bg-sidebar text-sidebar-foreground hover:bg-opacity-90 transition-all duration-200 border shadow hover:scale-105 z-50"
     >
@@ -53,12 +71,14 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage, useDocumentVisibility } from '@vueuse/core'
 import { ChevronLeft } from 'lucide-vue-next'
+import { useIsMobileLayout } from '@main/composables/useIsMobileLayout'
 import { useConversationStore } from '@main/stores/conversation'
 import { useEmitter } from '@main/composables/useEmitter'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'
 import Conversation from '@main/features/conversation/Conversation.vue'
 import ConversationSideBar from '@main/features/conversation/sidebar/ConversationSideBar.vue'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@shared-ui/components/ui/resizable'
+import { Sheet, SheetContent } from '@shared-ui/components/ui/sheet'
 
 const props = defineProps({
   uuid: String
@@ -67,7 +87,9 @@ const props = defineProps({
 const conversationStore = useConversationStore()
 const route = useRoute()
 const emitter = useEmitter()
+const isMobile = useIsMobileLayout()
 const sidebarPanelRef = ref(null)
+const mobileSidebarOpen = ref(false)
 const sidebarOpen = useStorage('conversationSidebarOpen', true)
 const panelSizes = useStorage('conversationDetailPanelSizes', [70, 30])
 
@@ -82,6 +104,10 @@ const isLoading = computed(
 const isDimmed = computed(() => conversationStore.conversation.loading)
 
 const toggleSidebar = () => {
+  if (isMobile.value) {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value
+    return
+  }
   if (sidebarOpen.value) {
     sidebarPanelRef.value?.collapse()
   } else {
@@ -103,16 +129,21 @@ const onLayoutChange = (sizes) => {
   }
 }
 
-// Listen to emitter events for toggle (from sidebar contact)
+// Listen to emitter events for toggle (from sidebar contact) and fetch conversation.
 onMounted(() => {
   emitter.on(EMITTER_EVENTS.CONVERSATION_SIDEBAR_TOGGLE, toggleSidebar)
 
-  // Sync initial collapsed state from localStorage
-  nextTick(() => {
-    if (!sidebarOpen.value && sidebarPanelRef.value) {
-      sidebarPanelRef.value.collapse()
-    }
-  })
+  if (isMobile.value) {
+    mobileSidebarOpen.value = false
+  } else {
+    nextTick(() => {
+      if (!sidebarOpen.value && sidebarPanelRef.value) {
+        sidebarPanelRef.value.collapse()
+      }
+    })
+  }
+
+  if (props.uuid) fetchConversation(props.uuid)
 })
 
 const visibility = useDocumentVisibility()
@@ -133,11 +164,6 @@ const fetchConversation = async (uuid) => {
   ])
   await conversationStore.updateAssigneeLastSeen(uuid)
 }
-
-// Initial fetch
-onMounted(() => {
-  if (props.uuid) fetchConversation(props.uuid)
-})
 
 watch(
   () => props.uuid,

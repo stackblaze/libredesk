@@ -1,19 +1,24 @@
 <template>
-  <div
-    class="libredesk-widget-app text-foreground bg-background"
-    :class="{ dark: widgetStore.config.dark_mode, mobile: widgetStore.isMobileFullScreen }"
-    :style="customColorStyle"
-    @click.once="initAudioContext"
-    @touchstart.once="initAudioContext"
-  >
-    <div class="widget-container">
-      <MainLayout />
+  <TooltipProvider :delay-duration="150">
+    <Toaster class="pointer-events-auto" position="top-center" />
+    <div
+      class="libredesk-widget-app text-foreground bg-background"
+      :class="{ dark: widgetStore.config.dark_mode, mobile: widgetStore.isMobileFullScreen }"
+      :style="customColorStyle"
+      @click.once="initAudioContext"
+      @touchstart.once="initAudioContext"
+    >
+      <div class="widget-container">
+        <MainLayout />
+      </div>
     </div>
-  </div>
+  </TooltipProvider>
 </template>
 
 <script setup>
 import { computed, onMounted, watch, getCurrentInstance } from 'vue'
+import { Toaster } from '@shared-ui/components/ui/sonner'
+import { TooltipProvider } from '@shared-ui/components/ui/tooltip'
 import { useWidgetStore } from './store/widget.js'
 import { useChatStore } from '@widget/store/chat.js'
 import { useUserStore } from './store/user.js'

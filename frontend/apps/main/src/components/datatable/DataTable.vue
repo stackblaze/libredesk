@@ -11,10 +11,11 @@
 
     <div
       ref="scrollContainer"
+      data-table-wrapper
       class="relative overflow-auto rounded-lg border border-border bg-card shadow-sm"
       :style="{ maxHeight }"
     >
-      <table class="w-full caption-bottom text-sm">
+      <table class="w-full min-w-[36rem] caption-bottom text-sm">
         <TableHeader class="sticky top-0 z-10 bg-card">
           <TableRow
             v-for="headerGroup in table.getHeaderGroups()"

@@ -44,10 +44,10 @@
     </DropdownMenuTrigger>
     <DropdownMenuContent
       class="min-w-56"
-      side="right"
+      :side="menuSide"
       align="end"
       :side-offset="8"
-      :align-offset="40"
+      :align-offset="menuSide === 'top' ? 8 : 40"
     >
       <DropdownMenuLabel class="font-normal space-y-2 px-2">
         <!-- User header -->
@@ -161,7 +161,8 @@ import { useColorMode } from '@vueuse/core'
 import { useUiLayout, UI_LAYOUT_DEFAULT, UI_LAYOUT_ZENDESK } from '../../composables/useUiLayout'
 
 defineProps({
-  zendesk: { type: Boolean, default: false }
+  zendesk: { type: Boolean, default: false },
+  menuSide: { type: String, default: 'right' }
 })
 
 const mode = useColorMode()

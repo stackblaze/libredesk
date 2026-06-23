@@ -1,11 +1,30 @@
 <template>
   <div class="flex flex-col h-full">
     <!-- Header -->
-    <div class="h-12 flex-shrink-0 px-2 border-b flex items-center justify-between">
-      <div>
-        <span>{{ conversationStore.currentContactName }}</span>
+    <div class="h-12 flex-shrink-0 px-2 border-b flex items-center justify-between gap-2">
+      <div class="flex items-center gap-1 min-w-0">
+        <Button
+          v-if="isMobile"
+          variant="ghost"
+          size="icon"
+          class="shrink-0"
+          :aria-label="t('globals.terms.back')"
+          @click="goBackToList"
+        >
+          <ArrowLeft class="size-4" />
+        </Button>
+        <span class="truncate">{{ conversationStore.currentContactName }}</span>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 shrink-0">
+        <Button
+          v-if="isMobile"
+          variant="ghost"
+          size="icon"
+          :aria-label="t('globals.terms.details')"
+          @click="openConversationSidebar"
+        >
+          <PanelRight class="size-4" />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div
@@ -52,7 +71,9 @@
 
 <script setup>
 import { useConversationStore } from '../../stores/conversation'
-import { MoreHorizontal } from 'lucide-vue-next'
+import { MoreHorizontal, ArrowLeft, PanelRight } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
+import { useIsMobileLayout } from '@main/composables/useIsMobileLayout'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,7 +91,30 @@ import { handleHTTPError } from '@shared-ui/utils/http.js'
 import api from '@main/api'
 const conversationStore = useConversationStore()
 const emitter = useEmitter()
+const route = useRoute()
+const router = useRouter()
+const isMobile = useIsMobileLayout()
 const { t } = useI18n()
+
+const goBackToList = () => {
+  if (route.name === 'inbox-conversation') {
+    router.push({ name: 'inbox', params: { type: route.params.type || 'assigned' } })
+    return
+  }
+  if (route.name === 'team-inbox-conversation') {
+    router.push({ name: 'team-inbox', params: { teamID: route.params.teamID } })
+    return
+  }
+  if (route.name === 'view-inbox-conversation') {
+    router.push({ name: 'view-inbox', params: { viewID: route.params.viewID } })
+    return
+  }
+  router.back()
+}
+
+const openConversationSidebar = () => {
+  emitter.emit(EMITTER_EVENTS.CONVERSATION_SIDEBAR_TOGGLE)
+}
 
 const downloadTranscript = async () => {
   const conversation = conversationStore.current

@@ -3,8 +3,31 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>libredesk Chat Widget</title>
+
+  <!-- PWA: installable widget. The manifest carries the current inbox_id so an
+       installed widget launches back into the correct inbox. -->
+  <script>
+    (function () {
+      try {
+        var inboxId = new URLSearchParams(window.location.search).get('inbox_id') || ''
+        var href = '/widget/manifest.webmanifest'
+        if (/^\d+$/.test(inboxId)) href += '?inbox_id=' + encodeURIComponent(inboxId)
+        var link = document.createElement('link')
+        link.rel = 'manifest'
+        link.href = href
+        document.head.appendChild(link)
+      } catch (e) {}
+    })()
+  </script>
+  <meta name="theme-color" content="#1a1a1d" />
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Libredesk Chat" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"mime"
 	"net/http"
 	"path"
@@ -290,6 +291,8 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	// Frontend pages.
 	g.GET("/", notAuthPage(serveIndexPage))
 	g.GET("/widget", validateWidgetInbox(serveWidgetIndexPage))
+	g.GET("/widget/manifest.webmanifest", servePWAWidgetManifest)
+	g.GET("/widget/sw.js", serveWidgetServiceWorker)
 	g.GET("/inboxes/{all:*}", authPage(serveIndexPage))
 	g.GET("/teams/{all:*}", authPage(serveIndexPage))
 	g.GET("/views/{all:*}", authPage(serveIndexPage))
@@ -299,6 +302,11 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/account/{all:*}", authPage(serveIndexPage))
 	g.GET("/reset-password", notAuthPage(serveIndexPage))
 	g.GET("/set-password", notAuthPage(serveIndexPage))
+
+	// PWA files. Served from the root so the service worker can control the
+	// whole app scope and the manifest is discoverable at a stable URL.
+	g.GET("/manifest.webmanifest", servePWAManifest)
+	g.GET("/sw.js", serveServiceWorker)
 
 	// Assets and static files.
 	// FIXME: Reduce the number of routes.
@@ -365,6 +373,91 @@ func serveWidgetIndexPage(r *fastglue.Request) error {
 	r.RequestCtx.Response.Header.Set("Content-Type", "text/html")
 	r.RequestCtx.SetBody(file.ReadBytes())
 
+	return nil
+}
+
+// servePWAManifest serves the web app manifest used for PWA installation.
+func servePWAManifest(r *fastglue.Request) error {
+	app := r.Context.(*App)
+
+	file, err := app.fs.Get(path.Join(frontendDir, "manifest.webmanifest"))
+	if err != nil {
+		return r.SendErrorEnvelope(http.StatusNotFound, app.i18n.T("validation.notFoundFile"), nil, envelope.NotFoundError)
+	}
+	r.RequestCtx.Response.Header.Set("Content-Type", "application/manifest+json")
+	r.RequestCtx.SetBody(file.ReadBytes())
+	return nil
+}
+
+// serveServiceWorker serves the PWA service worker. It is served from the root
+// path so it can control the entire app scope, with caching disabled so worker
+// updates are picked up promptly.
+func serveServiceWorker(r *fastglue.Request) error {
+	app := r.Context.(*App)
+
+	file, err := app.fs.Get(path.Join(frontendDir, "sw.js"))
+	if err != nil {
+		return r.SendErrorEnvelope(http.StatusNotFound, app.i18n.T("validation.notFoundFile"), nil, envelope.NotFoundError)
+	}
+	r.RequestCtx.Response.Header.Set("Content-Type", "text/javascript")
+	r.RequestCtx.Response.Header.Set("Service-Worker-Allowed", "/")
+	r.RequestCtx.Response.Header.Set("Cache-Control", "no-cache")
+	r.RequestCtx.SetBody(file.ReadBytes())
+	return nil
+}
+
+// servePWAWidgetManifest serves the chat widget's web app manifest. The widget
+// is launched with an `inbox_id` query param, so it is templated into start_url
+// to keep an installed widget pointed at the correct inbox.
+func servePWAWidgetManifest(r *fastglue.Request) error {
+	startURL := "/widget"
+	if id := string(r.RequestCtx.QueryArgs().Peek("inbox_id")); id != "" {
+		// Only accept a numeric inbox id to avoid injecting arbitrary values.
+		if _, err := strconv.Atoi(id); err == nil {
+			startURL = "/widget?inbox_id=" + id
+		}
+	}
+
+	manifest := map[string]any{
+		"name":             "Libredesk Chat",
+		"short_name":       "Libredesk Chat",
+		"description":      "Libredesk live chat.",
+		"id":               "/widget",
+		"start_url":        startURL,
+		"scope":            "/widget",
+		"display":          "standalone",
+		"background_color": "#1a1a1d",
+		"theme_color":      "#1a1a1d",
+		"orientation":      "any",
+		"icons": []map[string]any{
+			{"src": "/images/pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+			{"src": "/images/pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+			{"src": "/images/pwa-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+		},
+	}
+
+	body, err := json.Marshal(manifest)
+	if err != nil {
+		app := r.Context.(*App)
+		return sendErrorEnvelope(r, envelope.NewError(envelope.GeneralError, app.i18n.T("globals.messages.somethingWentWrong"), nil))
+	}
+	r.RequestCtx.Response.Header.Set("Content-Type", "application/manifest+json")
+	r.RequestCtx.SetBody(body)
+	return nil
+}
+
+// serveWidgetServiceWorker serves the widget service worker scoped to /widget.
+func serveWidgetServiceWorker(r *fastglue.Request) error {
+	app := r.Context.(*App)
+
+	file, err := app.fs.Get(path.Join(widgetDir, "widget-sw.js"))
+	if err != nil {
+		return r.SendErrorEnvelope(http.StatusNotFound, app.i18n.T("validation.notFoundFile"), nil, envelope.NotFoundError)
+	}
+	r.RequestCtx.Response.Header.Set("Content-Type", "text/javascript")
+	r.RequestCtx.Response.Header.Set("Service-Worker-Allowed", "/widget")
+	r.RequestCtx.Response.Header.Set("Cache-Control", "no-cache")
+	r.RequestCtx.SetBody(file.ReadBytes())
 	return nil
 }
 

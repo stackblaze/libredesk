@@ -2,7 +2,16 @@ export const UI_LAYOUT_STORAGE_KEY = 'libredesk_ui_layout'
 export const UI_LAYOUT_ZENDESK = 'zendesk'
 
 export const DEFAULT_VIEWPORT = 'width=1280, initial-scale=0.29, shrink-to-fit=no'
-export const ZENDESK_VIEWPORT = 'width=device-width, initial-scale=1'
+export const ZENDESK_VIEWPORT = 'width=device-width, initial-scale=1, viewport-fit=cover'
+export const MOBILE_BREAKPOINT = '(max-width: 768px)'
+
+export function isSmallScreenViewport () {
+  try {
+    return window.matchMedia(MOBILE_BREAKPOINT).matches
+  } catch {
+    return false
+  }
+}
 
 /**
  * Read layout preference from localStorage.
@@ -36,8 +45,10 @@ export function setViewportContent (content) {
 /** Apply viewport + html class for the given layout mode. Safe to call before Vue mounts. */
 export function applyUiLayoutViewport (layout) {
   const isZendesk = layout === UI_LAYOUT_ZENDESK
+  const useResponsiveViewport = isZendesk || isSmallScreenViewport()
   document.documentElement.classList.toggle('zendesk-layout', isZendesk)
-  setViewportContent(isZendesk ? ZENDESK_VIEWPORT : DEFAULT_VIEWPORT)
+  document.documentElement.classList.toggle('mobile-layout', isSmallScreenViewport() && !isZendesk)
+  setViewportContent(useResponsiveViewport ? ZENDESK_VIEWPORT : DEFAULT_VIEWPORT)
 }
 
 /** Apply viewport from localStorage if Zendesk mode is already selected. */

@@ -55,6 +55,21 @@
     }
   }
 
+  /* PWA: when launched as an installed app, feel more native by disabling the
+     rubber-band/pull-to-refresh overscroll. */
+  @media (display-mode: standalone), (display-mode: minimal-ui), (display-mode: window-controls-overlay) {
+    html,
+    body {
+      overscroll-behavior: none;
+    }
+  }
+
+  /* Default layout on phones: allow admin tables/forms to scroll horizontally. */
+  html.mobile-layout .overflow-x-auto,
+  html.mobile-layout [data-table-wrapper] {
+    -webkit-overflow-scrolling: touch;
+  }
+
   * {
     @apply border-border;
   }

@@ -8,13 +8,18 @@
     (function () {
       try {
         var raw = localStorage.getItem('libredesk_ui_layout')
-        if (!raw) return
         var val = raw
-        try { val = JSON.parse(raw) } catch (e) {}
-        if (val !== 'zendesk') return
-        document.documentElement.classList.add('zendesk-layout')
-        var meta = document.querySelector('meta[name="viewport"]')
-        if (meta) meta.content = 'width=device-width, initial-scale=1'
+        if (raw) {
+          try { val = JSON.parse(raw) } catch (e) {}
+        }
+        var isSmall = window.matchMedia('(max-width: 768px)').matches
+        var useResponsive = val === 'zendesk' || isSmall
+        if (val === 'zendesk') document.documentElement.classList.add('zendesk-layout')
+        if (isSmall && val !== 'zendesk') document.documentElement.classList.add('mobile-layout')
+        if (useResponsive) {
+          var meta = document.querySelector('meta[name="viewport"]')
+          if (meta) meta.content = 'width=device-width, initial-scale=1, viewport-fit=cover'
+        }
       } catch (e) {}
     })()
   </script>
@@ -22,6 +27,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
     rel="stylesheet">
+
+  <!-- PWA: installable app metadata -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#1a1a1d" />
+  <meta name="application-name" content="Libredesk" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/pwa-192.png" />
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Libredesk" />
 </head>
 
 <body>

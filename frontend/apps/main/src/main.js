@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { toast } from 'vue-sonner'
 import { initI18n } from './i18n'
 import { useAppSettingsStore } from './stores/appSettings'
 import router from './router'
@@ -68,3 +69,49 @@ async function initApp () {
 initApp().catch((error) => {
   console.error('Error initializing app: ', error)
 })
+
+// Register the service worker to enable PWA install + runtime caching of static
+// assets. Only in production builds to avoid caching surprises during dev.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+
+      const promptUpdate = (worker) => {
+        if (!worker) return
+        toast('A new version of Libredesk is available.', {
+          duration: Infinity,
+          action: {
+            label: 'Reload',
+            onClick: () => worker.postMessage('SKIP_WAITING')
+          }
+        })
+      }
+
+      // A worker updated in a previous session may already be waiting.
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        promptUpdate(registration.waiting)
+      }
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
+        if (!newWorker) return
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            promptUpdate(newWorker)
+          }
+        })
+      })
+
+      // Reload once the new worker takes control (after the user accepts).
+      let refreshing = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+      })
+    } catch (error) {
+      console.error('Service worker registration failed: ', error)
+    }
+  })
+}
