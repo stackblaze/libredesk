@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-full relative">
-    <div class="absolute top-2 right-2 z-20">
+    <div className="absolute top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] z-20">
       <CloseWidgetButton />
     </div>
     <Tabs :modelValue="widgetStore.currentView" @update:modelValue="handleTabChange" class="flex flex-col h-full">
@@ -13,7 +13,10 @@
           <ChatView v-else />
         </TabsContent>
       </div>
-      <TabsList v-if="!widgetStore.isChatView" class="grid grid-cols-2 h-auto bg-background border-t rounded-none p-0">
+      <TabsList
+        v-if="!widgetStore.isChatView"
+        class="grid grid-cols-2 h-auto bg-background border-t rounded-none p-0 pb-[env(safe-area-inset-bottom)]"
+      >
         <TabsTrigger value="home" class="nav-tab">
           <House class="w-5 h-5" />
           <span class="text-xs font-medium">{{ $t('globals.terms.home') }}</span>

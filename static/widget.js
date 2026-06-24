@@ -321,8 +321,10 @@
         setLauncherPosition () {
             const spacing = this.widgetSettings.launcher.spacing;
             const side = this.widgetSettings.launcher.position === 'right' ? 'right' : 'left';
-            this.widgetButtonWrapper.style.bottom = `${spacing.bottom}px`;
-            this.widgetButtonWrapper.style[side] = `${spacing.side}px`;
+            const bottom = this.isMobile ? Math.max(spacing.bottom, 16) : spacing.bottom;
+            const inset = this.isMobile ? Math.max(spacing.side, 16) : spacing.side;
+            this.widgetButtonWrapper.style.bottom = `${bottom}px`;
+            this.widgetButtonWrapper.style[side] = `${inset}px`;
         }
 
         applyIframeLayout () {
@@ -330,12 +332,15 @@
             const iframe = this.iframe;
 
             if (this.isMobile) {
+                iframe.style.position = 'fixed';
                 iframe.style.top = '0';
                 iframe.style.left = '0';
                 iframe.style.right = '0';
                 iframe.style.bottom = '0';
-                iframe.style.width = '100vw';
-                iframe.style.height = '100dvh';
+                iframe.style.width = '100%';
+                iframe.style.maxWidth = '100%';
+                iframe.style.height = '100%';
+                iframe.style.minHeight = '100dvh';
                 iframe.style.borderRadius = '0';
                 iframe.style.boxShadow = 'none';
                 return;
@@ -464,6 +469,29 @@
             }
         }
 
+        lockHostPageScroll () {
+            if (!this.isMobile) return;
+            this._savedScrollY = window.scrollY || 0;
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = '-' + this._savedScrollY + 'px';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+        }
+
+        unlockHostPageScroll () {
+            if (!this.isMobile || this._savedScrollY === undefined) return;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+            window.scrollTo(0, this._savedScrollY);
+            this._savedScrollY = undefined;
+        }
+
         showChat () {
             if (!this.iframe) return;
 
@@ -472,6 +500,7 @@
 
             this.iframe.style.display = 'block';
             this.applyIframeLayout();
+            this.lockHostPageScroll();
             this.updateLauncherVisibility();
 
             this.toggleButton.style.transform = 'scale(0.9)';
@@ -488,6 +517,7 @@
         hideChat () {
             if (!this.iframe) return;
 
+            this.unlockHostPageScroll();
             this.iframe.style.display = 'none';
             this.isChatVisible = false;
             this.toggleButton.style.transform = 'scale(1)';
