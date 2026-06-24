@@ -1,26 +1,27 @@
 <template>
-  <div class="border-t focus:ring-0 focus:outline-none">
-    <!-- Message Input -->
-    <div class="p-2">
-      <!-- Unified Input Container -->
-      <div class="border border-input rounded-lg bg-background focus-within:border-secondary">
-        <!-- Textarea Container -->
-        <div class="p-2">
+  <div class="message-input border-t border-border/60 bg-background">
+    <div class="p-3 pt-2">
+      <div
+        class="message-composer rounded-xl border border-input/70 bg-muted/20 transition-[border-color,box-shadow] focus-within:border-primary/35 focus-within:ring-2 focus-within:ring-primary/10"
+        :class="{ 'ring-2 ring-primary/10 border-primary/35': isFocused }"
+      >
+        <div class="px-3 pt-3 pb-1">
           <Textarea
             v-model="newMessage"
             @keydown="handleKeydown"
-            @input="handleTyping"
+            @input="handleInput"
+            @focus="isFocused = true"
+            @blur="isFocused = false"
             :placeholder="$t('globals.terms.typeMessage')"
             :disabled="isSending"
             maxlength="10000"
-            class="w-full max-h-32 resize-none border-0 bg-transparent focus:ring-0 focus:outline-none focus-visible:ring-0 p-0 shadow-none" style="min-height:20px;height:20px"
+            rows="1"
+            class="message-composer-field w-full resize-none border-0 bg-transparent p-0 shadow-none text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/55 focus:ring-0 focus:outline-none focus-visible:ring-0"
             ref="messageInput"
-          ></Textarea>
+          />
         </div>
 
-        <!-- Actions and Send Button -->
-        <div class="flex justify-between items-center px-2 pb-2">
-          <!-- Message Input Actions (file upload + emoji) -->
+        <div class="flex justify-between items-center gap-2 px-2 pb-2">
           <MessageInputActions
             :fileUploadEnabled="config.features?.file_upload || false"
             :emojiEnabled="config.features?.emoji || false"
@@ -31,18 +32,24 @@
             @emojiSelect="handleEmojiSelect"
           />
 
-          <!-- Send Button -->
           <Button
             @click="sendMessage"
             :aria-label="$t('globals.messages.send')"
             size="sm"
-            class="h-9 w-9 p-0 rounded-full disabled:opacity-50 disabled:cursor-not-allowed border-0"
+            class="h-9 w-9 shrink-0 rounded-full border-0 transition-transform active:scale-95 disabled:opacity-40"
             :disabled="!newMessage.trim() || isUploading || isSending"
           >
             <ArrowUp class="w-4 h-4" />
           </Button>
         </div>
       </div>
+
+      <p
+        v-if="isFocused"
+        class="mt-2 text-center text-[11px] leading-snug text-muted-foreground/55"
+      >
+        <kbd class="font-sans">Enter</kbd> to send · <kbd class="font-sans">Shift+Enter</kbd> for a new line
+      </p>
     </div>
   </div>
 </template>
@@ -61,6 +68,9 @@ import { useTypingIndicator } from '@shared-ui/composables/useTypingIndicator.js
 import MessageInputActions from './MessageInputActions.vue'
 import api, { saveSession } from '@widget/api/index.js'
 
+const MIN_INPUT_HEIGHT = 44
+const MAX_INPUT_HEIGHT = 128
+
 const emit = defineEmits(['error'])
 const widgetStore = useWidgetStore()
 const chatStore = useChatStore()
@@ -69,20 +79,41 @@ const messageInput = ref(null)
 const newMessage = ref('')
 const isUploading = ref(false)
 const isSending = ref(false)
+const isFocused = ref(false)
 const config = computed(() => widgetStore.config)
 
-const getTextareaEl = () => messageInput.value?.$el?.querySelector?.('textarea') || messageInput.value?.$el
+const getTextareaEl = () => {
+  const el = messageInput.value?.$el
+  return el instanceof HTMLTextAreaElement ? el : el?.querySelector?.('textarea')
+}
+
+const resizeTextarea = () => {
+  nextTick(() => {
+    const textarea = getTextareaEl()
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, MIN_INPUT_HEIGHT), MAX_INPUT_HEIGHT)
+    textarea.style.height = `${nextHeight}px`
+    textarea.style.overflowY = textarea.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden'
+  })
+}
 
 const focusTextarea = () => {
   nextTick(() => getTextareaEl()?.focus())
 }
 
-onMounted(focusTextarea)
-watch(() => widgetStore.isOpen, (open) => {
-  if (open) focusTextarea()
+onMounted(() => {
+  resizeTextarea()
+  focusTextarea()
 })
 
-// Setup typing indicator
+watch(() => widgetStore.isOpen, (open) => {
+  if (open) {
+    resizeTextarea()
+    focusTextarea()
+  }
+})
+
 const { startTyping, stopTyping } = useTypingIndicator((isTyping) => {
   if (chatStore.currentConversation?.uuid) {
     sendWidgetTyping(isTyping, chatStore.currentConversation.uuid)
@@ -96,7 +127,8 @@ const initChatConversation = async (messageText) => {
   }
   const resp = await api.initChatConversation(payload)
   chatStore.pendingFormData = null
-  const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } = resp.data.data
+  const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } =
+    resp.data.data
   conversation.business_hours_id = business_hours_id
   conversation.working_hours_utc_offset = working_hours_utc_offset
 
@@ -104,10 +136,7 @@ const initChatConversation = async (messageText) => {
     saveSession(session_token, user, userStore, true)
   }
 
-  // Add the new conversation to the list
   chatStore.addConversationToList(conversation)
-
-  // Update chat store with new conversation and messages.
   chatStore.setCurrentConversation(conversation)
   chatStore.replaceMessages(messages)
 }
@@ -133,19 +162,13 @@ const sendMessageToConversation = async (messageText, tempMessageID) => {
 }
 
 const sendMessage = async () => {
-  // Empty or already sending?
   if (!newMessage.value.trim() || isSending.value) return
 
-  // Stop typing when sending message
   stopTyping()
-
-  // Convert text to HTML.
   const messageText = newMessage.value.trim()
-
-  // Clear input field immediately
   newMessage.value = ''
+  resizeTextarea()
 
-  // Add pending message before API call so we can remove it on failure.
   let tempMessageID = null
   if (chatStore.currentConversation?.uuid) {
     tempMessageID = chatStore.addPendingMessage(
@@ -164,11 +187,9 @@ const sendMessage = async () => {
     }
     emit('error', '')
   } catch (error) {
-    // Remove failed message if we have a temp ID.
     if (tempMessageID) {
       chatStore.removeMessage(chatStore.currentConversation.uuid, tempMessageID)
     }
-
     emit('error', handleHTTPError(error).message)
   } finally {
     isSending.value = false
@@ -176,12 +197,11 @@ const sendMessage = async () => {
   }
 }
 
-// Handle typing events
-const handleTyping = () => {
+const handleInput = () => {
+  resizeTextarea()
   startTyping()
 }
 
-// Handle Enter vs Shift+Enter for new lines
 const handleKeydown = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
@@ -189,18 +209,15 @@ const handleKeydown = (event) => {
   }
 }
 
-// File upload handler
 const handleFileUpload = async (files) => {
   if (!chatStore.currentConversation.uuid || files.length === 0) return
 
   isUploading.value = true
   emit('error', '')
 
-  // Create pending file message immediately
   const fileNames = Array.from(files)
     .map((f) => f.name)
     .join(', ')
-
   const trimmedFileNames =
     fileNames.length > 40 ? fileNames.slice(0, 40).trimEnd() + '...' : fileNames
   const pendingMessage = `${trimmedFileNames}`
@@ -222,7 +239,6 @@ const handleFileUpload = async (files) => {
       chatStore.updateConversationListLastMessage(chatStore.currentConversation.uuid, resp.data.data)
     }
   } catch (error) {
-    // Remove failed upload message
     if (tempMessageID) {
       chatStore.removeMessage(chatStore.currentConversation.uuid, tempMessageID)
     }
@@ -232,37 +248,45 @@ const handleFileUpload = async (files) => {
   }
 }
 
-// Handle emoji selection.
 const handleEmojiSelect = (emoji) => {
   const textarea = getTextareaEl()
   if (textarea && textarea.selectionStart !== undefined) {
-    // Insert emoji at cursor position
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const before = newMessage.value.substring(0, start)
     const after = newMessage.value.substring(end)
-
     newMessage.value = before + emoji + after
 
-    // Restore cursor position after emoji
     nextTick(() => {
       const newPos = start + emoji.length
       textarea.setSelectionRange(newPos, newPos)
       textarea.focus()
+      resizeTextarea()
     })
   } else {
-    // Fallback: append emoji
     newMessage.value += emoji
+    resizeTextarea()
   }
 }
 
-// Auto-resize textarea on input.
-watch(newMessage, () => {
-  nextTick(() => {
-    const textarea = getTextareaEl()
-    if (!textarea) return
-    textarea.style.height = '20px'
-    textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px'
-  })
-})
+watch(newMessage, () => resizeTextarea())
 </script>
+
+<style scoped>
+.message-composer-field {
+  min-height: 44px;
+  max-height: 128px;
+  field-sizing: content;
+}
+
+/* Fallback when field-sizing is unsupported */
+@supports not (field-sizing: content) {
+  .message-composer-field {
+    field-sizing: normal;
+  }
+}
+
+.message-input kbd {
+  @apply rounded px-1 py-0.5 text-[10px] bg-muted/50 text-muted-foreground/80;
+}
+</style>

@@ -178,10 +178,10 @@ watch(
   height: 100%;
 }
 
-/* iOS Safari auto-zooms on focus when font-size < 16px. Force 16px on mobile to prevent it. */
-.mobile :deep(input),
-.mobile :deep(textarea),
-.mobile :deep(select) {
+/* 16px inputs prevent iOS zoom-on-focus and improve composer readability. */
+.libredesk-widget-app :deep(input),
+.libredesk-widget-app :deep(textarea),
+.libredesk-widget-app :deep(select) {
   font-size: 16px;
 }
 </style>
