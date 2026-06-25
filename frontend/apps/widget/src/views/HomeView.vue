@@ -14,6 +14,10 @@
           </div>
         </HomeHeader>
 
+        <!-- Conversation starters: tappable options that open a chat pre-filled
+             with that intent (the visitor still reviews and sends). -->
+        <ConversationStarters v-if="canStartConversation" />
+
         <!-- Home Apps (announcements + external links) sit on the normal background. -->
         <div v-if="config.home_apps?.length" class="flex flex-col gap-3 p-4 bg-background">
           <div class="space-y-3">
@@ -39,6 +43,7 @@ import { useI18n } from 'vue-i18n'
 import HomeHeader from '@widget/components/HomeHeader.vue'
 import HomeExternalLink from '@widget/components/HomeExternalLink.vue'
 import AnnouncementCard from '@widget/components/AnnouncementCard.vue'
+import ConversationStarters from '@widget/components/ConversationStarters.vue'
 
 const widgetStore = useWidgetStore()
 const chatStore = useChatStore()
@@ -59,6 +64,8 @@ const startButtonText = computed(() => {
 })
 
 const startConversation = () => {
+  // Freeform start: clear any starter chosen earlier so the composer opens empty.
+  chatStore.pendingStarterMessage = null
   chatStore.setCurrentConversation(null)
   widgetStore.navigateToChat()
 }

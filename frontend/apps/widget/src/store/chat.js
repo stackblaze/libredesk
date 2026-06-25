@@ -17,6 +17,9 @@ export const useChatStore = defineStore('chat', () => {
     // is only created once the visitor sends their first message, so we stash the
     // collected form fields here and attach them to that init request.
     const pendingFormData = ref(null)
+    // A conversation-starter message chosen on the home screen, pre-filled into
+    // the composer once the chat opens (after the pre-chat form). Visitor sends it.
+    const pendingStarterMessage = ref(null)
     // Conversation messages cache, evict old conversation messages after 50 conversations.
     const messageCache = reactive(new MessageCache(50))
     const isLoadingConversations = ref(false)
@@ -279,6 +282,7 @@ export const useChatStore = defineStore('chat', () => {
         conversations,
         currentConversation,
         pendingFormData,
+        pendingStarterMessage,
         isLoadingConversations,
         isLoadingConversation,
 

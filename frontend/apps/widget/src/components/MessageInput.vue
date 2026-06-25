@@ -103,6 +103,12 @@ const focusTextarea = () => {
 }
 
 onMounted(() => {
+  // A conversation starter chosen on the home screen pre-fills the composer so
+  // the visitor can review and send it (we never auto-send on their behalf).
+  if (chatStore.pendingStarterMessage) {
+    newMessage.value = chatStore.pendingStarterMessage
+    chatStore.pendingStarterMessage = null
+  }
   resizeTextarea()
   focusTextarea()
 })
