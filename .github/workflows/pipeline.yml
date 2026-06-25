@@ -150,7 +150,12 @@ jobs:
     # Only build/publish on a real push to main (or manual dispatch); PRs stop
     # after the test jobs above.
     needs: [frontend, go]
+    # NOTE: the leading !cancelled() is REQUIRED. Without a status-check function,
+    # GitHub skips a job whose `needs` were skipped (frontend/go are `if: false`),
+    # regardless of the rest of this `if` — which is why every push since the
+    # test-skip change deployed nothing. !cancelled() forces the `if` to evaluate.
     if: |
+      !cancelled() &&
       github.event_name != 'pull_request' &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.go.result == 'success' || needs.go.result == 'skipped')
