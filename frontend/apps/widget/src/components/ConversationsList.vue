@@ -13,27 +13,27 @@
       <div
         v-for="conversation in chatStore.getConversations"
         :key="conversation.uuid"
-        class="p-4 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
+        class="px-4 py-2.5 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
         @click="openConversation(conversation.uuid)"
       >
-        <div class="flex items-center gap-3">
-          <Avatar class="size-10 flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <Avatar class="size-8 flex-shrink-0">
             <AvatarImage :src="getAvatarUrl(conversation)" />
-            <AvatarFallback>{{ getAvatarFallback(conversation) }}</AvatarFallback>
+            <AvatarFallback class="text-xs">{{ getAvatarFallback(conversation) }}</AvatarFallback>
           </Avatar>
           <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-0.5">
-              <span class="text-sm font-medium text-foreground">{{ getSenderLabel(conversation.last_message.author) }}</span>
-              <span class="text-xs text-muted-foreground flex-shrink-0 ml-2">{{ getRelativeTime(new Date(conversation.last_message.created_at)) }}</span>
+            <div class="flex items-center justify-between gap-2 mb-0.5">
+              <span class="text-sm font-medium text-foreground truncate">{{ getSenderLabel(conversation.last_message.author) }}</span>
+              <span class="text-[10px] text-muted-foreground flex-shrink-0">{{ getRelativeTime(new Date(conversation.last_message.created_at)) }}</span>
             </div>
             <div class="flex items-center gap-2">
-              <p class="text-sm text-muted-foreground truncate flex-1 min-w-0">
+              <p class="text-xs text-muted-foreground truncate flex-1 min-w-0 leading-snug">
                 {{ conversation.last_message.content }}
               </p>
               <UnreadCountBadge :count="conversation.unread_message_count" class="flex-shrink-0" />
             </div>
           </div>
-          <ChevronRight class="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <ChevronRight class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
         </div>
       </div>
     </div>

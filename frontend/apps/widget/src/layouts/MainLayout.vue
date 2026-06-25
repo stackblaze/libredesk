@@ -17,13 +17,19 @@
         v-if="!widgetStore.isChatView"
         class="grid grid-cols-2 h-auto bg-background border-t rounded-none p-0 pb-[env(safe-area-inset-bottom)]"
       >
-        <TabsTrigger value="home" class="nav-tab">
-          <House class="w-4 h-4" />
-          <span class="text-[10px] font-medium leading-none">{{ $t('globals.terms.home') }}</span>
+        <TabsTrigger
+          value="home"
+          class="nav-tab"
+          :aria-label="$t('globals.terms.home')"
+        >
+          <House class="w-5 h-5" />
         </TabsTrigger>
-        <TabsTrigger value="messages" class="nav-tab">
-          <MessagesSquare class="w-4 h-4" />
-          <span class="text-[10px] font-medium leading-none">{{ $t('globals.terms.message', 2) }}</span>
+        <TabsTrigger
+          value="messages"
+          class="nav-tab"
+          :aria-label="$t('globals.terms.message', 2)"
+        >
+          <MessagesSquare class="w-5 h-5" />
         </TabsTrigger>
       </TabsList>
       <div
@@ -69,7 +75,7 @@ const handleTabChange = (value) => {
 
 <style scoped>
 .nav-tab {
-  @apply flex flex-col items-center justify-center gap-0.5 w-full px-0 py-2
+  @apply flex items-center justify-center w-full px-0 py-1.5
          rounded-none shadow-none cursor-pointer transition-colors
          text-muted-foreground min-h-0;
 }
