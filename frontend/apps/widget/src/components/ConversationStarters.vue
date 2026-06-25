@@ -1,7 +1,7 @@
 <template>
-  <div v-if="starters.length" class="flex flex-col gap-3 p-4 bg-background">
+  <div v-if="starters.length" class="flex flex-col gap-2 px-4 pt-3 pb-4 bg-background">
     <div v-if="heading" class="text-sm font-medium text-foreground">{{ heading }}</div>
-    <div class="space-y-2">
+    <div class="space-y-1.5">
       <Card
         v-for="(starter, index) in starters"
         :key="index"
@@ -9,9 +9,9 @@
         role="button"
         @click="start(starter)"
       >
-        <CardContent class="p-4">
+        <CardContent class="px-4 py-2.5">
           <div class="flex justify-between items-center gap-3">
-            <span class="text-sm text-primary font-medium">{{ starter.text }}</span>
+            <span class="text-sm text-foreground font-medium">{{ starter.text }}</span>
             <ArrowRight size="16" class="text-muted-foreground shrink-0" />
           </div>
         </CardContent>

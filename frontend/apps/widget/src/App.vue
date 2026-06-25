@@ -171,6 +171,10 @@ watch(
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .widget-container {

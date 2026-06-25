@@ -1,6 +1,6 @@
 <template>
   <div class="relative" :style="headerStyle">
-    <div class="p-8">
+    <div class="px-6 pt-6 pb-4">
       <!-- Logo -->
       <img
         v-if="config.logo_url"
@@ -9,7 +9,7 @@
         class="max-h-8 max-w-full"
       />
       <!-- Greeting and introduction -->
-      <div class="mt-12" :class="textColorClass">
+      <div class="mt-8" :class="textColorClass">
         <h2 class="text-2xl font-bold break-words">{{ parsedGreeting }}</h2>
         <p class="mt-1.5 text-base font-medium" :class="subTextColorClass">
           {{ parsedIntroduction }}

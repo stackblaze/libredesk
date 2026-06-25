@@ -1,28 +1,29 @@
 <template>
-  <div class="bg-background flex-1 flex flex-col">
+  <div class="prechat-form bg-background flex-1 flex flex-col">
     <div v-if="showForm" class="flex-1 flex flex-col max-h-full">
       <div
-        class="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/30 hover:scrollbar-thumb-muted-foreground/50 p-4 space-y-4"
+        class="prechat-form__body flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/30 hover:scrollbar-thumb-muted-foreground/50 px-5 py-6"
       >
         <!-- Form title -->
-        <div v-if="formTitle" class="text-xl text-foreground mb-2 text-center">
+        <div v-if="formTitle" class="prechat-form__title text-foreground mb-6 text-center">
           {{ formTitle }}
         </div>
 
-        <form ref="formRef" @submit.prevent="submitForm" class="space-y-4">
+        <form ref="formRef" @submit.prevent="submitForm" class="prechat-form__fields space-y-5">
           <!-- Dynamic fields -->
-          <div v-for="field in sortedFields" :key="field.key" class="space-y-2">
+          <div v-for="field in sortedFields" :key="field.key" class="prechat-form__field">
             <!-- Text input -->
             <FormField v-if="field.type === 'text'" v-slot="{ componentField }" :name="field.key">
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
                     type="text"
+                    :class="fieldInputClass"
                     :placeholder="field.placeholder || ''"
                   />
                 </FormControl>
@@ -37,14 +38,15 @@
               :name="field.key"
             >
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
                     type="email"
+                    :class="fieldInputClass"
                     :placeholder="field.placeholder || ''"
                   />
                 </FormControl>
@@ -59,14 +61,15 @@
               :name="field.key"
             >
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
                     type="number"
+                    :class="fieldInputClass"
                     :placeholder="field.placeholder || ''"
                   />
                 </FormControl>
@@ -81,14 +84,15 @@
               :name="field.key"
             >
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
                     type="date"
+                    :class="fieldInputClass"
                     :placeholder="field.placeholder || ''"
                   />
                 </FormControl>
@@ -103,14 +107,15 @@
               :name="field.key"
             >
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     v-bind="componentField"
                     type="url"
+                    :class="fieldInputClass"
                     :placeholder="field.placeholder || 'https://'"
                   />
                 </FormControl>
@@ -129,9 +134,9 @@
                   <Checkbox :checked="componentField.modelValue" @update:checked="handleChange" />
                 </FormControl>
                 <div class="space-y-1 leading-none">
-                  <FormLabel class="text-sm font-medium">
+                  <FormLabel class="prechat-form__checkbox-label">
                     {{ field.label }}
-                    <span v-if="field.required" class="text-destructive">*</span>
+                    <span v-if="field.required" class="text-destructive/80">*</span>
                   </FormLabel>
                   <FormMessage />
                 </div>
@@ -145,13 +150,13 @@
               :name="field.key"
             >
               <FormItem>
-                <FormLabel class="text-sm font-medium">
+                <FormLabel :class="fieldLabelClass">
                   {{ field.label }}
-                  <span v-if="field.required" class="text-destructive">*</span>
+                  <span v-if="field.required" class="text-destructive/80">*</span>
                 </FormLabel>
                 <FormControl>
                   <Select v-bind="componentField">
-                    <SelectTrigger>
+                    <SelectTrigger :class="fieldInputClass">
                       <SelectValue :placeholder="field.placeholder || $t('globals.terms.select')" />
                     </SelectTrigger>
                     <SelectContent>
@@ -173,8 +178,12 @@
       </div>
 
       <!-- Submit button - fixed at bottom -->
-      <div class="p-4 border-t">
-        <Button @click="submitForm" class="w-full" :disabled="!requiredFieldsFilled || !meta.valid || props.isSubmitting">
+      <div class="prechat-form__footer p-4 border-t border-border/40">
+        <Button
+          @click="submitForm"
+          class="prechat-form__submit w-full"
+          :disabled="!requiredFieldsFilled || !meta.valid || props.isSubmitting"
+        >
           <div
             v-if="props.isSubmitting"
             class="w-4 h-4 border-2 border-background border-t-current rounded-full animate-spin mr-2"
@@ -226,6 +235,9 @@ const emit = defineEmits(['submit'])
 const { t } = useI18n()
 const widgetStore = useWidgetStore()
 const formRef = ref(null)
+
+const fieldLabelClass = 'prechat-form__label'
+const fieldInputClass = 'prechat-form__input'
 
 const config = computed(() => widgetStore.config?.prechat_form || {})
 const preChatFormEnabled = computed(() => config.value.enabled || false)
@@ -333,3 +345,84 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style scoped>
+.prechat-form__title {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.prechat-form__field :deep(.prechat-form__label) {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+.prechat-form__field :deep(.prechat-form__label.text-destructive) {
+  color: hsl(var(--destructive));
+  text-transform: uppercase;
+}
+
+.prechat-form__field :deep(.prechat-form__checkbox-label) {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: hsl(var(--foreground) / 0.82);
+}
+
+.prechat-form__field :deep(.prechat-form__input) {
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--muted) / 0.28);
+  padding-inline: 0.875rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+  box-shadow: none;
+}
+
+.prechat-form__field :deep(.prechat-form__input::placeholder) {
+  color: hsl(var(--muted-foreground) / 0.5);
+  font-weight: 400;
+}
+
+.prechat-form__field :deep(.prechat-form__input:focus-visible) {
+  border-color: hsl(var(--primary) / 0.45);
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.18);
+}
+
+.prechat-form__field :deep(p.text-destructive) {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.prechat-form__footer :deep(.prechat-form__submit) {
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.prechat-form__footer :deep(.prechat-form__submit:disabled) {
+  opacity: 1;
+  background-color: hsl(var(--primary) / 0.38);
+  color: hsl(var(--primary-foreground) / 0.72);
+}
+</style>
