@@ -7,7 +7,7 @@
     <PreChatForm
       v-if="showPreChatForm"
       @submit="handlePreChatFormSubmit"
-      :exclude-default-fields="!!userStore.userSessionToken"
+      :exclude-default-fields="isIdentifiedVisitor"
       class="flex-1 min-h-0"
     />
 
@@ -45,6 +45,24 @@ const errorMessage = ref('')
 const preChatFormSubmitted = ref(false)
 const config = computed(() => widgetStore.config)
 
+// A visitor we already know: either a verified (logged-in) user, or a returning
+// visitor who previously gave us BOTH their name and email. These are recognized
+// and not re-asked for their details; everyone else must provide name + email
+// before each new chat.
+const isIdentifiedVisitor = computed(
+  () => !userStore.isVisitor || (!!userStore.firstName && !!userStore.email)
+)
+
+// Pre-chat fields we'd actually collect, after dropping the default name/email
+// fields for an already-identified visitor.
+const effectivePreChatFields = computed(() => {
+  const fields = (config.value?.prechat_form?.fields || []).filter((f) => f.enabled)
+  if (isIdentifiedVisitor.value) {
+    return fields.filter((f) => !['name', 'email'].includes(f.key))
+  }
+  return fields
+})
+
 // Determine if pre-chat form should be shown
 const showPreChatForm = computed(() => {
   const preChatForm = config.value?.prechat_form
@@ -54,9 +72,9 @@ const showPreChatForm = computed(() => {
     return false
   }
 
-  // Atleast one field must be enabled
-  const hasEnabledFields = preChatForm.fields?.some((field) => field.enabled)
-  if (!hasEnabledFields) {
+  // Nothing left to collect — e.g. a recognized returning visitor whose only
+  // pre-chat fields are name/email. Skip the form and go straight to chat.
+  if (effectivePreChatFields.value.length === 0) {
     return false
   }
 

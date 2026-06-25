@@ -8,12 +8,14 @@ export const useUserStore = defineStore('user', () => {
     const userID = ref(null)
     const firstName = ref('')
     const lastName = ref('')
+    const email = ref('')
 
-    const setUserMeta = ({ user_id, is_visitor, first_name, last_name }) => {
+    const setUserMeta = ({ user_id, is_visitor, first_name, last_name, email: userEmail }) => {
         userID.value = user_id || null
         isVisitor.value = is_visitor !== undefined ? is_visitor : true
         firstName.value = first_name || ''
         lastName.value = last_name || ''
+        email.value = userEmail || ''
     }
 
     const clearSessionToken = () => {
@@ -23,6 +25,7 @@ export const useUserStore = defineStore('user', () => {
         userID.value = null
         firstName.value = ''
         lastName.value = ''
+        email.value = ''
     }
 
     const setSessionToken = (token) => {
@@ -38,6 +41,7 @@ export const useUserStore = defineStore('user', () => {
         userID,
         firstName,
         lastName,
+        email,
         setUserMeta,
         clearSessionToken,
         setSessionToken

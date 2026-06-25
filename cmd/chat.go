@@ -309,6 +309,7 @@ func handleChatInit(r *fastglue.Request) error {
 			"is_visitor": isVisitor,
 			"first_name": visitor.FirstName,
 			"last_name":  visitor.LastName,
+			"email":      visitor.Email.String,
 		}
 	}
 
@@ -447,6 +448,7 @@ func handleWidgetAuthMe(r *fastglue.Request) error {
 		"is_visitor": u.Type == umodels.UserTypeVisitor,
 		"first_name": u.FirstName,
 		"last_name":  u.LastName,
+		"email":      u.Email.String,
 	})
 }
 

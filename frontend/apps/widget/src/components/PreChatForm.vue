@@ -232,14 +232,20 @@ const preChatFormEnabled = computed(() => config.value.enabled || false)
 const formTitle = computed(() => config.value.title || '')
 const formFields = computed(() => config.value.fields || [])
 
-// Sort and filter enabled fields, excluding default fields if user has session token
+// Sort and filter enabled fields, excluding default name/email for an already
+// identified visitor (verified user or a returning visitor we recognize).
 const sortedFields = computed(() => {
   let fields = formFields.value.filter((field) => field.enabled)
 
-  // If user has session token, exclude default name and email fields
   if (props.excludeDefaultFields) {
     fields = fields.filter((field) => !['name', 'email'].includes(field.key))
   }
+
+  // When we do ask for name/email (an unidentified visitor), they are always
+  // required, regardless of the admin's per-field setting.
+  fields = fields.map((field) =>
+    ['name', 'email'].includes(field.key) ? { ...field, required: true } : field
+  )
 
   return fields.sort((a, b) => (a.order || 0) - (b.order || 0))
 })
