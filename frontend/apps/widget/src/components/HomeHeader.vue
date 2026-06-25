@@ -9,9 +9,9 @@
         class="max-h-8 max-w-full"
       />
       <!-- Greeting and introduction -->
-      <div class="mt-24 font-bold text-4xl" :class="textColorClass">
-        <h2 class="break-all">{{ parsedGreeting }}</h2>
-        <p class="mt-2 font-semibold" :class="subTextColorClass">
+      <div class="mt-12" :class="textColorClass">
+        <h2 class="text-2xl font-bold break-words">{{ parsedGreeting }}</h2>
+        <p class="mt-1.5 text-base font-medium" :class="subTextColorClass">
           {{ parsedIntroduction }}
         </p>
       </div>
