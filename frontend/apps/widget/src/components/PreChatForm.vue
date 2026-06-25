@@ -180,8 +180,9 @@
       <!-- Submit button - fixed at bottom -->
       <div class="prechat-form__footer p-4 border-t border-border/40">
         <Button
+          type="submit"
           @click="submitForm"
-          class="prechat-form__submit w-full"
+          class="prechat-form__submit w-full cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-auto"
           :disabled="!requiredFieldsFilled || !meta.valid || props.isSubmitting"
         >
           <div
@@ -389,6 +390,16 @@ watch(
   line-height: 1.4;
   color: hsl(var(--foreground));
   box-shadow: none;
+  cursor: text;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.prechat-form__field :deep(.prechat-form__input:hover:not(:disabled):not(:focus-visible)) {
+  border-color: hsl(var(--primary) / 0.32);
+  background-color: hsl(var(--muted) / 0.4);
 }
 
 .prechat-form__field :deep(.prechat-form__input::placeholder) {
@@ -397,9 +408,10 @@ watch(
 }
 
 .prechat-form__field :deep(.prechat-form__input:focus-visible) {
-  border-color: hsl(var(--primary) / 0.45);
+  border-color: hsl(var(--primary) / 0.6);
+  background-color: hsl(var(--muted) / 0.34);
   outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.18);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.22);
 }
 
 .prechat-form__field :deep(p.text-destructive) {
@@ -418,11 +430,27 @@ watch(
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.prechat-form__footer :deep(.prechat-form__submit:not(:disabled):hover) {
+  background-color: hsl(var(--primary) / 0.88);
+  box-shadow: 0 6px 18px hsl(var(--primary) / 0.32);
+}
+
+.prechat-form__footer :deep(.prechat-form__submit:not(:disabled):active) {
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.24);
 }
 
 .prechat-form__footer :deep(.prechat-form__submit:disabled) {
   opacity: 1;
   background-color: hsl(var(--primary) / 0.38);
   color: hsl(var(--primary-foreground) / 0.72);
+  box-shadow: none;
+  transform: none;
 }
 </style>
