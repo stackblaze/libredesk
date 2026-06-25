@@ -3,10 +3,12 @@
     <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/30 hover:scrollbar-thumb-muted-foreground/50">
       <div class="flex flex-col">
         <HomeHeader :config="config">
-          <!-- Primary action renders on the gradient so it flows into the header.
-               We intentionally do NOT surface past conversations here — the home
-               screen is a clean "start a chat" entry; history lives in Messages. -->
-          <div v-if="canStartConversation">
+          <!-- Primary action renders on the gradient so it flows into the header. -->
+          <RecentConversationCard
+            v-if="mostRecentConversation"
+            :conversation="mostRecentConversation"
+          />
+          <div v-else-if="canStartConversation">
             <Button @click="startConversation" class="w-full flex items-center justify-center">
               {{ startButtonText }}
               <ArrowRight size="16" />
@@ -44,12 +46,19 @@ import HomeHeader from '@widget/components/HomeHeader.vue'
 import HomeExternalLink from '@widget/components/HomeExternalLink.vue'
 import AnnouncementCard from '@widget/components/AnnouncementCard.vue'
 import ConversationStarters from '@widget/components/ConversationStarters.vue'
+import RecentConversationCard from '@widget/components/RecentConversationCard.vue'
 
 const widgetStore = useWidgetStore()
 const chatStore = useChatStore()
 const userStore = useUserStore()
 const { t } = useI18n()
 const config = computed(() => widgetStore.config)
+
+const mostRecentConversation = computed(() => {
+  const conversations = chatStore.getConversations
+  if (!conversations || conversations.length === 0) return null
+  return conversations[0]
+})
 
 const canStartConversation = computed(() => {
   const userConfig = userStore.isVisitor ? config.value.visitors : config.value.users

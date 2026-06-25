@@ -96,7 +96,7 @@
           <div class="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
             <!-- Agent name and time for agent messages -->
             <span v-if="message.author.type === 'agent'">
-              {{ message.author.first_name }} {{ message.author.last_name }}
+              {{ message.author.first_name }}
               •
               {{ getMessageTime(message.created_at) }}
             </span>
@@ -128,20 +128,6 @@
         </div>
         </TransitionGroup>
 
-        <!-- First contact: a subtle, centered "connecting" system line (NOT a bubble). -->
-        <div v-if="isConnecting" class="flex items-center justify-center gap-2 py-2">
-          <span class="size-1.5 rounded-full bg-muted-foreground/50 animate-pulse"></span>
-          <span class="text-xs text-muted-foreground">{{ $t('globals.messages.connectingYou') }}</span>
-        </div>
-
-        <!-- Agent is composing a reply: typing indicator bubble. -->
-        <div v-else-if="showAgentTyping" class="flex flex-col items-start">
-          <div
-            class="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-5 bg-muted text-foreground rounded-bl-sm"
-          >
-            <TypingIndicator />
-          </div>
-        </div>
       </div>
     </div>
 
@@ -168,7 +154,6 @@ import ChatIntro from './ChatIntro.vue'
 import NoticeBanner from './NoticeBanner.vue'
 import MessageAttachment from './MessageAttachment.vue'
 import CSATMessageBubble from './CSATMessageBubble.vue'
-import { TypingIndicator } from '@shared-ui/components/TypingIndicator'
 import { Spinner } from '@shared-ui/components/ui/spinner'
 import { containsQuoteMarkers } from '@shared-ui/utils/quotedContent.js'
 import { useStickyScroll } from '@shared-ui/composables'
@@ -196,36 +181,7 @@ const { hasUserScrolled, scrollToBottom, handleScroll } = useStickyScroll(messag
 })
 
 const config = computed(() => widgetStore.config)
-const isTyping = computed(() => chatStore.isTyping)
 const isLoadingConversation = computed(() => chatStore.isLoadingConversation)
-
-// Human-like waiting states. "Awaiting reply" = the visitor's message is the
-// latest one, so the agent owes a response. On first contact (no agent message
-// yet) we show a brief "connecting you" line; after that we show a typing
-// indicator while the agent composes — both clear the moment the agent replies.
-// Never shows on a freshly opened/empty chat (there'd be nothing to wait for).
-const conversationMessages = computed(() => chatStore.getCurrentConversationMessages || [])
-const isCustomerAuthor = (m) => m?.author?.type === 'contact' || m?.author?.type === 'visitor'
-const hasAgentMessage = computed(() =>
-  conversationMessages.value.some((m) => !isCustomerAuthor(m))
-)
-// Only treat a chat as "awaiting a reply" briefly after a fresh visitor message.
-// Without this, re-opening any conversation where the visitor spoke last shows a
-// perpetual "typing" bubble (looks fake/suspicious) even though nobody's typing.
-const AWAITING_FRESH_WINDOW_MS = 90_000
-const awaitingAgentReply = computed(() => {
-  if (props.showPreChatForm || isLoadingConversation.value) return false
-  const msgs = conversationMessages.value
-  if (msgs.length === 0) return false
-  const last = msgs[msgs.length - 1]
-  if (!isCustomerAuthor(last)) return false
-  const ts = last.created_at ? new Date(last.created_at).getTime() : 0
-  return ts > 0 && Date.now() - ts < AWAITING_FRESH_WINDOW_MS
-})
-const isConnecting = computed(() => awaitingAgentReply.value && !hasAgentMessage.value)
-const showAgentTyping = computed(
-  () => isTyping.value || (awaitingAgentReply.value && hasAgentMessage.value)
-)
 
 const getMessageTime = (timestamp) => {
   return useRelativeTime(new Date(timestamp)).value

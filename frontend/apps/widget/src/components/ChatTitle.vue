@@ -17,12 +17,9 @@
         {{ chatTitle.name }}
       </h3>
       <p class="text-xs text-muted-foreground">
-        <!-- Show business hours status meaning we are out of business hours -->
-        <span v-if="businessHoursStatus">
-          {{ businessHoursStatus }}
-        </span>
+        <!-- Agent availability always wins so the online dot stays visible while they are assigned. -->
         <span
-          v-else-if="
+          v-if="
             chatTitle.availability_status === 'online' || chatTitle.availability_status === 'away'
           "
         >
@@ -34,6 +31,9 @@
             }"
           ></span>
           {{ chatTitle.availability_status === 'online' ? $t('globals.terms.online') : $t('globals.terms.away') }}
+        </span>
+        <span v-else-if="businessHoursStatus">
+          {{ businessHoursStatus }}
         </span>
         <span v-else-if="chatStore.currentConversation?.assignee?.active_at">
           {{ $t('globals.terms.active') }}
@@ -115,7 +115,7 @@ const chatTitle = computed(() => {
   const assignee = chatStore.currentConversation?.assignee
   if (assignee?.id && assignee?.id > 0) {
     return {
-      name: [assignee.first_name, assignee.last_name].filter(Boolean).join(' '),
+      name: assignee.first_name || '',
       avatarUrl: assignee.avatar_url || '',
       avatarFallback: assignee.first_name.charAt(0).toUpperCase(),
       availability_status: assignee.availability_status?.startsWith('away') ? 'away' : assignee.availability_status,
