@@ -230,7 +230,13 @@ jobs:
     # Only on main builds; uses a namespace-scoped ServiceAccount (patch the
     # single libredesk Deployment, nothing else).
     needs: docker
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # Same status-function requirement as `docker`: deploy sits downstream of the
+    # skipped test jobs, so without !cancelled() GitHub skips it even when the
+    # build succeeded. Guard on docker success so a failed build never deploys.
+    if: |
+      !cancelled() && needs.docker.result == 'success' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main'
     runs-on: [self-hosted, kubero]
     steps:
       - name: Deploy to prod
