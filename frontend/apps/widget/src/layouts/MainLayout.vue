@@ -18,12 +18,12 @@
         class="grid grid-cols-2 h-auto bg-background border-t rounded-none p-0 pb-[env(safe-area-inset-bottom)]"
       >
         <TabsTrigger value="home" class="nav-tab">
-          <House class="w-5 h-5" />
-          <span class="text-xs font-medium">{{ $t('globals.terms.home') }}</span>
+          <House class="w-4 h-4" />
+          <span class="text-[10px] font-medium leading-none">{{ $t('globals.terms.home') }}</span>
         </TabsTrigger>
         <TabsTrigger value="messages" class="nav-tab">
-          <MessagesSquare class="w-5 h-5" />
-          <span class="text-xs font-medium">{{ $t('globals.terms.message', 2) }}</span>
+          <MessagesSquare class="w-4 h-4" />
+          <span class="text-[10px] font-medium leading-none">{{ $t('globals.terms.message', 2) }}</span>
         </TabsTrigger>
       </TabsList>
       <div
@@ -69,9 +69,9 @@ const handleTabChange = (value) => {
 
 <style scoped>
 .nav-tab {
-  @apply flex flex-col items-center justify-center gap-1 w-full px-0 py-4
+  @apply flex flex-col items-center justify-center gap-0.5 w-full px-0 py-2
          rounded-none shadow-none cursor-pointer transition-colors
-         text-muted-foreground;
+         text-muted-foreground min-h-0;
 }
 .nav-tab[data-state='active'] {
   @apply bg-transparent shadow-none text-primary;

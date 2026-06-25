@@ -1,5 +1,8 @@
 <template>
-  <div v-if="starters.length" class="flex flex-col gap-2 px-4 pt-3 pb-4 bg-background">
+  <div
+    v-if="starters.length"
+    :class="['flex flex-col gap-2 px-4 pb-4 bg-background', heading ? 'pt-3' : 'pt-1']"
+  >
     <div v-if="heading" class="text-sm font-medium text-foreground">{{ heading }}</div>
     <div class="space-y-1.5">
       <Card
@@ -40,7 +43,9 @@ const DEFAULT_STARTERS = [
   { text: 'Book a demo', message: "I'd like to book a demo." }
 ]
 
-const heading = computed(() => config.value?.conversation_starters_heading || 'How can we help you today?')
+// Optional section title; leave empty by default — the home header greeting
+// already welcomes the visitor, so a second heading feels redundant.
+const heading = computed(() => config.value?.conversation_starters_heading || '')
 
 const starters = computed(() => {
   const configured = (config.value?.home_apps || [])
