@@ -128,12 +128,15 @@
         </div>
         </TransitionGroup>
 
-        <!-- Typing Indicator -->
-        <div v-if="isTyping" class="flex flex-col items-start">
+        <!-- Connecting status (until the agent's first message) / Typing Indicator -->
+        <div v-if="isConnecting || isTyping" class="flex flex-col items-start">
           <div
             class="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-5 bg-muted text-foreground rounded-bl-sm"
           >
-            <TypingIndicator />
+            <span v-if="isConnecting" class="text-muted-foreground">
+              {{ $t('globals.messages.connectingYou') }}
+            </span>
+            <TypingIndicator v-else />
           </div>
         </div>
       </div>
@@ -192,6 +195,21 @@ const { hasUserScrolled, scrollToBottom, handleScroll } = useStickyScroll(messag
 const config = computed(() => widgetStore.config)
 const isTyping = computed(() => chatStore.isTyping)
 const isLoadingConversation = computed(() => chatStore.isLoadingConversation)
+
+// "Connecting you" status: an active conversation that has no agent message yet
+// (waiting on the agent's greeting / first reply). Clears once the agent speaks.
+const hasAgentMessage = computed(() =>
+  (chatStore.getCurrentConversationMessages || []).some(
+    (m) => m.author?.type !== 'contact' && m.author?.type !== 'visitor'
+  )
+)
+const isConnecting = computed(
+  () =>
+    !props.showPreChatForm &&
+    !isLoadingConversation.value &&
+    !!chatStore.currentConversation &&
+    !hasAgentMessage.value
+)
 
 const getMessageTime = (timestamp) => {
   return useRelativeTime(new Date(timestamp)).value

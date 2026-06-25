@@ -666,6 +666,7 @@
   "globals.messages.saving": "Saving...",
   "globals.messages.selectAFutureTime": "Select a future time",
   "globals.messages.selectTLS": "Select TLS type",
+  "globals.messages.connectingYou": "Please wait while we connect you…",
   "globals.messages.send": "Send",
   "globals.messages.sendUsMessage": "Send us a message",
   "globals.messages.sending": "Sending...",
