@@ -2,14 +2,14 @@
   <div class="prechat-form bg-background flex-1 flex flex-col">
     <div v-if="showForm" class="flex-1 flex flex-col max-h-full">
       <div
-        class="prechat-form__body flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/30 hover:scrollbar-thumb-muted-foreground/50 px-5 py-6"
+        class="prechat-form__body flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/30 hover:scrollbar-thumb-muted-foreground/50 px-4 py-4"
       >
         <!-- Form title -->
-        <div v-if="formTitle" class="prechat-form__title text-foreground mb-6 text-center">
+        <div v-if="formTitle" class="prechat-form__title text-foreground mb-4 text-center">
           {{ formTitle }}
         </div>
 
-        <form ref="formRef" @submit.prevent="submitForm" class="prechat-form__fields space-y-5">
+        <form ref="formRef" @submit.prevent="submitForm" class="prechat-form__fields space-y-3.5">
           <!-- Dynamic fields -->
           <div v-for="field in sortedFields" :key="field.key" class="prechat-form__field">
             <!-- Text input -->
@@ -178,11 +178,12 @@
       </div>
 
       <!-- Submit button - fixed at bottom -->
-      <div class="prechat-form__footer p-4 border-t border-border/40">
+      <div class="prechat-form__footer px-4 py-3 border-t border-border/40">
         <Button
+          variant="outline"
           type="submit"
           @click="submitForm"
-          class="prechat-form__submit w-full cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-auto"
+          class="prechat-form__submit w-full shadow-none cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-100"
           :disabled="!requiredFieldsFilled || !meta.valid || props.isSubmitting"
         >
           <div
@@ -350,13 +351,14 @@ watch(
 <style scoped>
 .prechat-form__title {
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .prechat-form__field :deep(.prechat-form__label) {
+  margin-bottom: 0.375rem;
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -380,14 +382,15 @@ watch(
 }
 
 .prechat-form__field :deep(.prechat-form__input) {
-  height: 2.75rem;
-  border-radius: 0.75rem;
-  border-color: hsl(var(--border));
-  background-color: hsl(var(--muted) / 0.28);
-  padding-inline: 0.875rem;
-  font-size: 1rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.9);
+  background-color: hsl(var(--muted) / 0.22);
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.35;
   color: hsl(var(--foreground));
   box-shadow: none;
   cursor: text;
@@ -397,21 +400,27 @@ watch(
     box-shadow 0.15s ease;
 }
 
+@media (max-width: 639px) {
+  .prechat-form__field :deep(.prechat-form__input) {
+    font-size: 16px;
+  }
+}
+
 .prechat-form__field :deep(.prechat-form__input:hover:not(:disabled):not(:focus-visible)) {
-  border-color: hsl(var(--primary) / 0.32);
-  background-color: hsl(var(--muted) / 0.4);
+  border-color: hsl(var(--primary) / 0.28);
+  background-color: hsl(var(--muted) / 0.32);
 }
 
 .prechat-form__field :deep(.prechat-form__input::placeholder) {
-  color: hsl(var(--muted-foreground) / 0.5);
+  color: hsl(var(--muted-foreground) / 0.45);
   font-weight: 400;
 }
 
 .prechat-form__field :deep(.prechat-form__input:focus-visible) {
-  border-color: hsl(var(--primary) / 0.6);
-  background-color: hsl(var(--muted) / 0.34);
+  border-color: hsl(var(--primary) / 0.5);
+  background-color: hsl(var(--muted) / 0.28);
   outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.22);
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.18);
 }
 
 .prechat-form__field :deep(p.text-destructive) {
@@ -423,33 +432,46 @@ watch(
 }
 
 .prechat-form__footer :deep(.prechat-form__submit) {
-  height: 2.75rem;
-  border-radius: 0.75rem;
+  height: 2.375rem;
+  min-height: 2.375rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.06);
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
+  color: hsl(var(--foreground));
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  -webkit-font-smoothing: antialiased;
+  transform: none;
   transition:
-    background-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.12s ease;
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .prechat-form__footer :deep(.prechat-form__submit:not(:disabled):hover) {
-  background-color: hsl(var(--primary) / 0.88);
-  box-shadow: 0 6px 18px hsl(var(--primary) / 0.32);
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: hsl(var(--foreground));
+  box-shadow: none;
 }
 
 .prechat-form__footer :deep(.prechat-form__submit:not(:disabled):active) {
-  transform: scale(0.985);
-  box-shadow: 0 2px 8px hsl(var(--primary) / 0.24);
+  border-color: rgba(255, 255, 255, 0.16);
+  background-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  transform: none;
 }
 
 .prechat-form__footer :deep(.prechat-form__submit:disabled) {
   opacity: 1;
-  background-color: hsl(var(--primary) / 0.38);
-  color: hsl(var(--primary-foreground) / 0.72);
+  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.03);
+  color: hsl(var(--muted-foreground) / 0.65);
   box-shadow: none;
   transform: none;
 }
