@@ -115,7 +115,7 @@ const chatTitle = computed(() => {
   const assignee = chatStore.currentConversation?.assignee
   if (assignee?.id && assignee?.id > 0) {
     return {
-      name: assignee.first_name,
+      name: [assignee.first_name, assignee.last_name].filter(Boolean).join(' '),
       avatarUrl: assignee.avatar_url || '',
       avatarFallback: assignee.first_name.charAt(0).toUpperCase(),
       availability_status: assignee.availability_status?.startsWith('away') ? 'away' : assignee.availability_status,
