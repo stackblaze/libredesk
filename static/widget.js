@@ -23,7 +23,8 @@
             this.IFRAME_BOX_SHADOW = '0 12px 48px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.25)';
             this.IFRAME_WIDTH = '400px';
             this.IFRAME_HEIGHT = '700px';
-            this.EXPANDED_WIDTH = '750px';
+            // Expanded view: noticeably larger, capped to the viewport on smaller screens.
+            this.EXPANDED_WIDTH = 'min(1040px, calc(100vw - 40px))';
             this.MOBILE_BREAKPOINT = 600;
             this.LAUNCHER_SIZE = 60;
             this.MOBILE_LAUNCHER_SIZE = 50;

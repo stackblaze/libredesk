@@ -209,10 +209,18 @@ const isCustomerAuthor = (m) => m?.author?.type === 'contact' || m?.author?.type
 const hasAgentMessage = computed(() =>
   conversationMessages.value.some((m) => !isCustomerAuthor(m))
 )
+// Only treat a chat as "awaiting a reply" briefly after a fresh visitor message.
+// Without this, re-opening any conversation where the visitor spoke last shows a
+// perpetual "typing" bubble (looks fake/suspicious) even though nobody's typing.
+const AWAITING_FRESH_WINDOW_MS = 90_000
 const awaitingAgentReply = computed(() => {
   if (props.showPreChatForm || isLoadingConversation.value) return false
   const msgs = conversationMessages.value
-  return msgs.length > 0 && isCustomerAuthor(msgs[msgs.length - 1])
+  if (msgs.length === 0) return false
+  const last = msgs[msgs.length - 1]
+  if (!isCustomerAuthor(last)) return false
+  const ts = last.created_at ? new Date(last.created_at).getTime() : 0
+  return ts > 0 && Date.now() - ts < AWAITING_FRESH_WINDOW_MS
 })
 const isConnecting = computed(() => awaitingAgentReply.value && !hasAgentMessage.value)
 const showAgentTyping = computed(
