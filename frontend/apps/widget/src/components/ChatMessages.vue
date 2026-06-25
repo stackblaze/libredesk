@@ -128,6 +128,13 @@
         </div>
         </TransitionGroup>
 
+        <!-- Handoff notice: a human took over from whoever was assigned before. -->
+        <div v-if="handoffName" class="flex items-center justify-center py-2">
+          <span class="text-xs text-muted-foreground">
+            {{ $t('globals.messages.nowChattingWith', { name: handoffName }) }}
+          </span>
+        </div>
+
       </div>
     </div>
 
@@ -183,6 +190,26 @@ const { hasUserScrolled, scrollToBottom, handleScroll } = useStickyScroll(messag
 const config = computed(() => widgetStore.config)
 const isLoadingConversation = computed(() => chatStore.isLoadingConversation)
 
+// Show a "you're now chatting with X" line when the conversation is reassigned
+// from one agent to a different one (e.g. the AI hands off to a human). Only on
+// a genuine change between two agents — not the first assignment.
+const handoffName = ref('')
+watch(
+  () => chatStore.currentConversation?.assignee?.id,
+  (newId, oldId) => {
+    const assignee = chatStore.currentConversation?.assignee
+    if (newId && oldId && newId !== oldId && assignee?.first_name) {
+      handoffName.value = assignee.first_name
+    }
+  }
+)
+watch(
+  () => chatStore.currentConversation?.uuid,
+  () => {
+    handoffName.value = ''
+  }
+)
+
 const getMessageTime = (timestamp) => {
   return useRelativeTime(new Date(timestamp)).value
 }
@@ -225,6 +252,13 @@ const handleScrollToBottom = () => {
   scrollToBottom()
 }
 
+const scrollToLatest = (force = false) => {
+  if (!widgetStore.isOpen) return
+  if (force) hasUserScrolled.value = false
+  if (!force && hasUserScrolled.value) return
+  nextTick(scrollToBottom)
+}
+
 // Debounced version for tab-switch and widget-open triggers only.
 // New message and conversation switch call the store function directly.
 const debouncedUpdateLastSeen = useDebounceFn(() => {
@@ -249,7 +283,7 @@ watch(
     currentConversationUUID.value = newUUID
     unreadMessages.value = 0
     hasUserScrolled.value = false
-    nextTick(scrollToBottom)
+    scrollToLatest(true)
     if (widgetStore.isOpen && !chatStore.isLoadingConversation) {
       chatStore.updateCurrentConversationLastSeen()
     }
@@ -257,16 +291,15 @@ watch(
   { immediate: true }
 )
 
-// New message arrival - update last seen for agent messages, increment unread if user scrolled up, force-stick for own messages.
+// New message arrival - stick to bottom unless the user scrolled up to read history.
 watch(
   () => chatStore.getCurrentConversationMessages.length,
   (newLen, oldLen) => {
     if (oldLen === 0 && newLen > 0) {
-      hasUserScrolled.value = false
-      nextTick(scrollToBottom)
+      scrollToLatest(true)
       return
     }
-    if (!oldLen || !widgetStore.isOpen) return
+    if (oldLen === undefined || !widgetStore.isOpen) return
     if (newLen <= oldLen) return
     const messages = chatStore.getCurrentConversationMessages
     const newMessage = messages[messages.length - 1]
@@ -278,12 +311,30 @@ watch(
     }
 
     if (isOwnMessage) {
-      hasUserScrolled.value = false
+      scrollToLatest(true)
     } else if (hasUserScrolled.value) {
       unreadMessages.value++
+    } else {
+      scrollToLatest()
     }
   }
 )
+
+// Pending messages become real ones without changing list length.
+watch(
+  () => {
+    const msgs = chatStore.getCurrentConversationMessages
+    const last = msgs[msgs.length - 1]
+    return last ? `${last.uuid}:${last.status ?? ''}` : ''
+  },
+  () => {
+    scrollToLatest()
+  }
+)
+
+watch(handoffName, (name) => {
+  if (name) scrollToLatest()
+})
 
 // Widget opening - direct_to_conversation case where messages load while widget is hidden.
 watch(
@@ -291,7 +342,7 @@ watch(
   (isOpen) => {
     if (isOpen && chatStore.currentConversation?.uuid) {
       chatStore.updateCurrentConversationLastSeen()
-      if (!hasUserScrolled.value) scrollToBottom()
+      scrollToLatest()
     }
   }
 )
