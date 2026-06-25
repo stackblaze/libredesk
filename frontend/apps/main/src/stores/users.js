@@ -14,6 +14,7 @@ export const useUsersStore = defineStore('users', () => {
         value: String(user.id),
         avatar_url: user.avatar_url,
         availability_status: user.availability_status,
+        team_ids: (user.teams || []).map((team) => String(team.id)),
     })))
     const fetchUsers = async (force = false) => {
         if (!force && users.value.length) return

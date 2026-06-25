@@ -1,5 +1,12 @@
 -- name: get-users-compact
-SELECT COUNT(*) OVER() as total, users.id, users.avatar_url, users.type, users.created_at, users.updated_at, users.first_name, users.last_name, users.email, users.enabled, users.external_user_id, users.availability_status
+SELECT COUNT(*) OVER() as total, users.id, users.avatar_url, users.type, users.created_at, users.updated_at, users.first_name, users.last_name, users.email, users.enabled, users.external_user_id, users.availability_status,
+COALESCE(
+    (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'emoji', t.emoji))
+     FROM team_members tm
+     JOIN teams t ON tm.team_id = t.id
+     WHERE tm.user_id = users.id),
+    '[]'
+) AS teams
 FROM users
 WHERE users.email != 'System' AND users.deleted_at IS NULL AND type = ANY($1)
 

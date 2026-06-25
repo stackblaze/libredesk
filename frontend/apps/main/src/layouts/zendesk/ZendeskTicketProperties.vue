@@ -8,11 +8,11 @@
     </div>
 
     <div class="prop-field">
-      <p class="prop-label">{{ t('globals.terms.assignee') }}</p>
+      <p class="prop-label">{{ t('zendesk.assignee') }}</p>
       <SelectComboBox
         v-if="conversationStore.current"
         v-model="conversationStore.current.assigned_user_id"
-        :items="[{ value: 'none', label: t('globals.terms.none') }, ...usersStore.options]"
+        :items="[{ value: 'none', label: t('globals.terms.none') }, ...agentOptions]"
         :placeholder="t('placeholders.selectAgent')"
         @select="selectAgent"
         type="user"
@@ -79,17 +79,21 @@ import { useI18n } from 'vue-i18n'
 import { SelectTag } from '@shared-ui/components/ui/select'
 import SelectComboBox from '@main/components/combobox/SelectCombobox.vue'
 import { useConversationStore } from '@main/stores/conversation'
-import { useUsersStore } from '@main/stores/users'
 import { useTeamStore } from '@main/stores/team'
 import { useTagStore } from '@main/stores/tag'
 import { TAG_ACTION } from '@/constants/conversation'
+import { useTeamFilteredAgentOptions } from '@main/composables/useTeamFilteredAgentOptions'
 import ZendeskMacroPicker from './ZendeskMacroPicker.vue'
 
 const { t } = useI18n()
 const conversationStore = useConversationStore()
-const usersStore = useUsersStore()
 const teamsStore = useTeamStore()
 const tagStore = useTagStore()
+
+const agentOptions = useTeamFilteredAgentOptions(
+  computed(() => conversationStore.current?.assigned_team_id),
+  computed(() => conversationStore.current?.assigned_user_id)
+)
 
 onMounted(async () => {
   await tagStore.fetchTags()

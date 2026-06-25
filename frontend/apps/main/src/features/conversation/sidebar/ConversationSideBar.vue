@@ -12,7 +12,7 @@
           <div>
             <SelectComboBox
               v-model="conversationStore.current.assigned_user_id"
-              :items="[{ value: 'none', label: t('globals.terms.none') }, ...usersStore.options]"
+              :items="[{ value: 'none', label: t('globals.terms.none') }, ...agentOptions]"
               :placeholder="t('placeholders.selectAgent')"
               @select="selectAgent"
               type="user"
@@ -124,7 +124,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useConversationStore } from '@/stores/conversation'
-import { useUsersStore } from '@/stores/users'
 import { useTeamStore } from '@/stores/team'
 import { useTagStore } from '@/stores/tag'
 import { useUserStore } from '@/stores/user'
@@ -149,17 +148,23 @@ import PreviousConversations from '@/features/conversation/sidebar/PreviousConve
 import ConversationSideBarPageVisits from '@/features/conversation/sidebar/ConversationSideBarPageVisits.vue'
 import SelectComboBox from '@main/components/combobox/SelectCombobox.vue'
 import { TAG_ACTION } from '@/constants/conversation'
+import { useTeamFilteredAgentOptions } from '@main/composables/useTeamFilteredAgentOptions'
 import api from '../../../api'
 
 const customAttributeStore = useCustomAttributeStore()
 const emitter = useEmitter()
 const conversationStore = useConversationStore()
-const usersStore = useUsersStore()
 const teamsStore = useTeamStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
 const accordionState = useStorage('conversation-sidebar-accordion', [])
 const { t } = useI18n()
+
+const agentOptions = useTeamFilteredAgentOptions(
+  computed(() => conversationStore.current?.assigned_team_id),
+  computed(() => conversationStore.current?.assigned_user_id)
+)
+
 customAttributeStore.fetchCustomAttributes()
 
 onMounted(async () => {
