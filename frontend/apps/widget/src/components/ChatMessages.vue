@@ -128,15 +128,18 @@
         </div>
         </TransitionGroup>
 
-        <!-- Connecting status (until the agent's first message) / Typing Indicator -->
-        <div v-if="isConnecting || isTyping" class="flex flex-col items-start">
+        <!-- Connecting status: a subtle, centered system line (NOT a chat bubble). -->
+        <div v-if="isConnecting" class="flex items-center justify-center gap-2 py-2">
+          <span class="size-1.5 rounded-full bg-muted-foreground/50 animate-pulse"></span>
+          <span class="text-xs text-muted-foreground">{{ $t('globals.messages.connectingYou') }}</span>
+        </div>
+
+        <!-- Typing Indicator (agent is actively typing) -->
+        <div v-else-if="isTyping" class="flex flex-col items-start">
           <div
             class="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-5 bg-muted text-foreground rounded-bl-sm"
           >
-            <span v-if="isConnecting" class="text-muted-foreground">
-              {{ $t('globals.messages.connectingYou') }}
-            </span>
-            <TypingIndicator v-else />
+            <TypingIndicator />
           </div>
         </div>
       </div>
@@ -196,18 +199,26 @@ const config = computed(() => widgetStore.config)
 const isTyping = computed(() => chatStore.isTyping)
 const isLoadingConversation = computed(() => chatStore.isLoadingConversation)
 
-// "Connecting you" status: an active conversation that has no agent message yet
-// (waiting on the agent's greeting / first reply). Clears once the agent speaks.
+// "Connecting you" status: shown ONLY after the visitor has sent a message and
+// is waiting on the agent's first reply. It must never show on a freshly opened
+// or empty chat (there'd be nothing to connect to — a stuck state). Clears the
+// moment the agent speaks.
+const conversationMessages = computed(() => chatStore.getCurrentConversationMessages || [])
 const hasAgentMessage = computed(() =>
-  (chatStore.getCurrentConversationMessages || []).some(
+  conversationMessages.value.some(
     (m) => m.author?.type !== 'contact' && m.author?.type !== 'visitor'
+  )
+)
+const hasCustomerMessage = computed(() =>
+  conversationMessages.value.some(
+    (m) => m.author?.type === 'contact' || m.author?.type === 'visitor'
   )
 )
 const isConnecting = computed(
   () =>
     !props.showPreChatForm &&
     !isLoadingConversation.value &&
-    !!chatStore.currentConversation &&
+    hasCustomerMessage.value &&
     !hasAgentMessage.value
 )
 
