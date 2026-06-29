@@ -9,6 +9,7 @@
     .gutter { padding:24px; }
     .wrap { background-color:#ffffff; padding:40px; max-width:560px; margin:0 auto; border-radius:8px; border:1px solid #e4e4e7; }
     .header { padding-bottom:20px; margin-bottom:24px; border-bottom:1px solid #e4e4e7; }
+    .header-brand { font-size:18px; font-weight:700; color:#09090b; line-height:1.2; }
     .content { color:#09090b; white-space:pre-wrap; word-break:break-word; }
     .signature { margin-top:28px; padding-top:20px; border-top:1px solid #e4e4e7; color:#09090b; }
     .footer { text-align:center; font-size:12px; color:#a1a1aa; padding:24px 8px 8px; }
@@ -25,13 +26,22 @@
   <div class="gutter">&nbsp;</div>
   <div class="wrap">
     <div class="header">
-      {{ if ne EmailLogoURL "" }}
-        <img src="{{ EmailLogoURL }}" alt="{{ if ne SiteName "" }}{{ SiteName }}{{ else }}Stackblaze{{ end }}" height="26" style="height:26px;width:auto;display:block;border:0;">
-      {{ else if ne LogoURL "" }}
-        <img src="{{ LogoURL }}" alt="{{ if ne SiteName "" }}{{ SiteName }}{{ else }}Stackblaze{{ end }}" height="26" style="height:26px;width:auto;display:block;border:0;">
-      {{ else }}
-        <span style="font-size:18px;font-weight:700;color:#09090b;">{{ if ne SiteName "" }}{{ SiteName }}{{ else }}Stackblaze{{ end }}</span>
-      {{ end }}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{ if ne EmailLogoURL "" }}
+          <td style="vertical-align:middle;padding-right:10px;">
+            <img src="{{ EmailLogoURL }}" alt="" height="26" style="height:26px;width:auto;display:block;border:0;">
+          </td>
+          {{ else if ne LogoURL "" }}
+          <td style="vertical-align:middle;padding-right:10px;">
+            <img src="{{ LogoURL }}" alt="" height="26" style="height:26px;width:auto;display:block;border:0;">
+          </td>
+          {{ end }}
+          <td style="vertical-align:middle;">
+            <span class="header-brand">{{ if ne SiteName "" }}{{ SiteName }}{{ else }}Stackblaze{{ end }} Support</span>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <div class="content">{{ template "content" . }}</div>
