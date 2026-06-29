@@ -461,6 +461,15 @@ func getTmplFuncs(consts *constants, i18n *i18n.I18n) template.FuncMap {
 		"LogoURL": func() string {
 			return consts.LogoURL
 		},
+		// EmailLogoURL is a public HTTPS PNG bundled for email clients (Gmail
+		// blocks SVG and many app.logo_url values are not email-safe).
+		"EmailLogoURL": func() string {
+			base := strings.TrimRight(consts.AppBaseURL, "/")
+			if base == "" {
+				return ""
+			}
+			return base + "/static/public/email-logo.png"
+		},
 		"SiteName": func() string {
 			return consts.SiteName
 		},
