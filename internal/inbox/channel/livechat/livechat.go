@@ -105,6 +105,8 @@ type Config struct {
 		ImageURL    string `json:"image_url,omitempty"`
 		URL         string `json:"url"`
 		Text        string `json:"text,omitempty"`
+		Message     string `json:"message,omitempty"`
+		Intent      string `json:"intent,omitempty"`
 	} `json:"home_apps"`
 	TrustedDomains                 []string         `json:"trusted_domains"`
 	BlockedIPs                     []string         `json:"blocked_ips"`

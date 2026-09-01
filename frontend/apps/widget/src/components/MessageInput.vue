@@ -131,8 +131,10 @@ const initChatConversation = async (messageText) => {
   if (chatStore.pendingFormData) {
     payload.form_data = chatStore.pendingFormData
   }
+  payload.intent = chatStore.pendingIntent === 'support' ? 'support' : 'sales'
   const resp = await api.initChatConversation(payload)
   chatStore.pendingFormData = null
+  chatStore.pendingIntent = 'sales'
   const { conversation, session_token, user, messages, business_hours_id, working_hours_utc_offset } =
     resp.data.data
   conversation.business_hours_id = business_hours_id

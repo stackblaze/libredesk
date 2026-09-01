@@ -81,8 +81,9 @@ const startButtonText = computed(() => {
 })
 
 const startConversation = () => {
-  // Freeform start: clear any starter chosen earlier so the composer opens empty.
+  // Freeform start: sales by default. Clear any support starter chosen earlier.
   chatStore.pendingStarterMessage = null
+  chatStore.pendingIntent = 'sales'
   chatStore.setCurrentConversation(null)
   widgetStore.navigateToChat()
 }

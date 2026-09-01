@@ -126,3 +126,13 @@ SET
 WHERE
     id = $1
 RETURNING *;
+
+-- name: get-discord-thread
+SELECT thread_id
+FROM webhook_discord_threads
+WHERE webhook_id = $1 AND conversation_uuid = $2;
+
+-- name: upsert-discord-thread
+INSERT INTO webhook_discord_threads (webhook_id, conversation_uuid, thread_id)
+VALUES ($1, $2, $3)
+ON CONFLICT (webhook_id, conversation_uuid) DO NOTHING;

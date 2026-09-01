@@ -3,6 +3,7 @@ package webhook
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -11,24 +12,26 @@ import (
 )
 
 const (
-	discordTitleLimit = 256
-	discordDescLimit  = 4096
-	discordFieldLimit = 1024
+	discordTitleLimit      = 256
+	discordDescLimit       = 4096
+	discordFieldLimit      = 1024
+	discordThreadNameLimit = 100
 )
 
 type discordPayload struct {
-	Username string         `json:"username,omitempty"`
-	Embeds   []discordEmbed `json:"embeds"`
+	Username   string         `json:"username,omitempty"`
+	Embeds     []discordEmbed `json:"embeds"`
+	ThreadName string         `json:"thread_name,omitempty"`
 }
 
 type discordEmbed struct {
-	Title       string          `json:"title,omitempty"`
-	Description string          `json:"description,omitempty"`
-	URL         string          `json:"url,omitempty"`
-	Color       int             `json:"color,omitempty"`
-	Timestamp   string          `json:"timestamp,omitempty"`
-	Fields      []discordField  `json:"fields,omitempty"`
-	Footer      *discordFooter  `json:"footer,omitempty"`
+	Title       string         `json:"title,omitempty"`
+	Description string         `json:"description,omitempty"`
+	URL         string         `json:"url,omitempty"`
+	Color       int            `json:"color,omitempty"`
+	Timestamp   string         `json:"timestamp,omitempty"`
+	Fields      []discordField `json:"fields,omitempty"`
+	Footer      *discordFooter `json:"footer,omitempty"`
 }
 
 type discordField struct {
@@ -62,7 +65,7 @@ func usesDiscordPayload(w models.Webhook) bool {
 	return w.Delivery == models.DeliveryDiscord || models.IsDiscordWebhookURL(w.URL)
 }
 
-func buildDiscordPayload(task DeliveryTask, rootURL string) ([]byte, error) {
+func buildDiscordPayload(task DeliveryTask, rootURL, threadName string) ([]byte, error) {
 	payload := mapFrom(task.Payload)
 	conv := mapFrom(payload["conversation"])
 	if conv == nil && looksLikeConversation(payload) {
@@ -126,10 +129,69 @@ func buildDiscordPayload(task DeliveryTask, rootURL string) ([]byte, error) {
 		embed.Fields = appendField(embed.Fields, "Tags", tags, false)
 	}
 
-	return json.Marshal(discordPayload{
+	p := discordPayload{
 		Username: "Libredesk",
 		Embeds:   []discordEmbed{embed},
-	})
+	}
+	if threadName != "" {
+		p.ThreadName = truncate(threadName, discordThreadNameLimit)
+	}
+	return json.Marshal(p)
+}
+
+func conversationUUIDFromTask(task DeliveryTask) string {
+	payload := mapFrom(task.Payload)
+	conv := mapFrom(payload["conversation"])
+	if conv == nil && looksLikeConversation(payload) {
+		conv = payload
+	}
+	return firstNonEmpty(strVal(payload, "conversation_uuid"), strVal(payload, "uuid"), strVal(conv, "uuid"))
+}
+
+func discordThreadName(task DeliveryTask) string {
+	payload := mapFrom(task.Payload)
+	conv := mapFrom(payload["conversation"])
+	if conv == nil && looksLikeConversation(payload) {
+		conv = payload
+	}
+	ref := firstNonEmpty(strVal(conv, "reference_number"), strVal(payload, "reference_number"))
+	subject := firstNonEmpty(strVal(conv, "subject"), strVal(payload, "subject"))
+	contact := contactName(conv, payload)
+	label := firstNonEmpty(subject, contact, "Conversation")
+	if ref != "" {
+		return truncate("#"+ref+" "+label, discordThreadNameLimit)
+	}
+	return truncate(label, discordThreadNameLimit)
+}
+
+func discordExecuteURL(rawURL, threadID string, wait bool) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	if threadID != "" {
+		q.Set("thread_id", threadID)
+	} else {
+		q.Del("thread_id")
+	}
+	if wait {
+		q.Set("wait", "true")
+	} else {
+		q.Del("wait")
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+func discordThreadIDFromResponse(body []byte) string {
+	var msg struct {
+		ChannelID string `json:"channel_id"`
+	}
+	if err := json.Unmarshal(body, &msg); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(msg.ChannelID)
 }
 
 func discordEventMeta(event models.WebhookEvent) (string, int) {

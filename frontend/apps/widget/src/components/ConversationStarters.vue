@@ -26,13 +26,14 @@ const widgetStore = useWidgetStore()
 const chatStore = useChatStore()
 const config = computed(() => widgetStore.config)
 
-// Sensible defaults; all route to the live-chat agent. Override per-deploy by
-// adding home_apps items of type 'conversation_starter' ({ text, message }).
+// Sales vs support: the black Start conversation button and sales starters
+// land on the Sales team; account help is Support. Override per-deploy by
+// adding home_apps items of type 'conversation_starter' ({ text, message, intent }).
 const DEFAULT_STARTERS = [
-  { text: 'Talk to sales', message: "I'd like to talk to sales." },
-  { text: 'Get help with my account', message: 'I need help with my account.' },
-  { text: 'Pricing & plans', message: 'Can you tell me about pricing and plans?' },
-  { text: 'Book a demo', message: "I'd like to book a demo." }
+  { text: 'Talk to sales', message: "I'd like to talk to sales.", intent: 'sales' },
+  { text: 'Get help with my account', message: 'I need help with my account.', intent: 'support' },
+  { text: 'Pricing & plans', message: 'Can you tell me about pricing and plans?', intent: 'sales' },
+  { text: 'Book a demo', message: "I'd like to book a demo.", intent: 'sales' }
 ]
 
 // Optional section title; leave empty by default — the home header greeting
@@ -42,12 +43,17 @@ const heading = computed(() => config.value?.conversation_starters_heading || ''
 const starters = computed(() => {
   const configured = (config.value?.home_apps || [])
     .filter((item) => item.type === 'conversation_starter' && item.text)
-    .map((item) => ({ text: item.text, message: item.message || item.text }))
+    .map((item) => ({
+      text: item.text,
+      message: item.message || item.text,
+      intent: item.intent === 'support' ? 'support' : 'sales'
+    }))
   return configured.length ? configured : DEFAULT_STARTERS
 })
 
 const start = (starter) => {
   chatStore.pendingStarterMessage = starter.message || starter.text
+  chatStore.pendingIntent = starter.intent === 'support' ? 'support' : 'sales'
   chatStore.setCurrentConversation(null)
   widgetStore.navigateToChat()
 }
