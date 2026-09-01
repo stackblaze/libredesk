@@ -83,6 +83,7 @@ type customAttributeWidget struct {
 
 type chatInitReq struct {
 	Message  string         `json:"message"`
+	Intent   string         `json:"intent"`
 	FormData map[string]any `json:"form_data"`
 }
 
@@ -236,19 +237,22 @@ func handleChatInit(r *fastglue.Request) error {
 		return sendErrorEnvelope(r, err)
 	}
 
-	app.lo.Info("creating new live chat conversation for user", "user_id", contactID, "inbox_id", inbox.ID, "is_visitor", isVisitor)
+	intent := normalizeLivechatIntent(req.Intent, req.Message)
+	subject := livechatRouteSubject(intent)
+	app.lo.Info("creating new live chat conversation for user", "user_id", contactID, "inbox_id", inbox.ID, "is_visitor", isVisitor, "intent", intent)
 
 	// Create conversation and insert message.
 	meta := map[string]any{
 		"ip":         clientIP,
 		"user_agent": userAgent,
+		"intent":     intent,
 	}
 	_, conversationUUID, err := app.conversation.CreateConversation(
 		contactID,
 		inbox.ID,
 		"",
 		time.Now(),
-		"",
+		subject,
 		false,
 		meta,
 		conversationAttrs,
@@ -261,6 +265,14 @@ func handleChatInit(r *fastglue.Request) error {
 		}
 		app.lo.Error("error creating conversation", "error", err)
 		return r.SendErrorEnvelope(fasthttp.StatusInternalServerError, app.i18n.T("globals.messages.errorSendingMessage"), nil, envelope.GeneralError)
+	}
+
+	if teamID := app.livechatTeamID(intent); teamID > 0 {
+		if sys, sysErr := app.user.GetSystemUser(); sysErr != nil {
+			app.lo.Error("error fetching system user for livechat team routing", "error", sysErr)
+		} else if err := app.conversation.UpdateConversationTeamAssignee(conversationUUID, teamID, sys); err != nil {
+			app.lo.Error("error assigning livechat team", "conversation_uuid", conversationUUID, "team_id", teamID, "intent", intent, "error", err)
+		}
 	}
 
 	message := cmodels.Message{

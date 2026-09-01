@@ -49,6 +49,7 @@ type Manager struct {
 	wg            sync.WaitGroup
 	encryptionKey string
 	rootURL       func() string
+	threadMu      sync.Map
 }
 
 // Opts contains options for initializing the Manager.
@@ -74,21 +75,35 @@ type DeliveryTask struct {
 
 // queries contains prepared SQL queries.
 type queries struct {
-	GetWebhooksCompact *sqlx.Stmt `query:"get-webhooks-compact"`
-	GetAllWebhooks     *sqlx.Stmt `query:"get-all-webhooks"`
-	GetWebhook         *sqlx.Stmt `query:"get-webhook"`
-	GetWebhookSecret   *sqlx.Stmt `query:"get-webhook-secret"`
-	GetActiveWebhooks  *sqlx.Stmt `query:"get-active-webhooks"`
-	GetWebhooksByEvent *sqlx.Stmt `query:"get-webhooks-by-event"`
-	InsertWebhook      *sqlx.Stmt `query:"insert-webhook"`
-	UpdateWebhook      *sqlx.Stmt `query:"update-webhook"`
-	DeleteWebhook      *sqlx.Stmt `query:"delete-webhook"`
-	ToggleWebhook      *sqlx.Stmt `query:"toggle-webhook"`
+	GetWebhooksCompact  *sqlx.Stmt `query:"get-webhooks-compact"`
+	GetAllWebhooks      *sqlx.Stmt `query:"get-all-webhooks"`
+	GetWebhook          *sqlx.Stmt `query:"get-webhook"`
+	GetWebhookSecret    *sqlx.Stmt `query:"get-webhook-secret"`
+	GetActiveWebhooks   *sqlx.Stmt `query:"get-active-webhooks"`
+	GetWebhooksByEvent  *sqlx.Stmt `query:"get-webhooks-by-event"`
+	GetDiscordThread    *sqlx.Stmt `query:"get-discord-thread"`
+	UpsertDiscordThread *sqlx.Stmt `query:"upsert-discord-thread"`
+	InsertWebhook       *sqlx.Stmt `query:"insert-webhook"`
+	UpdateWebhook       *sqlx.Stmt `query:"update-webhook"`
+	DeleteWebhook       *sqlx.Stmt `query:"delete-webhook"`
+	ToggleWebhook       *sqlx.Stmt `query:"toggle-webhook"`
 }
 
 // New creates and returns a new instance of the Manager.
 func New(opts Opts) (*Manager, error) {
 	var q queries
+
+	if _, err := opts.DB.Exec(`
+		CREATE TABLE IF NOT EXISTS webhook_discord_threads (
+			webhook_id INT NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+			conversation_uuid TEXT NOT NULL,
+			thread_id TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			PRIMARY KEY (webhook_id, conversation_uuid)
+		);
+	`); err != nil {
+		return nil, fmt.Errorf("creating webhook_discord_threads: %w", err)
+	}
 
 	if err := dbutil.ScanSQLFile("queries.sql", &q, opts.DB, efs); err != nil {
 		return nil, err
@@ -380,24 +395,100 @@ func (m *Manager) deliverWebhook(task DeliveryTask) {
 
 // deliverSingleWebhook delivers a webhook to a single endpoint.
 func (m *Manager) deliverSingleWebhook(webhook models.Webhook, task DeliveryTask) {
-	payloadBytes, err := m.marshalDeliveryPayload(webhook, task)
+	if usesDiscordPayload(webhook) {
+		m.deliverDiscordWebhook(webhook, task)
+		return
+	}
+
+	payloadBytes, err := json.Marshal(map[string]any{
+		"event":     task.Event,
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+		"payload":   task.Payload,
+	})
+	if err != nil {
+		m.lo.Error("error marshaling webhook payload", "webhook_id", webhook.ID, "event", task.Event, "error", err)
+		return
+	}
+	m.postWebhook(webhook, task, webhook.URL, payloadBytes)
+}
+
+func (m *Manager) deliverDiscordWebhook(webhook models.Webhook, task DeliveryTask) {
+	convUUID := conversationUUIDFromTask(task)
+	threadID := ""
+	threadName := ""
+	wait := false
+
+	if task.Event != models.EventWebhookTest && convUUID != "" {
+		mu := m.threadLock(webhook.ID, convUUID)
+		mu.Lock()
+		defer mu.Unlock()
+
+		threadID = m.discordThreadID(webhook.ID, convUUID)
+		if threadID == "" {
+			threadName = discordThreadName(task)
+			wait = true
+		}
+	}
+
+	payloadBytes, err := buildDiscordPayload(task, m.appRootURL(), threadName)
 	if err != nil {
 		m.lo.Error("error marshaling webhook payload", "webhook_id", webhook.ID, "event", task.Event, "error", err)
 		return
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest("POST", webhook.URL, bytes.NewReader(payloadBytes))
-	if err != nil {
-		m.lo.Error("error creating webhook request", "webhook_id", webhook.ID, "url", webhook.URL, "event", task.Event, "error", err)
+	execURL := discordExecuteURL(webhook.URL, threadID, wait)
+	status, body, ok := m.postWebhook(webhook, task, execURL, payloadBytes)
+	if !ok && wait && threadName != "" && status >= 400 {
+		// Text channels reject thread_name; post into the parent channel instead.
+		payloadBytes, err = buildDiscordPayload(task, m.appRootURL(), "")
+		if err != nil {
+			return
+		}
+		_, body, ok = m.postWebhook(webhook, task, webhook.URL, payloadBytes)
+	}
+	if ok && wait && threadID == "" {
+		if id := discordThreadIDFromResponse(body); id != "" {
+			m.saveDiscordThread(webhook.ID, convUUID, id)
+		}
+	}
+}
+
+func (m *Manager) threadLock(webhookID int, convUUID string) *sync.Mutex {
+	key := fmt.Sprintf("%d:%s", webhookID, convUUID)
+	actual, _ := m.threadMu.LoadOrStore(key, &sync.Mutex{})
+	return actual.(*sync.Mutex)
+}
+
+func (m *Manager) discordThreadID(webhookID int, convUUID string) string {
+	var id string
+	if err := m.q.GetDiscordThread.Get(&id, webhookID, convUUID); err != nil {
+		if err != sql.ErrNoRows {
+			m.lo.Error("error fetching discord thread", "webhook_id", webhookID, "conversation_uuid", convUUID, "error", err)
+		}
+		return ""
+	}
+	return id
+}
+
+func (m *Manager) saveDiscordThread(webhookID int, convUUID, threadID string) {
+	if webhookID <= 0 || convUUID == "" || threadID == "" {
 		return
 	}
+	if _, err := m.q.UpsertDiscordThread.Exec(webhookID, convUUID, threadID); err != nil {
+		m.lo.Error("error saving discord thread", "webhook_id", webhookID, "conversation_uuid", convUUID, "error", err)
+	}
+}
 
-	// Set headers
+func (m *Manager) postWebhook(webhook models.Webhook, task DeliveryTask, destURL string, payloadBytes []byte) (int, []byte, bool) {
+	req, err := http.NewRequest("POST", destURL, bytes.NewReader(payloadBytes))
+	if err != nil {
+		m.lo.Error("error creating webhook request", "webhook_id", webhook.ID, "url", destURL, "event", task.Event, "error", err)
+		return 0, nil, false
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Libredesk-Webhook/"+version.Version)
 
-	// Discord incoming webhooks authenticate via the URL; skip HMAC on those.
 	if webhook.Secret != "" && !usesDiscordPayload(webhook) {
 		signature := m.generateSignature(payloadBytes, webhook.Secret)
 		req.Header.Set("X-Libredesk-Signature", signature)
@@ -405,59 +496,45 @@ func (m *Manager) deliverSingleWebhook(webhook models.Webhook, task DeliveryTask
 
 	m.lo.Debug("delivering webhook",
 		"webhook_id", webhook.ID,
-		"url", webhook.URL,
+		"url", destURL,
 		"event", task.Event,
 		"payload", string(payloadBytes),
 		"headers", req.Header,
 	)
 
-	// Make the request
 	resp, err := m.httpClient.Do(req)
 	if err != nil {
 		m.lo.Error("webhook delivery failed - HTTP request error",
 			"webhook_id", webhook.ID,
-			"url", webhook.URL,
+			"url", destURL,
 			"event", task.Event,
 			"error", err)
-		return
+		return 0, nil, false
 	}
 	defer resp.Body.Close()
 
-	// Read response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		m.lo.Error("error reading webhook response", "webhook_id", webhook.ID, "error", err)
 		responseBody = []byte(fmt.Sprintf("Error reading response: %v", err))
 	}
 
-	// Check if delivery was successful (2xx status codes)
 	success := resp.StatusCode >= 200 && resp.StatusCode < 300
-
 	if success {
 		m.lo.Info("webhook delivered successfully",
 			"webhook_id", webhook.ID,
 			"event", task.Event,
-			"url", webhook.URL,
+			"url", destURL,
 			"status_code", resp.StatusCode)
 	} else {
 		m.lo.Error("webhook delivery failed",
 			"webhook_id", webhook.ID,
 			"event", task.Event,
-			"url", webhook.URL,
+			"url", destURL,
 			"status_code", resp.StatusCode,
 			"response", string(responseBody))
 	}
-}
-
-func (m *Manager) marshalDeliveryPayload(webhook models.Webhook, task DeliveryTask) ([]byte, error) {
-	if usesDiscordPayload(webhook) {
-		return buildDiscordPayload(task, m.appRootURL())
-	}
-	return json.Marshal(map[string]any{
-		"event":     task.Event,
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"payload":   task.Payload,
-	})
+	return resp.StatusCode, responseBody, success
 }
 
 func (m *Manager) appRootURL() string {

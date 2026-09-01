@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/abhinavxd/libredesk/internal/webhook/models"
@@ -50,18 +51,18 @@ func TestBuildDiscordPayloadConversationCreated(t *testing.T) {
 	raw, err := buildDiscordPayload(DeliveryTask{
 		Event: models.EventConversationCreated,
 		Payload: map[string]any{
-			"uuid":              "conv-1",
-			"subject":           "Billing question",
-			"status":            "open",
-			"inbox_name":        "support@",
-			"reference_number":  "SB-100",
+			"uuid":             "conv-1",
+			"subject":          "Billing question",
+			"status":           "open",
+			"inbox_name":       "support@",
+			"reference_number": "SB-100",
 			"contact": map[string]any{
 				"first_name": "Ada",
 				"last_name":  "Lovelace",
 				"email":      "ada@example.com",
 			},
 		},
-	}, "https://support.stackblaze.cloud")
+	}, "https://support.stackblaze.cloud", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +91,7 @@ func TestBuildDiscordPayloadMessage(t *testing.T) {
 			"private":           false,
 			"author":            map[string]any{"first_name": "Ada", "last_name": "Lovelace"},
 		},
-	}, "")
+	}, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,5 +101,41 @@ func TestBuildDiscordPayloadMessage(t *testing.T) {
 	}
 	if p.Embeds[0].Description != "Need help with login" {
 		t.Fatalf("desc: %s", p.Embeds[0].Description)
+	}
+}
+
+func TestDiscordThreadName(t *testing.T) {
+	got := discordThreadName(DeliveryTask{
+		Event: models.EventMessageCreated,
+		Payload: map[string]any{
+			"conversation_uuid": "c1",
+			"reference_number":  "218",
+			"subject":           "Sales",
+			"contact":           map[string]any{"first_name": "Dean", "last_name": "Kamali"},
+		},
+	})
+	if got != "#218 Sales" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestDiscordExecuteURL(t *testing.T) {
+	base := "https://discord.com/api/webhooks/1/tok"
+	got := discordExecuteURL(base, "99", true)
+	if !strings.Contains(got, "thread_id=99") || !strings.Contains(got, "wait=true") {
+		t.Fatalf("got %s", got)
+	}
+	got = discordExecuteURL(base+"?wait=true", "88", false)
+	if !strings.Contains(got, "thread_id=88") || strings.Contains(got, "wait=") {
+		t.Fatalf("got %s", got)
+	}
+}
+
+func TestConversationUUIDFromTask(t *testing.T) {
+	if got := conversationUUIDFromTask(DeliveryTask{Payload: map[string]any{"conversation_uuid": "abc"}}); got != "abc" {
+		t.Fatalf("got %q", got)
+	}
+	if got := conversationUUIDFromTask(DeliveryTask{Payload: map[string]any{"conversation": map[string]any{"uuid": "nested"}}}); got != "nested" {
+		t.Fatalf("got %q", got)
 	}
 }
