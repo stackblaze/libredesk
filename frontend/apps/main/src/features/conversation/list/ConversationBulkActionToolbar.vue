@@ -250,7 +250,10 @@ const onTagSelect = (item) => {
 const bulkUpdateStatus = (status) => {
   const count = conversationStore.selectedCount
   runBulkAction(
-    (uuid) => api.updateConversationStatus(uuid, { status }),
+    (uuid) =>
+      api.updateConversationStatus(uuid, { status }).then(() => {
+        conversationStore.mergeConversationUpdate({ uuid, status })
+      }),
     {
       successMessage: t('conversation.bulkActions.statusSuccess', { count, status })
     }

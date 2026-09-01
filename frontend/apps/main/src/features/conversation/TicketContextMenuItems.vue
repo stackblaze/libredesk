@@ -69,11 +69,32 @@
       {{ t('actions.addPrivateNote') }}
       <ContextMenuShortcut>N</ContextMenuShortcut>
     </ContextMenuItem>
+
+    <ContextMenuSeparator v-if="canWrite" />
+    <ContextMenuItem v-if="canWrite" class="text-destructive focus:text-destructive" @click="askDelete">
+      <Trash2 class="w-4 h-4 mr-2" />
+      {{ deleteLabel }}
+    </ContextMenuItem>
   </ContextMenuContent>
+
+  <AlertDialog :open="deleteOpen" @update:open="deleteOpen = $event">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ deleteLabel }}</AlertDialogTitle>
+        <AlertDialogDescription>{{ deleteDescription }}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{{ t('globals.messages.cancel') }}</AlertDialogCancel>
+        <AlertDialogAction variant="destructive" @click="actions.deleteTickets(conversation.uuid)">
+          {{ deleteLabel }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   CircleDot,
@@ -85,6 +106,7 @@ import {
   Reply,
   SquareCheck,
   StickyNote,
+  Trash2,
   UserPlus
 } from 'lucide-vue-next'
 import {
@@ -96,6 +118,16 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger
 } from '@shared-ui/components/ui/context-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@shared-ui/components/ui/alert-dialog'
 import { useConversationStore } from '@main/stores/conversation'
 import { useUserStore } from '@main/stores/user'
 import { useBulkActionPermissions } from '@/composables/useBulkActionPermissions'
@@ -116,4 +148,22 @@ const canWrite = computed(() => userStore.can(perms.CONVERSATIONS_WRITE))
 const canReply = computed(() => userStore.can(perms.MESSAGES_WRITE))
 const canNote = computed(() => userStore.can(perms.MESSAGES_WRITE_PRIVATE))
 const isSelected = computed(() => conversationStore.isSelected(props.conversation.uuid))
+const deleteOpen = ref(false)
+const deleteCount = computed(() => actions.statusTargets(props.conversation.uuid).length)
+const deleteLabel = computed(() =>
+  deleteCount.value > 1
+    ? t('conversation.spam.deleteTickets', deleteCount.value, { count: deleteCount.value })
+    : t('conversation.spam.deleteTicket')
+)
+const deleteDescription = computed(() =>
+  deleteCount.value > 1
+    ? t('conversation.spam.deleteTicketsConfirm', deleteCount.value, { count: deleteCount.value })
+    : t('conversation.spam.deleteTicketConfirm')
+)
+
+const askDelete = () => {
+  nextTick(() => {
+    deleteOpen.value = true
+  })
+}
 </script>

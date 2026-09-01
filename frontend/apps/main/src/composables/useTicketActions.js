@@ -6,6 +6,7 @@ import { useUserStore } from '@main/stores/user'
 import { useEmitter } from '@main/composables/useEmitter'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 import { conversationRouteForContext } from '@main/composables/useZendeskTabs'
+import { useInboxViewContext } from '@main/composables/useInboxViewContext'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
 import api from '@main/api'
 
@@ -16,6 +17,8 @@ export function useTicketActions () {
   const conversationStore = useConversationStore()
   const userStore = useUserStore()
   const emitter = useEmitter()
+
+  const { listRoute } = useInboxViewContext()
 
   const toastError = (err) => {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
@@ -33,14 +36,36 @@ export function useTicketActions () {
     router.push(conversationRouteForContext(route, uuid))
   }
 
+  const statusTargets = (uuid) => {
+    if (conversationStore.isSelected(uuid) && conversationStore.selectedCount > 1) {
+      return [...conversationStore.selectedUUIDs]
+    }
+    return [uuid]
+  }
+
   const setStatus = async (uuid, status) => {
     if (!uuid || !status) return
-    try {
-      await api.updateConversationStatus(uuid, { status })
-      conversationStore.mergeConversationUpdate({ uuid, status })
-      toastOk(t('conversation.ticketActions.statusSet', { status }))
-    } catch (err) {
-      toastError(err)
+    const uuids = statusTargets(uuid)
+    const results = await Promise.allSettled(
+      uuids.map((id) => api.updateConversationStatus(id, { status }))
+    )
+    const ok = uuids.filter((_, i) => results[i].status === 'fulfilled')
+    results.forEach((result) => {
+      if (result.status === 'rejected') toastError(result.reason)
+    })
+    for (const id of ok) {
+      conversationStore.mergeConversationUpdate({ uuid: id, status })
+    }
+    if (ok.length) {
+      toastOk(
+        uuids.length > 1
+          ? t('conversation.bulkActions.statusSuccess', { count: ok.length, status })
+          : t('conversation.ticketActions.statusSet', { status })
+      )
+    }
+    if (uuids.length > 1) {
+      conversationStore.clearSelection()
+      conversationStore.fetchFirstPageConversations()
     }
   }
 
@@ -115,6 +140,24 @@ export function useTicketActions () {
     emitter.emit(EMITTER_EVENTS.START_SPLIT_MODE)
   }
 
+  const deleteTickets = async (uuid) => {
+    if (!uuid) return
+    const uuids = statusTargets(uuid)
+    try {
+      await conversationStore.deleteConversations(uuids)
+      toastOk(
+        uuids.length > 1
+          ? t('conversation.spam.ticketsDeleted', uuids.length, { count: uuids.length })
+          : t('conversation.spam.ticketDeleted')
+      )
+      if (uuids.includes(route.params.uuid)) {
+        router.push(listRoute.value)
+      }
+    } catch (err) {
+      toastError(err)
+    }
+  }
+
   return {
     openTicket,
     setStatus,
@@ -124,6 +167,8 @@ export function useTicketActions () {
     openMerge,
     createLinked,
     focusComposer,
-    startSplit
+    startSplit,
+    deleteTickets,
+    statusTargets
   }
 }

@@ -675,21 +675,33 @@ export const useConversationStore = defineStore('conversation', () => {
 
   function processConversationListResponse (response) {
     const apiResponse = response.data.data
-    const newConversations = []
-    for (const conv of apiResponse.results) {
-      if (!mergeIntoList(conv.uuid, conv)) newConversations.push(conv)
-    }
-    conversations.page = Math.max(conversations.page, apiResponse.page)
-    conversations.hasMore = apiResponse.total_pages > conversations.page
-    if (!conversations.data) conversations.data = []
-    if (apiResponse.page === 1) {
-      conversations.data.unshift(...newConversations)
-    } else {
-      conversations.data.push(...newConversations)
-    }
+    const results = apiResponse.results || []
+    conversations.hasMore = apiResponse.total_pages > apiResponse.page
     conversations.total = apiResponse.total
+    if (!conversations.data) conversations.data = []
 
-    trimListToCurrentPage()
+    if (apiResponse.page === 1) {
+      // Replace the list so tickets that left this page (closed, reassigned, …)
+      // do not linger with their old status.
+      const next = []
+      for (const conv of results) {
+        const existing = conversations.data.find((c) => c.uuid === conv.uuid)
+        if (existing) {
+          deepMerge(existing, conv)
+          next.push(existing)
+        } else {
+          next.push(conv)
+        }
+      }
+      conversations.data = next
+      conversations.page = 1
+    } else {
+      conversations.page = Math.max(conversations.page, apiResponse.page)
+      for (const conv of results) {
+        if (!mergeIntoList(conv.uuid, conv)) conversations.data.push(conv)
+      }
+      trimListToCurrentPage()
+    }
 
     // Re-check document.hidden in case the user returned while the refresh was in flight.
     if (pendingNotificationUUIDs.size > 0) {
@@ -1036,8 +1048,15 @@ export const useConversationStore = defineStore('conversation', () => {
   async function deleteCurrentConversation () {
     const uuid = conversation.data?.uuid
     if (!uuid) return
-    await api.deleteConversation(uuid)
-    removeConversation(uuid)
+    await deleteConversations([uuid])
+  }
+
+  async function deleteConversations (uuids) {
+    const ids = [...new Set((uuids || []).filter(Boolean))]
+    for (const uuid of ids) {
+      await api.deleteConversation(uuid)
+      removeConversation(uuid)
+    }
   }
 
   function mergeContactUpdate (update) {
@@ -1249,6 +1268,7 @@ export const useConversationStore = defineStore('conversation', () => {
     fetchConversationsList,
     invalidateConversation,
     deleteCurrentConversation,
+    deleteConversations,
     removeConversation,
     fetchMessages,
     updateConversationTags,
