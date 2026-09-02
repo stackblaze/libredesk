@@ -555,21 +555,7 @@ func handleGetCurrentAgentAPIKey(r *fastglue.Request) error {
 		app   = r.Context.(*App)
 		auser = r.RequestCtx.UserValue("user").(amodels.User)
 	)
-	creds, err := app.user.GetAPICredentials(auser.ID)
-	if err != nil {
-		return sendErrorEnvelope(r, err)
-	}
-	return r.SendEnvelope(struct {
-		APIKey           string     `json:"api_key"`
-		APISecret        string     `json:"api_secret"`
-		APIKeyLastUsedAt null.Time  `json:"api_key_last_used_at"`
-		SecretAvailable  bool       `json:"secret_available"`
-	}{
-		APIKey:           creds.APIKey,
-		APISecret:        creds.APISecret,
-		APIKeyLastUsedAt: creds.APIKeyLastUsedAt,
-		SecretAvailable:  creds.SecretAvailable,
-	})
+	return sendAPICredentials(r, app, auser.ID)
 }
 
 // handleGenerateCurrentAgentAPIKey generates an API key for the logged-in agent.
@@ -588,6 +574,24 @@ func handleRevokeCurrentAgentAPIKey(r *fastglue.Request) error {
 		auser = r.RequestCtx.UserValue("user").(amodels.User)
 	)
 	return revokeAgentAPIKey(r, app, auser.ID)
+}
+
+func sendAPICredentials(r *fastglue.Request, app *App, userID int) error {
+	creds, err := app.user.GetAPICredentials(userID)
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+	return r.SendEnvelope(struct {
+		APIKey           string    `json:"api_key"`
+		APISecret        string    `json:"api_secret"`
+		APIKeyLastUsedAt null.Time `json:"api_key_last_used_at"`
+		SecretAvailable  bool      `json:"secret_available"`
+	}{
+		APIKey:           creds.APIKey,
+		APISecret:        creds.APISecret,
+		APIKeyLastUsedAt: creds.APIKeyLastUsedAt,
+		SecretAvailable:  creds.SecretAvailable,
+	})
 }
 
 func sendGeneratedAPIKey(r *fastglue.Request, app *App, userID int) error {
@@ -611,6 +615,27 @@ func revokeAgentAPIKey(r *fastglue.Request, app *App, userID int) error {
 	}
 	app.user.InvalidateAgentCache(userID)
 	return r.SendEnvelope(true)
+}
+
+// handleGetAgentAPIKey returns an agent's API key and secret when stored encrypted.
+func handleGetAgentAPIKey(r *fastglue.Request) error {
+	var (
+		app   = r.Context.(*App)
+		id, _ = strconv.Atoi(r.RequestCtx.UserValue("id").(string))
+	)
+	if id <= 0 {
+		return r.SendErrorEnvelope(fasthttp.StatusBadRequest, app.i18n.T("globals.messages.somethingWentWrong"), nil, envelope.InputError)
+	}
+
+	user, err := app.user.GetAgent(id, "")
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+	if user.Type != models.UserTypeAgent {
+		return r.SendErrorEnvelope(fasthttp.StatusNotFound, app.i18n.Ts("globals.messages.notFound", "name", app.i18n.T("globals.terms.agent")), nil, envelope.NotFoundError)
+	}
+
+	return sendAPICredentials(r, app, user.ID)
 }
 
 // handleGenerateAPIKey generates a new API key for a user

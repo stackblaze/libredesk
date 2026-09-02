@@ -665,6 +665,8 @@ const generateAPIKey = (id) =>
     }
   })
 
+const getAPIKey = (id) => http.get(`/api/v1/agents/${id}/api-key`)
+
 const revokeAPIKey = (id) => http.delete(`/api/v1/agents/${id}/api-key`)
 
 const generateMyAPIKey = () =>
@@ -943,6 +945,7 @@ export default {
   getActiveContextLinks,
   getContextLinkURL,
   generateAPIKey,
+  getAPIKey,
   revokeAPIKey,
   generateMyAPIKey,
   getMyAPIKey,

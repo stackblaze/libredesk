@@ -160,120 +160,17 @@
       </FormField>
     </div>
 
-    <!-- API Key Management Section -->
-    <div class="bg-muted/30 box p-4 space-y-4" v-if="!isNewForm">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-base font-semibold text-foreground">
-            {{ $t('globals.terms.apiKey', 2) }}
-          </p>
-          <p class="text-sm text-muted-foreground">
-            {{ $t('admin.agent.apiKey.description') }}
-          </p>
-        </div>
-      </div>
-
-      <!-- API Key Display -->
-      <div v-if="apiKeyData.api_key" class="space-y-3">
-        <div class="flex items-center justify-between p-3 bg-background border rounded-md">
-          <div class="flex items-center gap-3">
-            <Key class="w-4 h-4 text-muted-foreground" />
-            <div>
-              <p class="text-sm font-medium">{{ $t('globals.terms.apiKey') }}</p>
-              <p class="text-xs text-muted-foreground font-mono break-all">{{ apiKeyData.api_key }}</p>
-            </div>
-            <CopyButton :text="apiKeyData.api_key" variant="outline" size="sm" :show-text="false" />
-          </div>
-          <div class="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              @click="regenerateAPIKey"
-              :disabled="isAPIKeyLoading"
-            >
-              <RotateCcw class="w-4 h-4 mr-1" />
-              {{ $t('globals.messages.regenerate') }}
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              @click="revokeAPIKey"
-              :disabled="isAPIKeyLoading"
-            >
-              <Trash2 class="w-4 h-4 mr-1" />
-              {{ $t('globals.messages.revoke') }}
-            </Button>
-          </div>
-        </div>
-
-        <!-- Last Used Info -->
-        <div v-if="apiKeyLastUsedAt" class="text-xs text-muted-foreground">
-          {{ $t('globals.messages.lastUsed') }}:
-          {{ format(new Date(apiKeyLastUsedAt), 'PPpp') }}
-        </div>
-      </div>
-
-      <!-- No API Key State -->
-      <div v-else class="text-center py-6">
-        <Key class="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-        <p class="text-sm text-muted-foreground mb-3">{{ $t('admin.agent.apiKey.noKey') }}</p>
-        <Button type="button" @click="generateAPIKey" :disabled="isAPIKeyLoading">
-          <Plus class="w-4 h-4" />
-          {{ $t('agent.generateApiKey') }}
-        </Button>
-      </div>
-    </div>
-
-    <!-- API Key Display Dialog -->
-    <Dialog v-model:open="showAPIKeyDialog">
-      <DialogContent class="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {{ $t('toast.apiKeyGenerated') }}
-          </DialogTitle>
-          <DialogDescription> </DialogDescription>
-        </DialogHeader>
-        <div class="space-y-4">
-          <div>
-            <Label class="text-sm font-medium">{{ $t('globals.terms.apiKey') }}</Label>
-            <div class="flex items-center gap-2 mt-1">
-              <Input v-model="newAPIKeyData.api_key" readonly class="font-mono text-sm" />
-              <CopyButton
-                :text="newAPIKeyData.api_key"
-                variant="outline"
-                size="sm"
-                :show-text="false"
-              />
-            </div>
-          </div>
-          <div>
-            <Label class="text-sm font-medium">{{ $t('globals.terms.secret') }}</Label>
-            <div class="flex items-center gap-2 mt-1">
-              <Input v-model="newAPIKeyData.api_secret" readonly class="font-mono text-sm" />
-              <CopyButton
-                :text="newAPIKeyData.api_secret"
-                variant="outline"
-                size="sm"
-                :show-text="false"
-              />
-            </div>
-          </div>
-          <Alert>
-            <AlertTriangle class="h-4 w-4" />
-            <AlertTitle>{{ $t('globals.terms.warning') }}</AlertTitle>
-            <AlertDescription>
-              {{ $t('admin.agent.apiKey.warningMessage') }}
-            </AlertDescription>
-          </Alert>
-        </div>
-        <DialogFooter>
-          <Button @click="closeAPIKeyModal">{{ $t('globals.messages.close') }}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ApiKeyManager
+      v-if="!isNewForm && initialValues?.id"
+      :api-key="initialValues.api_key"
+      :last-used-at="initialValues.api_key_last_used_at"
+      :description="t('admin.agent.apiKey.description')"
+      :empty-label="t('admin.agent.apiKey.noKey')"
+      :generate-fn="generateAgentAPIKey"
+      :revoke-fn="revokeAgentAPIKey"
+      :fetch-fn="fetchAgentAPIKey"
+      :fetch-key="initialValues.id"
+    />
 
     <FormField name="send_welcome_email" v-slot="{ value, handleChange }" v-if="isNewForm">
       <FormItem>
@@ -324,7 +221,7 @@ import { Checkbox } from '@shared-ui/components/ui/checkbox/index.js'
 import { Label } from '@shared-ui/components/ui/label/index.js'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
 import { Badge } from '@shared-ui/components/ui/badge/index.js'
-import { Clock, LogIn, Key, RotateCcw, Trash2, Plus, AlertTriangle } from 'lucide-vue-next'
+import { Clock, LogIn } from 'lucide-vue-next'
 import {
   FormControl,
   FormField,
@@ -332,8 +229,8 @@ import {
   FormLabel,
   FormMessage
 } from '@shared-ui/components/ui/form/index.js'
-import CopyButton from '@/components/button/CopyButton.vue'
 import { Avatar, AvatarFallback, AvatarImage } from '@shared-ui/components/ui/avatar/index.js'
+import ApiKeyManager from '@/features/account/ApiKeyManager.vue'
 import {
   Select,
   SelectContent,
@@ -344,15 +241,6 @@ import {
 } from '@shared-ui/components/ui/select/index.js'
 import { SelectTag } from '@shared-ui/components/ui/select/index.js'
 import { Input } from '@shared-ui/components/ui/input/index.js'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@shared-ui/components/ui/dialog/index.js'
-import { Alert, AlertDescription, AlertTitle } from '@shared-ui/components/ui/alert/index.js'
 import { useI18n } from 'vue-i18n'
 import { useEmitter } from '../../../composables/useEmitter.js'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
@@ -394,17 +282,6 @@ const teams = ref([])
 const roles = ref([])
 const emitter = useEmitter()
 
-const apiKeyData = ref({
-  api_key: props.initialValues?.api_key || '',
-  api_secret: ''
-})
-const apiKeyLastUsedAt = ref(props.initialValues?.api_key_last_used_at || null)
-const newAPIKeyData = ref({
-  api_key: '',
-  api_secret: ''
-})
-const showAPIKeyDialog = ref(false)
-const isAPIKeyLoading = ref(false)
 const skills = ref([])
 const selectedSkillIds = ref([])
 const newSkillName = ref('')
@@ -471,67 +348,9 @@ const getInitials = (firstName, lastName) => {
   return `${firstName.charAt(0).toUpperCase()}${lastName.charAt(0).toUpperCase()}`
 }
 
-const generateAPIKey = async () => {
-  if (!props.initialValues?.id) return
-
-  try {
-    isAPIKeyLoading.value = true
-    const response = await api.generateAPIKey(props.initialValues.id)
-    if (response.data) {
-      const responseData = response.data.data
-      newAPIKeyData.value = {
-        api_key: responseData.api_key,
-        api_secret: responseData.api_secret
-      }
-      apiKeyData.value.api_key = responseData.api_key
-
-      // Clear the last used timestamp since this is a new API key
-      apiKeyLastUsedAt.value = null
-
-      showAPIKeyDialog.value = true
-      emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-        description: t('agent.apiKeyGenerated')
-      })
-    }
-  } catch (error) {
-    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-      variant: 'destructive',
-      description: t('globals.messages.somethingWentWrong')
-    })
-  } finally {
-    isAPIKeyLoading.value = false
-  }
-}
-
-const regenerateAPIKey = async () => {
-  await generateAPIKey()
-}
-
-const revokeAPIKey = async () => {
-  if (!props.initialValues?.id) return
-  try {
-    isAPIKeyLoading.value = true
-    await api.revokeAPIKey(props.initialValues.id)
-    apiKeyData.value.api_key = ''
-    apiKeyData.value.api_secret = ''
-    apiKeyLastUsedAt.value = null
-    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-      description: t('agent.apiKeyRevoked')
-    })
-  } catch (error) {
-    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-      variant: 'destructive',
-      description: t('globals.messages.somethingWentWrong')
-    })
-  } finally {
-    isAPIKeyLoading.value = false
-  }
-}
-
-const closeAPIKeyModal = () => {
-  showAPIKeyDialog.value = false
-  newAPIKeyData.value = { api_key: '', api_secret: '' }
-}
+const generateAgentAPIKey = () => api.generateAPIKey(props.initialValues.id)
+const revokeAgentAPIKey = () => api.revokeAPIKey(props.initialValues.id)
+const fetchAgentAPIKey = () => api.getAPIKey(props.initialValues.id)
 
 const toggleSkill = (id) => {
   if (selectedSkillIds.value.includes(id)) {
@@ -597,10 +416,6 @@ watch(
           'teams',
           newValues.teams.map((team) => team.name)
         )
-
-        // Update API key data
-        apiKeyData.value.api_key = newValues.api_key || ''
-        apiKeyLastUsedAt.value = newValues.api_key_last_used_at || null
       }, 0)
     }
   },

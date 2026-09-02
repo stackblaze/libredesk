@@ -209,6 +209,12 @@ const routes = [
             name: 'profile',
             component: () => import('@main/views/account/profile/ProfileEditView.vue'),
             meta: { titleKey: 'account.editProfile' }
+          },
+          {
+            path: 'api',
+            name: 'account-api',
+            component: () => import('@main/views/account/api/ApiKeyView.vue'),
+            meta: { titleKey: 'account.apiKey.title' }
           }
         ]
       },

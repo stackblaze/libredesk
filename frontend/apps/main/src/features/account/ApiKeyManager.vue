@@ -112,7 +112,8 @@ const props = defineProps({
   emptyLabel: { type: String, required: true },
   generateFn: { type: Function, required: true },
   revokeFn: { type: Function, required: true },
-  fetchFn: { type: Function, default: null }
+  fetchFn: { type: Function, default: null },
+  fetchKey: { type: [String, Number], default: null }
 })
 
 const emit = defineEmits(['updated'])
@@ -157,7 +158,7 @@ const applyCreds = (data) => {
   lastUsedAt.value = data.api_key_last_used_at || null
 }
 
-onMounted(async () => {
+const loadCreds = async () => {
   if (!props.fetchFn) return
   try {
     const response = await props.fetchFn()
@@ -165,9 +166,18 @@ onMounted(async () => {
   } catch {
     /* keep props */
   }
+}
+
+onMounted(loadCreds)
+watch(() => props.fetchKey, (next, prev) => {
+  if (next === prev) return
+  secret.value = ''
+  revealSecret.value = false
+  loadCreds()
 })
 
 const generate = async () => {
+  if (apiKey.value && !window.confirm(t('account.apiKey.regenerateConfirm'))) return
   try {
     loading.value = true
     const response = await props.generateFn()
@@ -192,6 +202,7 @@ const generate = async () => {
 }
 
 const revoke = async () => {
+  if (!window.confirm(t('account.apiKey.revokeConfirm'))) return
   try {
     loading.value = true
     await props.revokeFn()

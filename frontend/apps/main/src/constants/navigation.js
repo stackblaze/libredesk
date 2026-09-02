@@ -268,6 +268,11 @@ export const accountNavItems = [
     titleKey: 'globals.terms.profile',
     href: '/account/profile',
     icon: 'CircleUser'
+  },
+  {
+    titleKey: 'account.apiKey.title',
+    href: '/account/api',
+    icon: 'KeyRound'
   }
 ]
 

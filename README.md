@@ -109,7 +109,7 @@ See [installation docs](https://docs.libredesk.io/getting-started/installation)
 
 ## MCP
 
-LibreDesk exposes a JSON-RPC MCP server at `/mcp`. Authenticate with an agent API key (Admin → Users):
+LibreDesk exposes a JSON-RPC MCP server at `/mcp`. Each support user can generate and view their own API key and secret under Account → API & MCP (admins can also do this on Admin → Users):
 
 ```json
 {
