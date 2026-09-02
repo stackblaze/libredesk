@@ -111,7 +111,8 @@ func mcpTools(app *App, user umodels.User) []mcp.Tool {
 			Name:        "list_conversations",
 			Description: "List tickets. Use list=assigned (default), unassigned, mentioned, or all.",
 			InputSchema: objectSchema(map[string]any{
-				"list":      prop("string", "assigned | unassigned | mentioned | all"),
+				"list":      prop("string", "assigned | unassigned | mentioned | all | team_unassigned"),
+				"team_id":   prop("integer", "Required when list is team_unassigned"),
 				"page":      prop("integer", "Page number, default 1"),
 				"page_size": prop("integer", "Page size, default 20"),
 			}, nil),
@@ -126,11 +127,7 @@ func mcpTools(app *App, user umodels.User) []mcp.Tool {
 				"uuid": prop("string", "Conversation UUID"),
 			}, []string{"uuid"}),
 			Handler: func(args map[string]any) (any, error) {
-				conv, err := enforceConversationAccess(app, strings.TrimSpace(mcp.StrArg(args, "uuid")), user)
-				if err != nil {
-					return nil, err
-				}
-				return compactConversation(*conv), nil
+				return mcpGetConversation(app, user, args)
 			},
 		},
 		{
@@ -196,24 +193,213 @@ func mcpTools(app *App, user umodels.User) []mcp.Tool {
 		},
 		{
 			Name:        "update_status",
-			Description: "Set a ticket status (for example Open, Replied, Resolved, Closed).",
+			Description: "Set a ticket status (for example Open, Replied, Resolved, Closed, Snoozed).",
 			InputSchema: objectSchema(map[string]any{
-				"uuid":   prop("string", "Conversation UUID"),
-				"status": prop("string", "Status name"),
+				"uuid":          prop("string", "Conversation UUID"),
+				"status":        prop("string", "Status name"),
+				"snoozed_until": prop("string", "Go duration such as 2h; required when status is Snoozed"),
 			}, []string{"uuid", "status"}),
 			Handler: func(args map[string]any) (any, error) {
-				if !hasPerm(user, authzModels.PermConversationsUpdateStatus) {
-					return nil, envelope.NewError(envelope.PermissionError, "permission denied", nil)
-				}
-				uuid := strings.TrimSpace(mcp.StrArg(args, "uuid"))
-				status := strings.TrimSpace(mcp.StrArg(args, "status"))
-				if _, err := enforceConversationAccess(app, uuid, user); err != nil {
-					return nil, err
-				}
-				if err := app.conversation.UpdateConversationStatus(uuid, 0, status, "", user); err != nil {
-					return nil, err
-				}
-				return map[string]any{"ok": true, "uuid": uuid, "status": status}, nil
+				return mcpUpdateStatus(app, user, args)
+			},
+		},
+		{
+			Name:        "get_me",
+			Description: "Return the authenticated agent (id, name, email, teams, permissions).",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpGetMe(user), nil
+			},
+		},
+		{
+			Name:        "search_messages",
+			Description: "Search message bodies. Query must be at least 3 characters.",
+			InputSchema: objectSchema(map[string]any{
+				"query": prop("string", "Search query"),
+			}, []string{"query"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpSearchMessages(app, user, mcp.StrArg(args, "query"))
+			},
+		},
+		{
+			Name:        "update_priority",
+			Description: "Set a ticket priority by name (use list_priorities).",
+			InputSchema: objectSchema(map[string]any{
+				"uuid":     prop("string", "Conversation UUID"),
+				"priority": prop("string", "Priority name"),
+			}, []string{"uuid", "priority"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpUpdatePriority(app, user, args)
+			},
+		},
+		{
+			Name:        "assign_conversation",
+			Description: "Assign a ticket to an agent and/or team. Set assign_to_me true to take it yourself.",
+			InputSchema: objectSchema(map[string]any{
+				"uuid":         prop("string", "Conversation UUID"),
+				"user_id":      prop("integer", "Agent id"),
+				"team_id":      prop("integer", "Team id"),
+				"assign_to_me": prop("boolean", "Assign to the authenticated agent"),
+			}, []string{"uuid"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpAssign(app, user, args)
+			},
+		},
+		{
+			Name:        "unassign_conversation",
+			Description: "Remove the assigned agent, team, or both. assignee is user, team, or both (default both).",
+			InputSchema: objectSchema(map[string]any{
+				"uuid":     prop("string", "Conversation UUID"),
+				"assignee": prop("string", "user | team | both"),
+			}, []string{"uuid"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpUnassign(app, user, args)
+			},
+		},
+		{
+			Name:        "update_tags",
+			Description: "Change ticket tags. action is set (replace), add, or remove. Default set.",
+			InputSchema: objectSchema(map[string]any{
+				"uuid":   prop("string", "Conversation UUID"),
+				"tags":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Tag names"},
+				"action": prop("string", "set | add | remove"),
+			}, []string{"uuid", "tags"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpUpdateTags(app, user, args)
+			},
+		},
+		{
+			Name:        "create_conversation",
+			Description: "Open a new email conversation. initiator is agent (default) or contact.",
+			InputSchema: objectSchema(map[string]any{
+				"inbox_id":      prop("integer", "Enabled email inbox id"),
+				"contact_email": prop("string", "Contact email"),
+				"first_name":    prop("string", "Contact first name"),
+				"last_name":     prop("string", "Contact last name"),
+				"subject":       prop("string", "Subject"),
+				"content":       prop("string", "Initial message"),
+				"initiator":     prop("string", "agent | contact"),
+				"agent_id":      prop("integer", "Optional assigned agent"),
+				"team_id":       prop("integer", "Optional assigned team"),
+			}, []string{"inbox_id", "contact_email", "first_name", "content"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpCreateConversation(app, user, args)
+			},
+		},
+		{
+			Name:        "apply_macro",
+			Description: "Apply a saved macro's actions. If it has message_content, send it as a reply unless private is true.",
+			InputSchema: objectSchema(map[string]any{
+				"uuid":     prop("string", "Conversation UUID"),
+				"macro_id": prop("integer", "Macro id from list_macros"),
+				"private":  prop("boolean", "Send macro message as a private note"),
+			}, []string{"uuid", "macro_id"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpApplyMacro(app, user, args)
+			},
+		},
+		{
+			Name:        "get_contact",
+			Description: "Get a contact by numeric id or email.",
+			InputSchema: objectSchema(map[string]any{
+				"id":    prop("integer", "Contact id"),
+				"email": prop("string", "Contact email"),
+			}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpGetContact(app, user, args)
+			},
+		},
+		{
+			Name:        "update_contact",
+			Description: "Update a contact. Omitted fields are left unchanged.",
+			InputSchema: objectSchema(map[string]any{
+				"id":         prop("integer", "Contact id"),
+				"first_name": prop("string", "First name"),
+				"last_name":  prop("string", "Last name"),
+				"email":      prop("string", "Email"),
+				"phone":      prop("string", "Phone number"),
+				"phone_code": prop("string", "Phone country code"),
+				"country":    prop("string", "Country"),
+			}, []string{"id"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpUpdateContact(app, user, args)
+			},
+		},
+		{
+			Name:        "get_contact_notes",
+			Description: "List internal notes on a contact.",
+			InputSchema: objectSchema(map[string]any{
+				"id": prop("integer", "Contact id"),
+			}, []string{"id"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpGetContactNotes(app, user, args)
+			},
+		},
+		{
+			Name:        "add_contact_note",
+			Description: "Add an internal note to a contact profile.",
+			InputSchema: objectSchema(map[string]any{
+				"id":   prop("integer", "Contact id"),
+				"note": prop("string", "Note text"),
+			}, []string{"id", "note"}),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpAddContactNote(app, user, args)
+			},
+		},
+		{
+			Name:        "list_statuses",
+			Description: "List conversation statuses.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListStatuses(app)
+			},
+		},
+		{
+			Name:        "list_priorities",
+			Description: "List conversation priorities.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListPriorities(app)
+			},
+		},
+		{
+			Name:        "list_tags",
+			Description: "List tags that can be applied to conversations.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListTags(app)
+			},
+		},
+		{
+			Name:        "list_teams",
+			Description: "List teams for assignment.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListTeams(app)
+			},
+		},
+		{
+			Name:        "list_agents",
+			Description: "List agents for assignment.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListAgents(app)
+			},
+		},
+		{
+			Name:        "list_inboxes",
+			Description: "List inboxes (id, name, channel, enabled). Secrets are never returned.",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListInboxes(app)
+			},
+		},
+		{
+			Name:        "list_macros",
+			Description: "List saved macros (id, name, visibility, actions, message_content).",
+			InputSchema: objectSchema(map[string]any{}, nil),
+			Handler: func(args map[string]any) (any, error) {
+				return mcpListMacros(app)
 			},
 		},
 	}
@@ -257,8 +443,24 @@ func mcpListConversations(app *App, user umodels.User, args map[string]any) (any
 			return nil, envelope.NewError(envelope.PermissionError, "permission denied", nil)
 		}
 		items, err = app.conversation.GetAllConversationsList(user.ID, "", "", "", page, pageSize)
+	case "team_unassigned":
+		if !hasPerm(user, authzModels.PermConversationsReadTeamInbox) {
+			return nil, envelope.NewError(envelope.PermissionError, "permission denied", nil)
+		}
+		teamID := mcp.IntArg(args, "team_id", 0)
+		if teamID < 1 {
+			return nil, envelope.NewError(envelope.InputError, "team_id is required when list is team_unassigned", nil)
+		}
+		ok, teamErr := app.team.UserBelongsToTeam(teamID, user.ID)
+		if teamErr != nil {
+			return nil, teamErr
+		}
+		if !ok {
+			return nil, envelope.NewError(envelope.PermissionError, "not a member of that team", nil)
+		}
+		items, err = app.conversation.GetTeamUnassignedConversationsList(user.ID, teamID, "", "", "", page, pageSize)
 	default:
-		return nil, envelope.NewError(envelope.InputError, "list must be assigned, unassigned, mentioned, or all", nil)
+		return nil, envelope.NewError(envelope.InputError, "list must be assigned, unassigned, mentioned, all, or team_unassigned", nil)
 	}
 	if err != nil {
 		return nil, err
@@ -390,6 +592,10 @@ func compactListItem(item cmodels.ConversationListItem) map[string]any {
 		"status":           item.Status.String,
 		"priority":         item.Priority.String,
 		"inbox":            item.InboxName,
+		"contact":          strings.TrimSpace(item.Contact.FirstName + " " + item.Contact.LastName),
+		"contact_email":    item.Contact.Email.String,
+		"assigned_user_id": item.AssignedUserID,
+		"assigned_team_id": item.AssignedTeamID,
 		"last_message":     item.LastMessage.String,
 		"updated_at":       item.UpdatedAt,
 	}
@@ -405,8 +611,11 @@ func compactConversation(conv cmodels.Conversation) map[string]any {
 		"inbox":            conv.InboxName,
 		"channel":          conv.InboxChannel,
 		"contact_id":       conv.ContactID,
+		"contact":          conv.Contact.FullName(),
+		"contact_email":    conv.Contact.Email.String,
 		"assigned_user_id": conv.AssignedUserID,
 		"assigned_team_id": conv.AssignedTeamID,
+		"tags":             conv.Tags,
 		"last_message":     conv.LastMessage.String,
 		"updated_at":       conv.UpdatedAt,
 	}

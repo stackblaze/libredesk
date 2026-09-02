@@ -56,3 +56,21 @@ func TestHandleInitializeAndTools(t *testing.T) {
 		t.Fatal("notification should return nil")
 	}
 }
+
+func TestArgHelpers(t *testing.T) {
+	args := map[string]any{
+		"on":   true,
+		"tags": []any{"billing", "vip"},
+		"n":    float64(4),
+	}
+	if !BoolArg(args, "on") || BoolArg(args, "missing") {
+		t.Fatal("BoolArg")
+	}
+	got := StringSliceArg(args, "tags")
+	if len(got) != 2 || got[0] != "billing" {
+		t.Fatalf("StringSliceArg: %#v", got)
+	}
+	if IntArg(args, "n", 0) != 4 {
+		t.Fatal("IntArg")
+	}
+}

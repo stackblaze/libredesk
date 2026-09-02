@@ -28,9 +28,9 @@ type RPCError struct {
 }
 
 type Tool struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	InputSchema map[string]any `json:"inputSchema"`
+	Name        string                                 `json:"name"`
+	Description string                                 `json:"description"`
+	InputSchema map[string]any                         `json:"inputSchema"`
 	Handler     func(args map[string]any) (any, error) `json:"-"`
 }
 
@@ -140,4 +140,30 @@ func IntArg(args map[string]any, key string, fallback int) int {
 		return int(n)
 	}
 	return fallback
+}
+
+func BoolArg(args map[string]any, key string) bool {
+	v, _ := args[key].(bool)
+	return v
+}
+
+func StringSliceArg(args map[string]any, key string) []string {
+	raw, ok := args[key]
+	if !ok || raw == nil {
+		return nil
+	}
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			s, _ := item.(string)
+			if s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
 }

@@ -53,6 +53,8 @@ Visit [libredesk.io](https://libredesk.io) for more info. Check out the [**live 
   Google, Microsoft, and any OIDC provider are supported out of the box.
 - **API**  
   HTTP/JSON APIs and webhooks for custom integrations and workflows.
+- **MCP server**  
+  Built-in `/mcp` endpoint so AI agents can work tickets: search, reply, notes, assign, status, tags, macros, and contacts. Authenticate with an agent API key.
 - **Activity logs**  
   Track all actions performed by agents and admins, for auditing and accountability.
 - **Command bar**  
@@ -104,6 +106,25 @@ __________________
 - Run `./libredesk` and visit `http://localhost:9000` and login with email `System` and the password you set using the --set-system-user-password command.
 
 See [installation docs](https://docs.libredesk.io/getting-started/installation)
+
+## MCP
+
+LibreDesk exposes a JSON-RPC MCP server at `/mcp`. Authenticate with an agent API key (Admin → Users):
+
+```json
+{
+  "mcpServers": {
+    "libredesk": {
+      "url": "https://your-desk.example/mcp",
+      "headers": {
+        "Authorization": "Basic BASE64(api_key:api_secret)"
+      }
+    }
+  }
+}
+```
+
+Tools cover everyday support work: list/search conversations, read messages, reply, private notes, assign, status/priority/tags, macros, and contacts.
 __________________
 
 ## Developers
