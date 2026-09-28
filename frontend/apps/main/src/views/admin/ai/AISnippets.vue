@@ -1,82 +1,85 @@
 <template>
   <AdminSplitLayout>
     <template #content>
-      <LoadingOverlay :loading="isLoading" reserve-height>
-        <div class="flex justify-end gap-2 mb-4">
-          <Dialog v-model:open="importDialogOpen">
-            <DialogTrigger as-child>
-              <Button variant="outline">{{ t('admin.ai.snippet.importUrl') }}</Button>
-            </DialogTrigger>
-            <DialogContent class="sm:max-w-[560px]">
-              <DialogHeader>
-                <DialogTitle>{{ t('admin.ai.snippet.importUrl') }}</DialogTitle>
-              </DialogHeader>
-              <form class="space-y-4" @submit.prevent="importFromUrl">
-                <Input
-                  v-model="importUrl"
-                  type="url"
-                  :placeholder="t('admin.ai.snippet.importUrlPlaceholder')"
-                />
-                <div class="flex justify-end">
-                  <Button type="submit" :isLoading="isImporting" :disabled="!importUrl.trim()">
-                    {{ t('globals.messages.import') }}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Dialog v-model:open="snippetDialogOpen">
-            <DialogTrigger as-child @click="newSnippet">
-              <Button>{{ t('admin.ai.snippet.new') }}</Button>
-            </DialogTrigger>
-            <DialogContent class="sm:max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>
-                  {{ snippetEditing ? t('admin.ai.snippet.edit') : t('admin.ai.snippet.new') }}
-                </DialogTitle>
-              </DialogHeader>
-              <SnippetForm
-                :initial-values="snippetInitial"
-                :is-editing="snippetEditing"
-                :submit-form="submitSnippet"
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-        <DataTable
-          :columns="createSnippetColumns(t, { onEdit: editSnippet })"
-          :data="snippets"
-          :loading="isLoading"
-        />
-      </LoadingOverlay>
+      <Dialog v-model:open="importDialogOpen">
+        <DialogContent class="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>{{ t('admin.ai.snippet.importUrl') }}</DialogTitle>
+          </DialogHeader>
+          <form class="space-y-4" @submit.prevent="importFromUrl">
+            <Input
+              v-model="importUrl"
+              type="url"
+              :placeholder="t('admin.ai.snippet.importUrlPlaceholder')"
+            />
+            <div class="flex justify-end">
+              <Button type="submit" :isLoading="isImporting" :disabled="!importUrl.trim()">
+                {{ t('globals.messages.import') }}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog v-model:open="snippetDialogOpen">
+        <DialogContent class="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {{ snippetEditing ? t('admin.ai.snippet.edit') : t('admin.ai.snippet.new') }}
+            </DialogTitle>
+          </DialogHeader>
+          <SnippetForm
+            :initial-values="snippetInitial"
+            :is-editing="snippetEditing"
+            :submit-form="submitSnippet"
+          />
+        </DialogContent>
+      </Dialog>
+
+      <DataTable
+        :columns="createSnippetColumns(t, { onEdit: editSnippet })"
+        :data="snippets"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Button variant="outline" @click="importDialogOpen = true">
+            {{ t('admin.ai.snippet.importUrl') }}
+          </Button>
+          <Button @click="newSnippet">
+            <Plus class="size-4" />
+            {{ t('admin.ai.snippet.new') }}
+          </Button>
+        </template>
+      </DataTable>
     </template>
 
     <template #help>
-      <p>{{ t('admin.ai.snippetsHelp') }}</p>
-      <a
-        href="https://docs.libredesk.io/configuration/ai#snippets"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link-style"
-      >
-        {{ t('globals.terms.learnMore') }}
-      </a>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ t('admin.ai.snippetsHelp') }}</p>
+        <a
+          href="https://docs.libredesk.io/configuration/ai#snippets"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-style text-sm"
+        >
+          {{ t('globals.terms.learnMore') }}
+        </a>
+      </div>
     </template>
   </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { Button } from '@shared-ui/components/ui/button/index.js'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '@shared-ui/components/ui/dialog/index.js'
 import { Input } from '@shared-ui/components/ui/input/index.js'
 import SnippetForm from '@/features/admin/ai/SnippetForm.vue'
@@ -89,7 +92,7 @@ import api from '@/api'
 
 const { t } = useI18n()
 const emitter = useEmitter()
-const isLoading = ref(false)
+const isLoading = ref(true)
 
 const snippets = ref([])
 
@@ -160,6 +163,7 @@ const newSnippet = () => {
   snippetEditing.value = false
   editingSnippetId.value = null
   snippetInitial.value = {}
+  snippetDialogOpen.value = true
 }
 
 const editSnippet = (item) => {

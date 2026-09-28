@@ -1,22 +1,22 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-end mb-5">
+  <DataTable :columns="columns" :data="data" :loading="isLoading">
+    <template #actions>
       <router-link :to="{ name: 'new-team' }">
-        <Button> {{ $t('globals.messages.new') }} </Button>
+        <Button>
+          <Plus class="size-4" />
+          {{ $t('globals.messages.new') }}
+        </Button>
       </router-link>
-    </div>
-    <div>
-      <DataTable :columns="columns" :data="data" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
 import { columns } from '../../../features/admin/teams/TeamsDataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '../../../composables/useEmitter'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import DataTable from '@main/components/datatable/DataTable.vue'
@@ -24,7 +24,7 @@ import api from '../../../api'
 
 const emitter = useEmitter()
 const data = ref([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 
 const getData = async () => {
   try {
@@ -48,20 +48,12 @@ const refreshHandler = (event) => {
   }
 }
 
-const listenForRefresh = () => {
-  emitter.on(EMITTER_EVENTS.REFRESH_LIST, refreshHandler)
-}
-
-const removeListeners = () => {
-  emitter.off(EMITTER_EVENTS.REFRESH_LIST, refreshHandler)
-}
-
 onMounted(async () => {
   getData()
-  listenForRefresh()
+  emitter.on(EMITTER_EVENTS.REFRESH_LIST, refreshHandler)
 })
 
 onUnmounted(() => {
-  removeListeners()
+  emitter.off(EMITTER_EVENTS.REFRESH_LIST, refreshHandler)
 })
 </script>

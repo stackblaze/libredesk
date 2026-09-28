@@ -71,6 +71,24 @@ const routes = [
             name: 'report-teams',
             component: () => import('@main/views/reports/TeamReportsView.vue'),
             meta: { titleKey: 'report.teams' }
+          },
+          {
+            path: 'tickets',
+            name: 'report-tickets',
+            component: () => import('@main/views/reports/TicketsReportView.vue'),
+            meta: { titleKey: 'report.tickets' }
+          },
+          {
+            path: 'efficiency',
+            name: 'report-efficiency',
+            component: () => import('@main/views/reports/EfficiencyReportView.vue'),
+            meta: { titleKey: 'report.efficiency' }
+          },
+          {
+            path: 'backlog',
+            name: 'report-backlog',
+            component: () => import('@main/views/reports/BacklogReportView.vue'),
+            meta: { titleKey: 'report.backlog' }
           }
         ]
       },
@@ -229,6 +247,12 @@ const routes = [
             name: 'custom-attributes',
             component: () => import('@main/views/admin/custom-attributes/CustomAttributes.vue'),
             meta: { titleKey: 'globals.terms.customAttribute', titleCount: 2 }
+          },
+          {
+            path: 'ticket-forms',
+            name: 'ticket-forms',
+            component: () => import('@main/views/admin/ticket-forms/TicketFormsView.vue'),
+            meta: { titleKey: 'ticketForm.title', titleCount: 2 }
           },
           {
             path: 'general',

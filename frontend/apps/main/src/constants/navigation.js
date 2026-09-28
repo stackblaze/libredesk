@@ -16,6 +16,24 @@ export const reportsNavItems = [
     href: '/reports/teams',
     permission: 'reports:manage',
     icon: 'UsersRound'
+  },
+  {
+    titleKey: 'report.tickets',
+    href: '/reports/tickets',
+    permission: 'reports:manage',
+    icon: 'Inbox'
+  },
+  {
+    titleKey: 'report.efficiency',
+    href: '/reports/efficiency',
+    permission: 'reports:manage',
+    icon: 'Timer'
+  },
+  {
+    titleKey: 'report.backlog',
+    href: '/reports/backlog',
+    permission: 'reports:manage',
+    icon: 'CircleDot'
   }
 ]
 
@@ -47,7 +65,6 @@ export const adminNavItems = [
   },
   {
     titleKey: 'globals.terms.helpCenter',
-    badge: 'BETA',
     children: [
       {
         titleKey: 'globals.terms.helpCenter',
@@ -59,7 +76,6 @@ export const adminNavItems = [
   },
   {
     titleKey: 'admin.ai.title',
-    badge: 'BETA',
     children: [
       {
         titleKey: 'globals.terms.provider',
@@ -135,6 +151,13 @@ export const adminNavItems = [
         permission: 'custom_attributes:manage',
         isTitleKeyPlural: true,
         icon: 'SlidersHorizontal'
+      },
+      {
+        titleKey: 'ticketForm.title',
+        href: '/admin/ticket-forms',
+        permission: 'general_settings:manage',
+        isTitleKeyPlural: true,
+        icon: 'ClipboardList'
       },
       {
         titleKey: 'globals.terms.sharedView',

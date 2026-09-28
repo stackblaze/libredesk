@@ -1,10 +1,13 @@
 <template>
-  <div class="flex justify-between flex-1 min-h-0">
-    <div class="w-full xl:w-8/12 pr-6 relative">
+  <div class="flex flex-1 min-h-0 gap-8">
+    <div class="min-w-0 flex-1 relative">
       <slot name="content" />
     </div>
-    <div class="hidden lg:block rounded-md w-3/12 p-2 space-y-2 self-stretch text-sm text-foreground/70">
+    <aside
+      v-if="$slots.help"
+      class="hidden lg:block w-[17rem] shrink-0 space-y-4 text-sm text-muted-foreground"
+    >
       <slot name="help" />
-    </div>
+    </aside>
   </div>
 </template>

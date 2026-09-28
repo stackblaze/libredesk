@@ -1,86 +1,68 @@
 <template>
-  <div>
-    <AdminSplitLayout>
-      <template #content>
-        <LoadingOverlay :loading="isLoading" reserve-height>
-          <div class="flex justify-between mb-5">
-            <div class="flex justify-end mb-4 w-full gap-2">
-              <Dialog v-model:open="dialogOpen">
-                <DialogTrigger as-child @click="newOrg">
-                  <Button>{{ t('organization.new') }}</Button>
-                </DialogTrigger>
-                <DialogContent class="sm:max-w-[480px]">
-                  <DialogHeader>
-                    <DialogTitle class="mb-1">
-                      {{ isEditing ? t('organization.edit') : t('organization.new') }}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {{ t('organization.formDescription') }}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form class="space-y-4" @submit.prevent="onSubmit">
-                    <div class="space-y-1">
-                      <label class="text-sm font-medium">{{ t('globals.terms.name') }}</label>
-                      <Input v-model="form.name" type="text" required />
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-sm font-medium">{{ t('organization.domains') }}</label>
-                      <Input
-                        v-model="form.domainsText"
-                        type="text"
-                        :placeholder="t('organization.domainsPlaceholder')"
-                      />
-                      <p class="text-xs text-muted-foreground">{{ t('organization.domainsHint') }}</p>
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-sm font-medium">{{ t('globals.terms.note', 2) }}</label>
-                      <Input v-model="form.notes" type="text" />
-                    </div>
-                    <DialogFooter class="mt-6">
-                      <Button type="submit">
-                        {{ isEditing ? t('globals.messages.save') : t('globals.messages.create') }}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          <div class="space-y-2">
-            <div
-              v-for="org in orgs"
-              :key="org.id"
-              class="flex items-center justify-between rounded-md border px-4 py-3"
-            >
-              <div class="min-w-0">
-                <button class="font-medium hover:underline text-left" @click="editOrg(org)">
-                  {{ org.name }}
-                </button>
-                <p class="text-xs text-muted-foreground truncate">
-                  {{ (org.domains || []).join(', ') || t('organization.noDomains') }}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" class="text-destructive" @click="confirmDelete(org)">
-                {{ t('globals.messages.delete') }}
+  <AdminSplitLayout>
+    <template #content>
+      <DataTable :columns="columns" :data="orgs" :loading="isLoading">
+        <template #actions>
+          <Dialog v-model:open="dialogOpen">
+            <DialogTrigger as-child @click="newOrg">
+              <Button>
+                <Plus class="size-4" />
+                {{ t('organization.new') }}
               </Button>
-            </div>
-            <p v-if="!isLoading && orgs.length === 0" class="text-sm text-muted-foreground">
-              {{ t('organization.empty') }}
-            </p>
-          </div>
-        </LoadingOverlay>
-      </template>
-      <template #help>
-        <p>{{ $t('admin.organization.help') }}</p>
-      </template>
-    </AdminSplitLayout>
-  </div>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle class="mb-1">
+                  {{ isEditing ? t('organization.edit') : t('organization.new') }}
+                </DialogTitle>
+                <DialogDescription>
+                  {{ t('organization.formDescription') }}
+                </DialogDescription>
+              </DialogHeader>
+              <form class="space-y-4" @submit.prevent="onSubmit">
+                <div class="space-y-1">
+                  <label class="text-sm font-medium">{{ t('globals.terms.name') }}</label>
+                  <Input v-model="form.name" type="text" required />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-sm font-medium">{{ t('organization.domains') }}</label>
+                  <Input
+                    v-model="form.domainsText"
+                    type="text"
+                    :placeholder="t('organization.domainsPlaceholder')"
+                  />
+                  <p class="text-xs text-muted-foreground">{{ t('organization.domainsHint') }}</p>
+                </div>
+                <div class="space-y-1">
+                  <label class="text-sm font-medium">{{ t('globals.terms.note', 2) }}</label>
+                  <Input v-model="form.notes" type="text" />
+                </div>
+                <DialogFooter class="mt-6">
+                  <Button type="submit">
+                    {{ isEditing ? t('globals.messages.save') : t('globals.messages.create') }}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </DataTable>
+    </template>
+    <template #help>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ $t('admin.organization.help') }}
+        </p>
+      </div>
+    </template>
+  </AdminSplitLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, h } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
+import DataTable from '@main/components/datatable/DataTable.vue'
 import { Button } from '@shared-ui/components/ui/button/index.js'
 import { Input } from '@shared-ui/components/ui/input'
 import {
@@ -99,7 +81,7 @@ import { useI18n } from 'vue-i18n'
 import api from '../../../api/index.js'
 
 const { t } = useI18n()
-const isLoading = ref(false)
+const isLoading = ref(true)
 const orgs = ref([])
 const dialogOpen = ref(false)
 const isEditing = ref(false)
@@ -108,6 +90,51 @@ const emitter = useEmitter()
 const form = ref({ name: '', domainsText: '', notes: '' })
 
 onMounted(getOrgs)
+
+const columns = [
+  {
+    accessorKey: 'name',
+    header: () => t('globals.terms.name'),
+    cell: ({ row }) =>
+      h(
+        'button',
+        {
+          class: 'font-medium hover:underline text-left',
+          onClick: () => editOrg(row.original)
+        },
+        row.getValue('name')
+      )
+  },
+  {
+    accessorKey: 'domains',
+    header: () => t('organization.domains'),
+    cell: ({ row }) => {
+      const domains = row.original.domains || []
+      return domains.length ? domains.join(', ') : t('organization.noDomains')
+    }
+  },
+  {
+    accessorKey: 'notes',
+    header: () => t('globals.terms.note', 2),
+    cell: ({ row }) => row.original.notes || '—'
+  },
+  {
+    id: 'actions',
+    enableHiding: false,
+    enableSorting: false,
+    cell: ({ row }) =>
+      h(
+        Button,
+        {
+          variant: 'ghost',
+          size: 'sm',
+          class: 'text-destructive',
+          onClick: () => confirmDelete(row.original)
+        },
+        () => t('globals.messages.delete')
+      )
+  }
+]
 
 async function getOrgs() {
   isLoading.value = true

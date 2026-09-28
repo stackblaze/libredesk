@@ -1,25 +1,43 @@
 <template>
   <AdminSplitLayout>
     <template #content>
-      <LoadingOverlay :loading="loading" reserve-height>
-        <div class="flex justify-end mb-4">
+      <AdminEmptyState
+        v-if="!loading && !helpCenters.length"
+        :icon="BookOpen"
+        :title="t('admin.helpCenter.emptyTitle')"
+        :description="t('admin.helpCenter.help')"
+      >
+        <template #action>
           <Button @click="openCreateModal">
-            {{ $t('globals.messages.new') }}
+            <Plus class="size-4" />
+            {{ t('helpCenter.new') }}
           </Button>
-        </div>
+        </template>
+      </AdminEmptyState>
 
-        <DataTable :columns="columns" :data="helpCenters" :loading="loading" />
-      </LoadingOverlay>
+      <DataTable v-else :columns="columns" :data="helpCenters" :loading="loading">
+        <template #actions>
+          <Button @click="openCreateModal">
+            <Plus class="size-4" />
+            {{ t('helpCenter.new') }}
+          </Button>
+        </template>
+      </DataTable>
     </template>
+
     <template #help>
-      <p>{{ $t('admin.helpCenter.help') }}</p>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ t('admin.helpCenter.help') }}
+        </p>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 
   <Sheet :open="showCreateModal" @update:open="closeCreateModal">
     <SheetContent class="sm:max-w-lg overflow-y-auto">
       <SheetHeader>
-        <SheetTitle>{{ $t('globals.messages.new') }}</SheetTitle>
+        <SheetTitle>{{ t('helpCenter.new') }}</SheetTitle>
       </SheetHeader>
 
       <HelpCenterBasicsForm
@@ -36,11 +54,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEmitter } from '@/composables/useEmitter.js'
 import { EMITTER_EVENTS } from '@/constants/emitterEvents.js'
+import { BookOpen, Plus } from 'lucide-vue-next'
 import { Button } from '@shared-ui/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@shared-ui/components/ui/sheet'
-import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import DataTable from '@main/components/datatable/DataTable.vue'
+import AdminEmptyState from '@main/components/layout/AdminEmptyState.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
+import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
 import { createHelpCenterColumns } from '@/features/admin/help-center/helpCenterColumns.js'
 import HelpCenterBasicsForm from '@/features/admin/help-center/HelpCenterBasicsForm.vue'
 import api from '@/api'
@@ -50,7 +70,7 @@ import { useI18n } from 'vue-i18n'
 const router = useRouter()
 const emitter = useEmitter()
 const { t } = useI18n()
-const loading = ref(false)
+const loading = ref(true)
 const isSubmitting = ref(false)
 const helpCenters = ref([])
 const showCreateModal = ref(false)

@@ -8,8 +8,14 @@
     </template>
 
     <template #help>
-      <p>{{ $t('admin.ai.help.description') }}</p>
-      <p>{{ $t('admin.ai.help.detail') }}</p>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ $t('admin.ai.help.description') }}
+        </p>
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ $t('admin.ai.help.detail') }}
+        </p>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 </template>
@@ -18,6 +24,7 @@
 import { ref, onMounted } from 'vue'
 import api from '@main/api'
 import AdminSplitLayout from '@main/layouts/admin/AdminSplitLayout.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 import { useI18n } from 'vue-i18n'
 import AISettingsForm from '@/features/admin/ai/AISettingsForm.vue'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'

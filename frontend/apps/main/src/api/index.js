@@ -453,6 +453,9 @@ const getOverviewMessageVolume = (params) => http.get('/api/v1/reports/overview/
 const getOverviewTagDistribution = (params) => http.get('/api/v1/reports/overview/tags', { params })
 const getAgentReports = (params) => http.get('/api/v1/reports/agents', { params })
 const getTeamReports = (params) => http.get('/api/v1/reports/teams', { params })
+const getTicketReports = (params) => http.get('/api/v1/reports/tickets', { params })
+const getEfficiencyReports = (params) => http.get('/api/v1/reports/efficiency', { params })
+const getBacklogReports = (params) => http.get('/api/v1/reports/backlog', { params })
 const getLanguage = (lang) => http.get(`/api/v1/lang/${lang}`)
 const getAvailableLanguages = () => http.get('/api/v1/lang')
 const createInbox = (data) =>
@@ -462,6 +465,10 @@ const createInbox = (data) =>
     }
   })
 const getInboxes = () => http.get('/api/v1/inboxes')
+const getTicketForms = () => http.get('/api/v1/ticket-forms')
+const createTicketForm = (data) => http.post('/api/v1/ticket-forms', data)
+const updateTicketForm = (id, data) => http.put(`/api/v1/ticket-forms/${id}`, data)
+const deleteTicketForm = (id) => http.delete(`/api/v1/ticket-forms/${id}`)
 const getInbox = (id) => http.get(`/api/v1/inboxes/${id}`)
 const toggleInbox = (id) => http.put(`/api/v1/inboxes/${id}/toggle`)
 const updateInbox = (id, data) =>
@@ -726,6 +733,10 @@ export default {
   getUsers,
   getInbox,
   getInboxes,
+  getTicketForms,
+  createTicketForm,
+  updateTicketForm,
+  deleteTicketForm,
   getLanguage,
   getAvailableLanguages,
   getConversation,
@@ -760,6 +771,9 @@ export default {
   getOverviewTagDistribution,
   getAgentReports,
   getTeamReports,
+  getTicketReports,
+  getEfficiencyReports,
+  getBacklogReports,
   getConversationMessage,
   getConversationMessages,
   getConversationTranscript,

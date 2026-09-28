@@ -1,75 +1,79 @@
 <template>
-  <div>
-    <AdminSplitLayout>
-      <template #content>
-        <LoadingOverlay :loading="isLoading" reserve-height>
-          <div class="flex justify-between mb-5">
-            <div></div>
-            <div class="flex justify-end mb-4">
-              <Dialog v-model:open="dialogOpen">
-                <DialogTrigger as-child @click="newCustomAttribute">
-                  <Button class="ml-auto">
-                    {{
-                      $t('customAttribute.new')
-                    }}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent class="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {{
-                        isEditing
-                          ? $t('customAttribute.edit')
-                          : $t('customAttribute.new')
-                      }}
-                    </DialogTitle>
-                    <DialogDescription/>
-                  </DialogHeader>
-                  <CustomAttributesForm @submit.prevent="onSubmit" :form="form">
-                    <template #footer>
-                      <DialogFooter class="mt-10">
-                        <Button type="submit" :isLoading="isLoading">
-                          {{
-                            isEditing ? $t('globals.messages.save') : $t('globals.messages.create')
-                          }}
-                        </Button>
-                      </DialogFooter>
-                    </template>
-                  </CustomAttributesForm>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          <div>
-            <Tabs default-value="contact" v-model="appliesTo">
-              <TabsList class="grid w-full grid-cols-2 mb-5">
-                <TabsTrigger value="contact">
-                  {{ $t('globals.terms.contact') }}
-                </TabsTrigger>
-                <TabsTrigger value="conversation">
-                  {{ $t('globals.terms.conversation') }}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="contact">
-                <DataTable :columns="createColumns(t, { onEdit: editCustomAttribute })" :data="customAttributes" :loading="isLoading" />
-              </TabsContent>
-              <TabsContent value="conversation">
-                <DataTable :columns="createColumns(t, { onEdit: editCustomAttribute })" :data="customAttributes" :loading="isLoading" />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </LoadingOverlay>
-      </template>
+  <AdminSplitLayout>
+    <template #content>
+      <Dialog v-model:open="dialogOpen">
+        <DialogContent class="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {{ isEditing ? $t('customAttribute.edit') : $t('customAttribute.new') }}
+            </DialogTitle>
+            <DialogDescription />
+          </DialogHeader>
+          <CustomAttributesForm @submit.prevent="onSubmit" :form="form">
+            <template #footer>
+              <DialogFooter class="mt-10">
+                <Button type="submit" :isLoading="isLoading">
+                  {{ isEditing ? $t('globals.messages.save') : $t('globals.messages.create') }}
+                </Button>
+              </DialogFooter>
+            </template>
+          </CustomAttributesForm>
+        </DialogContent>
+      </Dialog>
 
-      <template #help>
-        <p>{{ $t('admin.customAttribute.help') }}</p>
-      </template>
-    </AdminSplitLayout>
-  </div>
+      <Tabs default-value="contact" v-model="appliesTo">
+        <TabsList class="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="contact">
+            {{ $t('globals.terms.contact') }}
+          </TabsTrigger>
+          <TabsTrigger value="conversation">
+            {{ $t('globals.terms.conversation') }}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="contact">
+          <DataTable
+            :columns="createColumns(t, { onEdit: editCustomAttribute })"
+            :data="customAttributes"
+            :loading="isLoading"
+          >
+            <template #actions>
+              <Button @click="newCustomAttribute">
+                <Plus class="size-4" />
+                {{ $t('customAttribute.new') }}
+              </Button>
+            </template>
+          </DataTable>
+        </TabsContent>
+        <TabsContent value="conversation">
+          <DataTable
+            :columns="createColumns(t, { onEdit: editCustomAttribute })"
+            :data="customAttributes"
+            :loading="isLoading"
+          >
+            <template #actions>
+              <Button @click="newCustomAttribute">
+                <Plus class="size-4" />
+                {{ $t('customAttribute.new') }}
+              </Button>
+            </template>
+          </DataTable>
+        </TabsContent>
+      </Tabs>
+    </template>
+
+    <template #help>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ $t('admin.customAttribute.help') }}
+        </p>
+      </div>
+    </template>
+  </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { createColumns } from '../../../features/admin/custom-attributes/dataTableColumns.js'
 import CustomAttributesForm from '@/features/admin/custom-attributes/CustomAttributesForm.vue'
@@ -77,7 +81,6 @@ import { Button } from '@shared-ui/components/ui/button'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { createFormSchema } from '../../../features/admin/custom-attributes/formSchema.js'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '../../../composables/useEmitter'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import {
@@ -86,8 +89,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '@shared-ui/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui/components/ui/tabs'
 import { useStorage } from '@vueuse/core'
@@ -99,7 +101,7 @@ import api from '../../../api'
 const appliesTo = useStorage('appliesTo', 'contact')
 const { t } = useI18n()
 const customAttributes = ref([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 const emitter = useEmitter()
 const dialogOpen = ref(false)
 const isEditing = ref(false)

@@ -57,15 +57,19 @@
     </template>
 
     <template #help>
-      <p>{{ t('admin.ai.faqLearning.help') }}</p>
-      <a
-        href="https://docs.libredesk.io/configuration/ai#learn-from-resolved-conversations"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link-style"
-      >
-        {{ t('globals.terms.learnMore') }}
-      </a>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ t('admin.ai.faqLearning.help') }}
+        </p>
+        <a
+          href="https://docs.libredesk.io/configuration/ai#learn-from-resolved-conversations"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-style text-sm"
+        >
+          {{ t('globals.terms.learnMore') }}
+        </a>
+      </div>
     </template>
   </AdminSplitLayout>
 </template>

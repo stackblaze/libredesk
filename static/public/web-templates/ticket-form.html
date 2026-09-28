@@ -1,0 +1,39 @@
+{{ define "ticket-form" }}
+{{ template "header" . }}
+<link href="/static/public/static/request.css" rel="stylesheet" />
+<div class="req">
+    <h1>{{ .Data.Form.Name }}</h1>
+    {{ if .Data.Form.Description }}
+    <p class="muted">{{ .Data.Form.Description }}</p>
+    {{ end }}
+    <div class="req-card">
+        {{ if .Data.Sent }}
+        <p class="banner">{{ L.T "ticketForm.submitted" }}</p>
+        {{ else }}
+        {{ if .Data.Error }}
+        <p class="error">{{ .Data.Error }}</p>
+        {{ end }}
+        <form action="/forms/{{ .Data.Form.ID }}" method="POST">
+            <label for="name">{{ L.T "globals.terms.name" }}</label>
+            <input id="name" name="name" maxlength="120" />
+            <label for="email">{{ L.T "globals.terms.email" }}</label>
+            <input id="email" name="email" type="email" required />
+            <label for="subject">{{ L.T "globals.terms.subject" }}</label>
+            <input id="subject" name="subject" required maxlength="200" />
+            {{ range .Data.Fields }}
+            <label for="field_{{ .Key }}">{{ .Label }}</label>
+            {{ if eq .Type "textarea" }}
+            <textarea id="field_{{ .Key }}" name="field_{{ .Key }}" rows="4" {{ if .Required }}required{{ end }}></textarea>
+            {{ else }}
+            <input id="field_{{ .Key }}" name="field_{{ .Key }}" {{ if .Required }}required{{ end }} />
+            {{ end }}
+            {{ end }}
+            <label for="message">{{ L.T "portal.message" }}</label>
+            <textarea id="message" name="message" rows="6" required></textarea>
+            <button type="submit" class="btn">{{ L.T "portal.submit" }}</button>
+        </form>
+        {{ end }}
+    </div>
+</div>
+{{ template "footer" }}
+{{ end }}

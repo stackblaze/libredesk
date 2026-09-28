@@ -1,37 +1,30 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-between mb-5">
-      <div></div>
-      <div>
-        <router-link :to="{ name: 'new-sla' }">
-          <Button>
-            {{
-              t('sla.new')
-            }}
-          </Button>
-        </router-link>
-      </div>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="slas" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+  <DataTable :columns="createColumns(t)" :data="slas" :loading="isLoading">
+    <template #actions>
+      <router-link :to="{ name: 'new-sla' }">
+        <Button>
+          <Plus class="size-4" />
+          {{ t('sla.new') }}
+        </Button>
+      </router-link>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { createColumns } from '../../../features/admin/sla/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import { useEmitter } from '../../../composables/useEmitter'
 import { useI18n } from 'vue-i18n'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import api from '../../../api'
 
 const { t } = useI18n()
 const slas = ref([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 const emit = useEmitter()
 
 onMounted(() => {

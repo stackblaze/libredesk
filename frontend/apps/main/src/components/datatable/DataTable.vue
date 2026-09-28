@@ -1,12 +1,17 @@
 <template>
   <div class="w-full space-y-3">
-    <div v-if="searchable" class="relative max-w-xs">
-      <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        v-model="globalFilter"
-        :placeholder="searchPlaceholder || t('globals.terms.search')"
-        class="pl-8"
-      />
+    <div v-if="searchable || $slots.actions" class="flex items-center gap-3">
+      <div v-if="searchable" class="relative w-full max-w-xs">
+        <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          v-model="globalFilter"
+          :placeholder="searchPlaceholder || t('globals.terms.search')"
+          class="pl-8"
+        />
+      </div>
+      <div v-if="$slots.actions" class="ml-auto flex shrink-0 items-center gap-2">
+        <slot name="actions" />
+      </div>
     </div>
 
     <div
@@ -25,14 +30,19 @@
             <TableHead
               v-for="header in headerGroup.headers"
               :key="header.id"
-              class="h-11 px-4 text-center text-sm font-medium text-muted-foreground"
-              :class="{
-                'group cursor-pointer select-none transition-colors hover:text-foreground':
-                  header.column.getCanSort()
-              }"
+              class="h-11 px-4 text-sm font-medium text-muted-foreground"
+              :class="[
+                header.column.id === 'actions' ? 'text-right' : 'text-left',
+                header.column.getCanSort()
+                  ? 'group cursor-pointer select-none transition-colors hover:text-foreground'
+                  : ''
+              ]"
               @click="header.column.getToggleSortingHandler()?.($event)"
             >
-              <div class="flex items-center justify-center gap-2">
+              <div
+                class="flex items-center gap-2"
+                :class="header.column.id === 'actions' ? 'justify-end' : 'justify-start'"
+              >
                 <FlexRender
                   v-if="!header.isPlaceholder"
                   :render="header.column.columnDef.header"
@@ -67,8 +77,11 @@
               <TableCell
                 v-for="cell in rows[virtualRow.index].getVisibleCells()"
                 :key="cell.id"
-                class="px-4 py-3 text-center text-sm"
-                :class="cell.column.id === 'actions' ? actionCellClass : ''"
+                class="px-4 py-3 text-sm"
+                :class="[
+                  cell.column.id === 'actions' ? 'text-right' : 'text-left',
+                  cell.column.id === 'actions' ? actionCellClass : ''
+                ]"
               >
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
@@ -88,10 +101,10 @@
 
           <template v-else>
             <TableRow class="hover:bg-transparent">
-              <TableCell :colspan="columns.length" class="h-32">
-                <div class="flex flex-col items-center justify-center gap-2 text-center">
-                  <Ghost class="h-8 w-8 text-muted-foreground/50" />
-                  <p class="text-sm font-medium text-muted-foreground">{{ emptyText }}</p>
+              <TableCell :colspan="columns.length" class="h-48">
+                <div class="flex flex-col items-center justify-center gap-2 px-6 py-8 text-center">
+                  <Inbox class="size-10 text-muted-foreground" :stroke-width="1.5" />
+                  <p class="text-sm font-medium text-foreground">{{ emptyText }}</p>
                 </div>
               </TableCell>
             </TableRow>
@@ -113,7 +126,7 @@ import {
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { useI18n } from 'vue-i18n'
 import { computed, ref } from 'vue'
-import { ArrowUpDown, ChevronDown, ChevronUp, Ghost, Search } from 'lucide-vue-next'
+import { ArrowUpDown, ChevronDown, ChevronUp, Inbox, Search } from 'lucide-vue-next'
 import {
   TableBody,
   TableCell,

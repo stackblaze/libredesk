@@ -1,25 +1,21 @@
 <template>
-  <LoadingOverlay :loading="formLoading" reserve-height>
-    <div class="flex justify-end mb-5">
+  <DataTable :columns="createColumns(t)" :data="sharedViews" :loading="formLoading">
+    <template #actions>
       <router-link :to="{ name: 'new-shared-view' }">
         <Button>
-          {{
-            $t('sharedView.new')
-          }}
+          <Plus class="size-4" />
+          {{ $t('sharedView.new') }}
         </Button>
       </router-link>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="sharedViews" :loading="formLoading" />
-    </div>
-  </LoadingOverlay>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@/components/datatable/DataTable.vue'
 import { createColumns } from '@/features/admin/shared-views/dataTableColumns.js'
-import LoadingOverlay from '@/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '@/composables/useEmitter'
 import { EMITTER_EVENTS } from '@/constants/emitterEvents.js'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
@@ -28,7 +24,7 @@ import { useI18n } from 'vue-i18n'
 import api from '@/api'
 
 const { t } = useI18n()
-const formLoading = ref(false)
+const formLoading = ref(true)
 const sharedViews = ref([])
 const emit = useEmitter()
 

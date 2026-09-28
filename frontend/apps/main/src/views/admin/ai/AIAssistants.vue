@@ -1,38 +1,41 @@
 <template>
   <AdminSplitLayout>
     <template #content>
-      <LoadingOverlay :loading="isLoading" reserve-height>
-        <div class="flex justify-end mb-4">
-          <Button @click="router.push({ name: 'new-ai-assistant' })">{{
-            t('admin.ai.assistant.new')
-          }}</Button>
-        </div>
-        <DataTable
-          :columns="createAssistantColumns(t, { onEdit: editAssistant })"
-          :data="assistants"
-          :loading="isLoading"
-        />
-      </LoadingOverlay>
+      <DataTable
+        :columns="createAssistantColumns(t, { onEdit: editAssistant })"
+        :data="assistants"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Button @click="router.push({ name: 'new-ai-assistant' })">
+            <Plus class="size-4" />
+            {{ t('admin.ai.assistant.new') }}
+          </Button>
+        </template>
+      </DataTable>
     </template>
 
     <template #help>
-      <p>{{ t('admin.ai.assistantsHelp') }}</p>
-      <a
-        href="https://docs.libredesk.io/configuration/ai#assistants"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link-style"
-      >
-        {{ t('globals.terms.learnMore') }}
-      </a>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ t('admin.ai.assistantsHelp') }}</p>
+        <a
+          href="https://docs.libredesk.io/configuration/ai#assistants"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-style text-sm"
+        >
+          {{ t('globals.terms.learnMore') }}
+        </a>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { Button } from '@shared-ui/components/ui/button/index.js'
 import { createAssistantColumns } from '@/features/admin/ai/assistantColumns.js'
@@ -46,8 +49,7 @@ import api from '@/api'
 const { t } = useI18n()
 const emitter = useEmitter()
 const router = useRouter()
-const isLoading = ref(false)
-
+const isLoading = ref(true)
 const assistants = ref([])
 
 const refreshHandler = (data) => {

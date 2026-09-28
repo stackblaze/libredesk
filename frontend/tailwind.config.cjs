@@ -100,6 +100,16 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
       },
+      boxShadow: {
+        '2xs': '0 1px 2px 0 oklch(0.2 0.03 264 / 0.04)',
+        xs: '0 1px 2px 0 oklch(0.2 0.03 264 / 0.05), 0 1px 1px -1px oklch(0.2 0.03 264 / 0.04)',
+        sm: '0 1px 3px 0 oklch(0.2 0.03 264 / 0.06), 0 1px 2px -1px oklch(0.2 0.03 264 / 0.05)',
+        DEFAULT: '0 1px 3px 0 oklch(0.2 0.03 264 / 0.06), 0 1px 2px -1px oklch(0.2 0.03 264 / 0.05)',
+        md: '0 4px 14px -3px oklch(0.2 0.03 264 / 0.09), 0 2px 6px -2px oklch(0.2 0.03 264 / 0.06)',
+        lg: '0 14px 32px -8px oklch(0.2 0.03 264 / 0.13), 0 5px 12px -5px oklch(0.2 0.03 264 / 0.08)',
+        xl: '0 24px 50px -12px oklch(0.2 0.03 264 / 0.18)',
+        '2xl': '0 24px 50px -12px oklch(0.2 0.03 264 / 0.18)'
+      },
       keyframes: {
         'dot-flashing': {
           '0%': { opacity: '0.2' },

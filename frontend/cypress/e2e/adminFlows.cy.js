@@ -31,7 +31,7 @@ describe('Admin setup and outgoing conversation', () => {
   const visitDefaultLayout = (path) => {
     cy.visit(path, {
       onBeforeLoad(win) {
-        win.localStorage.setItem('libredesk_ui_layout', 'default')
+        win.localStorage.setItem('libredesk_ui_layout', 'zendesk')
       }
     })
   }

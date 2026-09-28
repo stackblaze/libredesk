@@ -1,36 +1,32 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-end mb-5">
+  <DataTable :columns="createColumns(t)" :data="roles" :loading="isLoading">
+    <template #actions>
       <router-link :to="{ name: 'new-role' }">
         <Button>
-          {{
-            $t('role.new')
-          }}
+          <Plus class="size-4" />
+          {{ $t('role.new') }}
         </Button>
       </router-link>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="roles" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import { createColumns } from '../../../features/admin/roles/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '../../../composables/useEmitter'
-import { EMITTER_EVENTS} from '../../../constants/emitterEvents.js'
+import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import { useI18n } from 'vue-i18n'
 import api from '../../../api'
 
 const emitter = useEmitter()
 const { t } = useI18n()
 const roles = ref([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 
 const getRoles = async () => {
   try {

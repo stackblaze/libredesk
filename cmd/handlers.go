@@ -262,6 +262,9 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/api/v1/reports/overview/tags", perm(handleOverviewTagDistribution, "reports:manage"))
 	g.GET("/api/v1/reports/agents", perm(handleAgentReports, "reports:manage"))
 	g.GET("/api/v1/reports/teams", perm(handleTeamReports, "reports:manage"))
+	g.GET("/api/v1/reports/tickets", perm(handleTicketReports, "reports:manage"))
+	g.GET("/api/v1/reports/efficiency", perm(handleEfficiencyReports, "reports:manage"))
+	g.GET("/api/v1/reports/backlog", perm(handleBacklogReports, "reports:manage"))
 
 	// Templates.
 	g.GET("/api/v1/templates", perm(handleGetTemplates, "templates:manage"))
@@ -290,7 +293,6 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.POST("/api/v1/ai/completion", auth(handleAICompletion))
 	g.POST("/api/v1/ai/draft-reply", auth(handleAIDraftReply))
 	g.PUT("/api/v1/ai/provider", perm(handleUpdateAIProvider, "ai:manage"))
-
 
 	// AI provider config (completion / embedding).
 	g.GET("/api/v1/ai/config/{type}", perm(handleGetAIConfig, "ai:manage"))
@@ -455,8 +457,15 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.POST("/api/v1/portal/login", rateLimit(handlePortalLogin, "public"))
 	g.GET("/portal", rateLimit(handlePortalHome, "public"))
 	g.POST("/portal/logout", rateLimit(handlePortalLogout, "public"))
+	g.POST("/portal/conversations", rateLimit(handlePortalNewConversation, "public"))
 	g.GET("/portal/conversations/{uuid}", rateLimit(handlePortalConversation, "public"))
 	g.POST("/portal/conversations/{uuid}", rateLimit(handlePortalReply, "public"))
+	g.GET("/api/v1/ticket-forms", perm(handleGetTicketForms, "general_settings:manage"))
+	g.POST("/api/v1/ticket-forms", perm(handleCreateTicketForm, "general_settings:manage"))
+	g.PUT("/api/v1/ticket-forms/{id}", perm(handleUpdateTicketForm, "general_settings:manage"))
+	g.DELETE("/api/v1/ticket-forms/{id}", perm(handleDeleteTicketForm, "general_settings:manage"))
+	g.GET("/forms/{id}", rateLimit(handlePublicTicketForm, "public"))
+	g.POST("/forms/{id}", rateLimit(handlePublicTicketFormSubmit, "public"))
 
 	g.GET("/csat/{uuid}", rateLimit(handleShowCSAT, "public"))
 	g.GET("/csat/{uuid}/widget", rateLimit(handleShowCSATWidget, "public"))

@@ -442,3 +442,193 @@ WHERE c.assigned_team_id IS NOT NULL
   END
 GROUP BY t.id, t.name
 ORDER BY tickets_assigned DESC;
+
+-- name: get-ticket-reports
+WITH created_rows AS (
+    SELECT
+        i.channel::text AS channel,
+        c.created_at::date AS day,
+        COALESCE(s.name, '') AS status,
+        COALESCE(p.name, '') AS priority
+    FROM conversations c
+    JOIN inboxes i ON i.id = c.inbox_id
+    LEFT JOIN conversation_statuses s ON s.id = c.status_id
+    LEFT JOIN conversation_priorities p ON p.id = c.priority_id
+    WHERE c.created_at >= CASE
+        WHEN %d = 0 THEN CURRENT_DATE
+        ELSE NOW() - INTERVAL '%d days'
+    END
+    %s
+),
+resolved_rows AS (
+    SELECT i.channel::text AS channel, c.resolved_at::date AS day
+    FROM conversations c
+    JOIN inboxes i ON i.id = c.inbox_id
+    WHERE c.resolved_at IS NOT NULL
+      AND c.resolved_at >= CASE
+        WHEN %d = 0 THEN CURRENT_DATE
+        ELSE NOW() - INTERVAL '%d days'
+    END
+    %s
+),
+channels AS (
+    SELECT channel FROM created_rows
+    UNION
+    SELECT channel FROM resolved_rows
+)
+SELECT json_build_object(
+    'created', (SELECT COUNT(*) FROM created_rows),
+    'resolved', (SELECT COUNT(*) FROM resolved_rows),
+    'by_channel', COALESCE((
+        SELECT json_agg(row_to_json(x) ORDER BY x.channel)
+        FROM (
+            SELECT
+                ch.channel,
+                (SELECT COUNT(*) FROM created_rows cr WHERE cr.channel = ch.channel) AS created,
+                (SELECT COUNT(*) FROM resolved_rows rr WHERE rr.channel = ch.channel) AS resolved
+            FROM channels ch
+        ) x
+    ), '[]'::json),
+    'new_conversations', COALESCE((
+        SELECT json_agg(row_to_json(agg) ORDER BY agg.date)
+        FROM (
+            SELECT TO_CHAR(day, 'YYYY-MM-DD') AS date, COUNT(*) AS count
+            FROM created_rows
+            GROUP BY day
+        ) agg
+    ), '[]'::json),
+    'resolved_conversations', COALESCE((
+        SELECT json_agg(row_to_json(agg) ORDER BY agg.date)
+            FROM (
+            SELECT TO_CHAR(day, 'YYYY-MM-DD') AS date, COUNT(*) AS count
+            FROM resolved_rows
+            GROUP BY day
+        ) agg
+    ), '[]'::json),
+    'by_status', COALESCE((
+        SELECT json_agg(row_to_json(x) ORDER BY x.status)
+        FROM (
+            SELECT status, COUNT(*) AS created
+            FROM created_rows
+            WHERE status <> ''
+            GROUP BY status
+        ) x
+    ), '[]'::json),
+    'by_priority', COALESCE((
+        SELECT json_agg(row_to_json(x) ORDER BY x.priority)
+        FROM (
+            SELECT priority, COUNT(*) AS created
+            FROM created_rows
+            WHERE priority <> ''
+            GROUP BY priority
+        ) x
+    ), '[]'::json)
+) AS result;
+
+-- name: get-efficiency-reports
+SELECT json_build_object(
+    'median_first_reply_seconds', (
+        SELECT percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY EXTRACT(EPOCH FROM (c.first_reply_at - c.created_at))
+        )
+        FROM conversations c
+        WHERE c.first_reply_at IS NOT NULL
+          AND c.created_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    ),
+    'first_reply_count', (
+        SELECT COUNT(*)
+        FROM conversations c
+        WHERE c.first_reply_at IS NOT NULL
+          AND c.created_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    ),
+    'median_resolution_seconds', (
+        SELECT percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY EXTRACT(EPOCH FROM (c.resolved_at - c.created_at))
+        )
+        FROM conversations c
+        WHERE c.resolved_at IS NOT NULL
+          AND c.resolved_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    ),
+    'resolution_count', (
+        SELECT COUNT(*)
+        FROM conversations c
+        WHERE c.resolved_at IS NOT NULL
+          AND c.resolved_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    ),
+    'sla_met', (
+        SELECT COUNT(*)
+        FROM applied_slas a
+        JOIN conversations c ON c.id = a.conversation_id
+        WHERE a.first_response_met_at IS NOT NULL
+          AND a.created_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    ),
+    'sla_breached', (
+        SELECT COUNT(*)
+        FROM applied_slas a
+        JOIN conversations c ON c.id = a.conversation_id
+        WHERE a.first_response_breached_at IS NOT NULL
+          AND a.created_at >= CASE
+              WHEN %d = 0 THEN CURRENT_DATE
+              ELSE NOW() - INTERVAL '%d days'
+          END
+          %s
+    )
+) AS result;
+
+-- name: get-backlog-reports
+WITH days AS (
+    SELECT generate_series(
+        (CURRENT_DATE - INTERVAL '%d days')::date,
+        CURRENT_DATE,
+        INTERVAL '1 day'
+    )::date AS day
+),
+open_now AS (
+    SELECT i.channel::text AS channel, COUNT(*) AS open
+    FROM conversations c
+    JOIN conversation_statuses s ON s.id = c.status_id
+    JOIN inboxes i ON i.id = c.inbox_id
+    WHERE s.category <> 'resolved'
+    %s
+    GROUP BY i.channel
+),
+series AS (
+    SELECT
+        TO_CHAR(d.day, 'YYYY-MM-DD') AS date,
+        COUNT(c.id) AS count
+    FROM days d
+    LEFT JOIN conversations c
+        ON c.created_at < (d.day + INTERVAL '1 day')
+       AND (c.resolved_at IS NULL OR c.resolved_at >= (d.day + INTERVAL '1 day'))
+       %s
+    GROUP BY d.day
+)
+SELECT json_build_object(
+    'open', COALESCE((SELECT SUM(open) FROM open_now), 0),
+    'by_channel', COALESCE((
+        SELECT json_agg(row_to_json(o) ORDER BY o.channel) FROM open_now o
+    ), '[]'::json),
+    'series', COALESCE((
+        SELECT json_agg(row_to_json(s) ORDER BY s.date) FROM series s
+    ), '[]'::json)
+) AS result;

@@ -93,6 +93,49 @@ func handleAgentReports(r *fastglue.Request) error {
 	return r.SendEnvelope(rows)
 }
 
+func reportQueryFilters(r *fastglue.Request) (int, int, int) {
+	days, _ := strconv.Atoi(string(r.RequestCtx.QueryArgs().Peek("days")))
+	teamID, _ := strconv.Atoi(string(r.RequestCtx.QueryArgs().Peek("team_id")))
+	priorityID, _ := strconv.Atoi(string(r.RequestCtx.QueryArgs().Peek("priority_id")))
+	if teamID < 0 {
+		teamID = 0
+	}
+	if priorityID < 0 {
+		priorityID = 0
+	}
+	return days, teamID, priorityID
+}
+
+func handleTicketReports(r *fastglue.Request) error {
+	app := r.Context.(*App)
+	days, teamID, priorityID := reportQueryFilters(r)
+	rows, err := app.report.GetTicketReports(days, teamID, priorityID)
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+	return r.SendEnvelope(rows)
+}
+
+func handleEfficiencyReports(r *fastglue.Request) error {
+	app := r.Context.(*App)
+	days, teamID, priorityID := reportQueryFilters(r)
+	rows, err := app.report.GetEfficiencyReports(days, teamID, priorityID)
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+	return r.SendEnvelope(rows)
+}
+
+func handleBacklogReports(r *fastglue.Request) error {
+	app := r.Context.(*App)
+	days, teamID, priorityID := reportQueryFilters(r)
+	rows, err := app.report.GetBacklogReports(days, teamID, priorityID)
+	if err != nil {
+		return sendErrorEnvelope(r, err)
+	}
+	return r.SendEnvelope(rows)
+}
+
 func handleTeamReports(r *fastglue.Request) error {
 	app := r.Context.(*App)
 	days, _ := strconv.Atoi(string(r.RequestCtx.QueryArgs().Peek("days")))

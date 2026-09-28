@@ -1,15 +1,9 @@
-// Zendesk-inspired layout theme (opt-in via ui_layout preference)
+// Zendesk workflow, OpenBooks visual language (opt-in via ui_layout preference).
+// Type comes from the app font (Geist), same as the rest of the shell, so
+// teleported menus match the page.
 html.zendesk-layout {
   width: 100%;
   min-width: 100%;
-  // Applied on <html> (not just .zendesk-app) so teleported UI — dropdowns,
-  // dialogs, tooltips, command palette — share the same typeface.
-  --zendesk-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-family: var(--zendesk-font);
-}
-
-html.zendesk-layout body {
-  font-family: var(--zendesk-font);
 }
 
 html.zendesk-layout,
@@ -28,7 +22,7 @@ html.zendesk-layout {
     min-width: 0;
     max-width: 100%;
     box-shadow: none;
-    border-radius: 8px;
+    border-radius: 0.625rem;
     padding: 0.625rem 0.875rem;
 
     // Message body text inherits the browser default (16px) otherwise; pin it
@@ -40,61 +34,56 @@ html.zendesk-layout {
     }
   }
 
-  // Customer (incoming) messages get a subtle blue highlight, like Zendesk.
+  // Incoming messages sit on the brand green surface, same treatment OpenBooks
+  // uses for positive / AI surfaces.
   .message-bubble.zendesk-message.zendesk-message-customer {
-    background-color: hsl(205 70% 97%);
-    border-color: hsl(205 45% 90%);
+    background-color: hsl(var(--ob-green-50));
+    border-color: hsl(var(--ob-green-100));
   }
 }
 
 .dark html.zendesk-layout .message-bubble.zendesk-message.zendesk-message-customer,
 .dark.zendesk-layout .message-bubble.zendesk-message.zendesk-message-customer {
-  background-color: hsl(205 35% 16%);
-  border-color: hsl(205 25% 26%);
+  background-color: hsl(var(--positive-surface));
+  border-color: hsl(142 30% 22%);
 }
 
 .zendesk-app {
-  // Zendesk agent rail: #002f36 bg, #879296 icons (same in light & dark)
-  --zendesk-nav-bg: 187 100% 11%;
-  --zendesk-nav-fg: 0 0% 98%;
-  --zendesk-nav-muted: 197 8% 56%;
-  --zendesk-nav-active: 197 8% 56%;
-  // Light-mode surfaces — overridden by `.dark .zendesk-app` below.
-  --zendesk-canvas: 210 11% 98%;
-  --zendesk-views-bg: 0 0% 100%;
-  --zendesk-views-active: 200 80% 95%;
-  --zendesk-table-header: 220 14% 96%;
-  --zendesk-border: 220 13% 91%;
-  --zendesk-tab-bar-bg: 0 0% 100%;
-  --zendesk-chrome-bar-bg: 220 14% 96%;
-  --zendesk-tab-inactive: 220 14% 96%;
-  --zendesk-tab-active: 220 14% 96%;
-  --zendesk-tab-hover: 220 14% 94%;
-  --zendesk-tab-bar-height: 3rem;
-  --zendesk-tab-height: 2.5rem;
-  --zendesk-status-new: 32 95% 44%;
-  --zendesk-status-open: 0 72% 51%;
-  --zendesk-status-waiting: 38 92% 50%;
-  --zendesk-status-resolved: 142 64% 38%;
-  font-family: var(--zendesk-font);
+  // OpenBooks shell: near-white rail, quiet muted icons, green active pill.
+  --zendesk-nav-bg: var(--sidebar-background);
+  --zendesk-nav-fg: var(--ob-green-800);
+  --zendesk-nav-muted: var(--foreground);
+  --zendesk-nav-active: var(--ob-green-50);
+  --zendesk-canvas: var(--background);
+  --zendesk-views-bg: var(--sidebar-background);
+  --zendesk-views-active: var(--ob-green-50);
+  --zendesk-table-header: 0 0% 97.1%;
+  --zendesk-border: var(--border);
+  --zendesk-tab-bar-bg: var(--background);
+  --zendesk-chrome-bar-bg: var(--background);
+  --zendesk-tab-inactive: var(--background);
+  --zendesk-tab-active: var(--card);
+  --zendesk-tab-hover: var(--muted);
+  --zendesk-tab-bar-height: 3.5rem;
+  --zendesk-tab-height: 2.25rem;
+  --zendesk-status-open: var(--destructive);
+  --zendesk-status-waiting: var(--warning);
+  --zendesk-status-resolved: var(--success);
 }
 
-// Dark-mode surfaces. The agent rail and status colors stay as-is; only the
-// light panel/border/tab tokens are remapped onto the neutral dark palette.
 .dark .zendesk-app {
-  --zendesk-canvas: 240 7% 9%;
-  --zendesk-views-bg: 240 5% 13%;
-  --zendesk-views-active: 205 40% 22%;
-  --zendesk-table-header: 240 5% 15%;
-  --zendesk-border: 240 5% 18%;
-  --zendesk-tab-bar-bg: 240 5% 13%;
-  --zendesk-chrome-bar-bg: 240 6% 10%;
-  --zendesk-tab-inactive: 240 5% 14%;
-  --zendesk-tab-active: 240 5% 16%;
-  --zendesk-tab-hover: 240 5% 18%;
-  --zendesk-tab-bar-height: 3rem;
-  --zendesk-tab-height: 2.5rem;
-  --zendesk-accent: 201 90% 56%;
+  --zendesk-canvas: var(--background);
+  --zendesk-views-bg: var(--sidebar-background);
+  --zendesk-views-active: var(--ob-green-50);
+  --zendesk-table-header: 219.7 7.3% 12%;
+  --zendesk-border: var(--border);
+  --zendesk-tab-bar-bg: var(--background);
+  --zendesk-chrome-bar-bg: var(--background);
+  --zendesk-tab-inactive: var(--background);
+  --zendesk-tab-active: var(--card);
+  --zendesk-tab-hover: var(--accent);
+  --zendesk-tab-bar-height: 3.5rem;
+  --zendesk-tab-height: 2.25rem;
 }
 
 // Shared type scale — keep all Zendesk panels on the same headings/labels.
@@ -103,7 +92,7 @@ html.zendesk-layout {
 }
 
 .zendesk-eyebrow {
-  @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+  @apply text-[11px] font-medium text-muted-foreground;
 }
 
 .zendesk-meta {
@@ -112,68 +101,116 @@ html.zendesk-layout {
 
 .zendesk-nav-rail {
   background: hsl(var(--zendesk-nav-bg));
-  color: hsl(var(--zendesk-nav-fg));
+  color: hsl(var(--sidebar-foreground));
+  border-right: 1px solid hsl(var(--sidebar-border));
+}
+
+.zendesk-brand-mark {
+  width: 1.875rem;
+  height: 1.875rem;
+  margin: 0.875rem auto 0.125rem;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zendesk-rail-rule {
+  width: 1.75rem;
+  height: 1px;
+  margin: 0.5rem auto;
+  background: hsl(var(--sidebar-border));
 }
 
 .zendesk-nav-item {
-  @apply relative flex flex-col items-center justify-center py-3.5 px-0 mx-0 transition-colors;
-  color: hsl(var(--zendesk-nav-muted));
+  @apply relative flex items-center justify-center transition-colors;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 1.5px auto;
+  border-radius: 9px;
+  color: hsl(var(--foreground) / 0.7);
   text-decoration: none;
   border: 0;
   background: transparent;
   cursor: pointer;
+  overflow: visible;
 
   svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    stroke-width: 1.5;
+    width: 1.0625rem;
+    height: 1.0625rem;
+    stroke-width: 1.75;
+    opacity: 0.85;
   }
 
   &:hover {
-    color: hsl(var(--zendesk-nav-fg));
-    background: transparent;
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted));
   }
 
   &.active {
-    color: hsl(var(--zendesk-nav-fg));
-    background: transparent;
+    color: hsl(var(--ob-green-800));
+    background: hsl(var(--ob-green-50));
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 1.125rem;
-      background: hsl(var(--zendesk-nav-fg));
-      border-radius: 0 2px 2px 0;
+    svg {
+      opacity: 1;
+      color: hsl(var(--ob-green-800));
     }
+  }
+}
+
+.zendesk-nav-user {
+  overflow: visible;
+
+  &:hover {
+    background: transparent;
   }
 }
 
 .zendesk-views-pane {
   background: hsl(var(--zendesk-views-bg));
-  border-right: 1px solid hsl(var(--zendesk-border));
+  color: hsl(var(--sidebar-foreground));
+  border-right: 1px solid hsl(var(--sidebar-border));
+}
+
+.zendesk-views-pane .flex-1.overflow-y-auto {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .zendesk-view-item {
-  @apply flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors;
+  @apply flex items-center justify-between gap-2 px-2.5 text-[13.5px] font-medium cursor-pointer transition-colors;
+  margin: 1px 0;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  border-radius: 0.5rem;
+  color: hsl(var(--foreground) / 0.7);
 
   &:hover {
-    background: hsl(var(--zendesk-table-header));
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
   }
 
   &.active {
-    background: hsl(var(--zendesk-views-active));
-    font-weight: 500;
+    background: hsl(var(--ob-green-50));
+    color: hsl(var(--ob-green-800));
+    font-weight: 600;
+
+    svg {
+      color: hsl(var(--ob-green-800));
+      opacity: 1;
+    }
   }
 }
 
 .zendesk-table {
   th {
     background: hsl(var(--zendesk-table-header));
-    @apply text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 text-left border-b;
+    @apply text-xs font-medium text-muted-foreground px-3 py-2 text-left border-b;
     border-color: hsl(var(--zendesk-border));
   }
 
@@ -200,7 +237,7 @@ html.zendesk-layout {
 }
 
 .zendesk-sort-th {
-  @apply inline-flex items-center gap-1 uppercase tracking-wider font-semibold transition-colors;
+  @apply inline-flex items-center gap-1 font-medium transition-colors;
 
   &:hover {
     @apply text-foreground;
@@ -214,8 +251,8 @@ html.zendesk-layout {
   pointer-events: none;
   background: hsl(var(--background));
   border: 1px solid hsl(var(--zendesk-border));
-  border-radius: 8px;
-  box-shadow: 0 10px 30px -8px hsl(220 40% 20% / 0.25);
+  border-radius: 0.75rem;
+  box-shadow: 0 14px 32px -8px oklch(0.2 0.03 264 / 0.13), 0 5px 12px -5px oklch(0.2 0.03 264 / 0.08);
   padding: 0.75rem 0.875rem;
 }
 
@@ -232,24 +269,25 @@ html.zendesk-layout {
 }
 
 .zendesk-top-search {
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  transition: background 0.15s;
+  border: 1px solid hsl(var(--zendesk-border));
+  border-radius: 0.5rem;
+  background: hsl(var(--background));
+  box-shadow: 0 1px 2px 0 oklch(0.2 0.03 264 / 0.04);
+  transition: background 0.15s, border-color 0.15s;
 
   &:hover {
-    background: hsl(var(--zendesk-tab-hover));
+    background: hsl(var(--muted));
   }
 }
 
 .zendesk-top-search-wide {
   border: 1px solid hsl(var(--zendesk-border));
-  background: hsl(var(--zendesk-views-bg));
-  border-radius: 6px;
+  background: hsl(var(--background));
+  border-radius: 0.5rem;
 
   &:hover {
-    background: hsl(var(--zendesk-views-bg));
-    border-color: hsl(var(--zendesk-nav-muted));
+    background: hsl(var(--background));
+    border-color: hsl(var(--foreground) / 0.2);
   }
 }
 
@@ -269,39 +307,48 @@ html.zendesk-layout {
   height: 100%;
 }
 
-// Open-ticket tabs — white bar; active tab is a bordered grey pill.
+// Open-ticket tabs sit on one line, vertically centered. The open tab uses the
+// same green fill as the views list — no floating outline.
 .zendesk-tab-bar {
-  @apply flex items-stretch min-w-0;
+  @apply flex items-center min-w-0 h-full;
+  gap: 0.125rem;
+  padding: 0 0.5rem;
   background: transparent;
 }
 
 .zendesk-tab-scroll {
-  @apply flex items-stretch min-w-0 overflow-x-auto;
-  gap: 0.25rem;
-  padding-left: 0.25rem;
+  @apply flex items-center min-w-0 overflow-x-auto h-full;
+  gap: 0.125rem;
 }
 
 .zendesk-tab {
-  @apply relative flex items-center gap-2 pl-3 pr-2 transition-colors shrink-0;
-  min-width: 12rem;
+  @apply relative flex items-center gap-2 pl-2.5 pr-1.5 transition-colors shrink-0;
+  min-width: 11rem;
   max-width: 16rem;
-  height: var(--zendesk-tab-height);
-  margin-top: 0.25rem;
+  height: 2.75rem;
+  margin: 0;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px 4px 0 0;
-  color: hsl(var(--muted-foreground));
+  border: 0;
+  border-radius: 0.5rem;
+  color: hsl(var(--foreground) / 0.7);
 
   &:hover:not(.active) {
-    background: hsl(var(--zendesk-tab-hover));
+    background: hsl(var(--muted));
     color: hsl(var(--foreground));
   }
 
   &.active {
-    background: hsl(var(--zendesk-tab-active));
-    border-color: hsl(var(--zendesk-border));
-    color: hsl(var(--foreground));
-    z-index: 1;
+    background: hsl(var(--ob-green-50));
+    color: hsl(var(--ob-green-800));
+    box-shadow: none;
+
+    .zendesk-tab-title {
+      color: hsl(var(--ob-green-800));
+    }
+
+    svg {
+      color: hsl(var(--ob-green-800));
+    }
   }
 }
 
@@ -320,15 +367,15 @@ html.zendesk-layout {
 }
 
 .zendesk-tab-add {
-  @apply flex items-center gap-1 px-3 text-xs font-normal text-muted-foreground shrink-0 transition-colors;
-  height: var(--zendesk-tab-bar-height);
+  @apply flex items-center gap-1 px-2.5 text-xs font-medium text-muted-foreground shrink-0 transition-colors;
+  height: 2.75rem;
   background: transparent;
   border: 0;
-  border-radius: 0;
+  border-radius: 0.5rem;
 
   &:hover {
     @apply text-foreground;
-    background: transparent;
+    background: hsl(var(--muted));
   }
 }
 
@@ -338,7 +385,8 @@ html.zendesk-layout {
   height: 2rem;
   background: hsl(var(--background));
   border: 1px solid hsl(var(--zendesk-border));
-  border-radius: 4px;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 oklch(0.2 0.03 264 / 0.04);
 
   &:hover {
     @apply text-foreground;
@@ -378,15 +426,15 @@ html.zendesk-layout {
   }
 
   &:first-child {
-    border-radius: 4px 0 0 4px;
+    border-radius: 0.5rem 0 0 0.5rem;
   }
 
   &:last-child {
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 0.5rem 0.5rem 0;
   }
 
   &:only-child {
-    border-radius: 4px;
+    border-radius: 0.5rem;
   }
 }
 
@@ -414,11 +462,11 @@ html.zendesk-layout {
   color: hsl(var(--muted-foreground));
 
   &:first-child {
-    border-radius: 4px 0 0 4px;
+    border-radius: 0.5rem 0 0 0.5rem;
   }
 
   &:last-child {
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 0.5rem 0.5rem 0;
     border-left: 0;
   }
 
@@ -445,20 +493,23 @@ html.zendesk-layout {
 }
 
 .zendesk-status-badge {
-  @apply inline-flex items-center px-1.5 py-px rounded-sm text-[10px] font-bold text-white uppercase tracking-wide leading-none;
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold leading-none;
 
-  // Colored by status category (open | waiting | resolved); custom statuses
-  // inherit the color of the category an admin assigns them to.
+  // Tinted semantic pills (OpenBooks badge language). Category still comes
+  // from the status an admin assigns.
   &.category-open {
-    background: hsl(var(--zendesk-status-open));
+    background: hsl(var(--negative-surface));
+    color: hsl(var(--destructive));
   }
 
   &.category-waiting {
-    background: hsl(var(--zendesk-status-waiting));
+    background: hsl(var(--warning-surface));
+    color: hsl(var(--warning));
   }
 
   &.category-resolved {
-    background: hsl(var(--zendesk-status-resolved));
+    background: hsl(var(--positive-surface));
+    color: hsl(var(--success));
   }
 
   &.category-default {
@@ -602,7 +653,7 @@ html.zendesk-layout {
         box-shadow: none !important;
 
         &[data-state='active'] {
-          border-bottom-color: hsl(var(--foreground));
+          border-bottom-color: hsl(var(--primary));
           background: transparent !important;
           color: hsl(var(--foreground));
           font-weight: 600;

@@ -1,5 +1,5 @@
 <template>
-  <aside class="zendesk-views-pane w-56 shrink-0 flex flex-col h-full overflow-hidden">
+  <aside class="zendesk-views-pane w-[232px] shrink-0 flex flex-col h-full overflow-hidden">
     <div class="flex items-center justify-between px-3 py-3 border-b shrink-0">
       <span class="zendesk-title">{{ t('zendesk.views') }}</span>
       <Button variant="ghost" size="icon" class="size-7" @click="refreshList">

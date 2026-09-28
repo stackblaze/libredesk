@@ -1,7 +1,16 @@
 <template>
   <div class="rounded-full" :class="sizeClass">
     <svg class="block !size-full" viewBox="0 0 16 16" aria-hidden="true">
-      <template v-if="isOnline">
+      <!-- Small size is a plain status disc — check/clock glyphs mush at 10px. -->
+      <template v-if="size === 'sm'">
+        <circle
+          cx="8"
+          cy="8"
+          r="8"
+          :class="isOnline ? 'fill-success' : isAway ? 'fill-warning' : 'fill-muted-foreground/40'"
+        />
+      </template>
+      <template v-else-if="isOnline">
         <circle cx="8" cy="8" r="8" class="fill-success" />
         <path
           d="M4.3 8.4 6.8 11 11.7 5.3"

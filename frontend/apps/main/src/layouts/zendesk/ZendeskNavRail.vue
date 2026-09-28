@@ -1,5 +1,8 @@
 <template>
-  <nav class="zendesk-nav-rail w-12 shrink-0 flex flex-col h-full">
+  <nav class="zendesk-nav-rail w-14 shrink-0 flex flex-col h-full">
+    <div class="zendesk-brand-mark" aria-hidden="true">ld</div>
+    <div class="zendesk-rail-rule" />
+
     <router-link
       :to="lastInboxPath || { name: 'inboxes' }"
       class="zendesk-nav-item"

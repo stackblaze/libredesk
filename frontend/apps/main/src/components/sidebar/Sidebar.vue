@@ -7,7 +7,6 @@ import {
 } from '../../constants/navigation'
 import { useRoute, useRouter } from 'vue-router'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared-ui/components/ui/collapsible'
-import { Badge } from '@shared-ui/components/ui/badge'
 import {
   Sidebar,
   SidebarContent,
@@ -59,7 +58,8 @@ import {
   Wrench,
   Bot,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  ClipboardList
 } from 'lucide-vue-next'
 
 const navIconMap = {
@@ -90,7 +90,8 @@ const navIconMap = {
   Wrench,
   Bot,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  ClipboardList
 }
 import {
   DropdownMenu,
@@ -264,7 +265,7 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
 <template>
   <SidebarProvider
     :class="{ 'sidebar-wrapper-zendesk': isZendesk }"
-    style="--sidebar-width: 14rem"
+    style="--sidebar-width: 14.5rem"
     :default-open="sidebarOpen"
     v-on:update:open="sidebarOpen = $event"
   >
@@ -276,8 +277,8 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="px-1">
-                <span class="font-semibold text-xl">
+              <div class="px-2.5">
+                <span class="text-sm font-semibold leading-tight">
                   {{ t('globals.terms.contact', 2) }}
                 </span>
               </div>
@@ -314,8 +315,8 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="px-1">
-                <span class="font-semibold text-xl">
+              <div class="px-2.5">
+                <span class="text-sm font-semibold leading-tight">
                   {{ t('globals.terms.report', 2) }}
                 </span>
               </div>
@@ -344,26 +345,25 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
     <!-- Admin Sidebar -->
     <template v-if="route.matched.some((record) => record.name && record.name.startsWith('admin'))">
       <Sidebar :collapsible="secondaryCollapsible" :class="secondarySidebarClass">
-        <SidebarHeader>
+        <SidebarHeader class="pb-1 pt-3">
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="flex flex-col items-start justify-between w-full px-1">
-                <span class="font-semibold text-xl">
+              <div class="flex flex-col items-start gap-0.5 w-full px-2.5">
+                <span class="text-sm font-semibold leading-tight">
                   {{ t('globals.terms.admin') }}
                 </span>
-                <!-- App version -->
-                <div class="text-xs text-muted-foreground">
-                  ({{ settingsStore.settings['app.version'] }})
-                </div>
+                <span class="text-[11px] text-muted-foreground leading-none">
+                  {{ settingsStore.settings['app.version'] }}
+                </span>
               </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
           <MobileDrawerNav />
-          <SidebarGroup>
+          <SidebarGroup class="px-3 py-1">
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in filteredAdminNavItems" :key="item.titleKey">
+              <SidebarMenuItem v-for="item in filteredAdminNavItems" :key="item.titleKey" class="flex flex-col gap-px">
                 <SidebarMenuButton
                   v-if="!item.children"
                   :isActive="isActiveParent(item.href)"
@@ -376,29 +376,22 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
 
                 <Collapsible
                   v-else
-                  class="group/collapsible"
+                  class="group/collapsible flex flex-col gap-px"
                   :open="openAdminCollapsible === item.titleKey"
                   @update:open="toggleAdminCollapsible(item.titleKey)"
                 >
                   <CollapsibleTrigger as-child>
-                    <SidebarMenuButton :isActive="isActiveParent(item.href)">
+                    <SidebarMenuButton>
                       <span>{{ t(item.titleKey, item.isTitleKeyPlural === true ? 2 : 1) }}</span>
-                      <Badge
-                        v-if="item.badge"
-                        variant="outline"
-                        class="ml-1.5 rounded-full uppercase tracking-[0.07em] font-medium text-[9px] leading-none px-[5.5px] py-[3px] bg-warning/10 text-warning-600 border-warning/50 shrink-0"
-                      >
-                        {{ item.badge }}
-                      </Badge>
                       <ChevronRight
-                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                        class="ml-auto size-3.5 opacity-60 transition-transform duration-150 group-data-[state=open]/collapsible:rotate-90"
                       />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>
+                    <SidebarMenuSub class="ml-3 border-l border-border pl-2">
                       <SidebarMenuSubItem v-for="child in item.children" :key="child.titleKey">
-                        <SidebarMenuButton size="sm" :isActive="isActiveParent(child.href)" asChild>
+                        <SidebarMenuButton :isActive="isActiveParent(child.href)" asChild>
                           <router-link :to="child.href">
                             <component :is="navIconMap[child.icon]" v-if="child.icon" />
                             <span>{{ t(child.titleKey, child.isTitleKeyPlural === true ? 2 : 1) }}</span>
@@ -422,8 +415,8 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="px-1">
-                <span class="font-semibold text-xl">
+              <div class="px-2.5">
+                <span class="text-sm font-semibold leading-tight">
                   {{ t('globals.terms.account') }}
                 </span>
               </div>
@@ -458,13 +451,13 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div class="flex items-center justify-between w-full px-1">
-                <div class="font-semibold text-xl">
+              <div class="flex items-center justify-between w-full px-2.5">
+                <div class="text-sm font-semibold leading-tight">
                   <span>{{ t('globals.terms.inbox') }}</span>
                 </div>
-                <div class="mr-1 mt-1 transition-colors">
+                <div class="transition-colors">
                   <router-link :to="{ name: 'search' }">
-                    <Search size="18" stroke-width="2.5" class="text-muted-foreground hover:text-foreground" />
+                    <Search size="16" stroke-width="2" class="text-muted-foreground hover:text-foreground" />
                   </router-link>
                 </div>
               </div>
@@ -686,7 +679,8 @@ const secondaryCollapsible = computed(() => (isZendesk.value ? 'none' : 'offcanv
 }
 
 :deep(.sidebar-secondary-zendesk) {
-  @apply border-r ml-0 rounded-none shrink-0 w-56;
+  @apply border-r ml-0 rounded-none shrink-0;
+  width: 14.5rem;
   top: 0 !important;
   bottom: 0 !important;
   height: 100% !important;

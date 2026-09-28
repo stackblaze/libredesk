@@ -1,41 +1,40 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-between mb-5">
-      <div></div>
-      <div class="flex justify-end mb-4">
-        <Button
-          @click="navigateToNewTemplate"
-          :disabled="templateType !== 'email_outgoing'"
-        >
-          {{
-            $t('template.new')
-          }}
-        </Button>
-      </div>
-    </div>
-    <div>
-      <Tabs default-value="email_outgoing" v-model="templateType">
-        <TabsList class="grid w-full grid-cols-2 mb-5">
-          <TabsTrigger value="email_outgoing">
-            {{ $t('admin.template.outgoingEmailTemplates') }}
-          </TabsTrigger>
-          <TabsTrigger value="email_notification">
-            {{ $t('admin.template.emailNotificationTemplates') }}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="email_outgoing">
-          <DataTable :columns="createOutgoingEmailTableColumns(t)" :data="templates" :loading="isLoading" />
-        </TabsContent>
-        <TabsContent value="email_notification">
-          <DataTable :columns="createEmailNotificationTableColumns(t)" :data="templates" :loading="isLoading" />
-        </TabsContent>
-      </Tabs>
-    </div>
-  </LoadingOverlay>
+  <Tabs default-value="email_outgoing" v-model="templateType">
+    <TabsList class="grid w-full grid-cols-2 mb-4">
+      <TabsTrigger value="email_outgoing">
+        {{ $t('admin.template.outgoingEmailTemplates') }}
+      </TabsTrigger>
+      <TabsTrigger value="email_notification">
+        {{ $t('admin.template.emailNotificationTemplates') }}
+      </TabsTrigger>
+    </TabsList>
+    <TabsContent value="email_outgoing">
+      <DataTable
+        :columns="createOutgoingEmailTableColumns(t)"
+        :data="templates"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Button @click="navigateToNewTemplate">
+            <Plus class="size-4" />
+            {{ $t('template.new') }}
+          </Button>
+        </template>
+      </DataTable>
+    </TabsContent>
+    <TabsContent value="email_notification">
+      <DataTable
+        :columns="createEmailNotificationTableColumns(t)"
+        :data="templates"
+        :loading="isLoading"
+      />
+    </TabsContent>
+  </Tabs>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import {
   createOutgoingEmailTableColumns,
@@ -43,7 +42,6 @@ import {
 } from '../../../features/admin/templates/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import { useRouter } from 'vue-router'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '../../../composables/useEmitter'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui/components/ui/tabs'
@@ -55,7 +53,7 @@ import api from '../../../api'
 const templateType = useStorage('templateType', 'email_outgoing')
 const { t } = useI18n()
 const templates = ref([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 const router = useRouter()
 const emit = useEmitter()
 

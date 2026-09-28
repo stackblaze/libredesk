@@ -25,22 +25,22 @@
           </div>
           <LivechatWidgetPreview :config="livechatPreview" :user-type="previewUserType" />
         </div>
-        <div class="space-y-1">
-          <p class="text-sm text-muted-foreground">{{ $t('admin.inbox.help.livechat') }}</p>
-          <a
-            href="https://docs.libredesk.io/configuration/livechat"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="link-style text-sm"
-          >
-            {{ $t('globals.terms.learnMore') }}
-          </a>
-        </div>
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ $t('admin.inbox.help.livechat') }}
+        </p>
+        <a
+          href="https://docs.libredesk.io/configuration/livechat"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-style text-sm"
+        >
+          {{ $t('globals.terms.learnMore') }}
+        </a>
       </div>
       <div v-else class="space-y-4">
-        <div class="space-y-1">
-          <p class="text-sm font-medium text-foreground">{{ $t('globals.terms.email') }}</p>
-          <p class="text-sm text-muted-foreground">{{ $t('admin.inbox.help.email') }}</p>
+        <AdminHelpCard>
+          <p class="text-sm font-semibold text-foreground">{{ $t('globals.terms.email') }}</p>
+          <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.inbox.help.email') }}</p>
           <a
             href="https://docs.libredesk.io/configuration/connecting-inboxes"
             target="_blank"
@@ -49,10 +49,10 @@
           >
             {{ $t('globals.terms.learnMore') }}
           </a>
-        </div>
-        <div class="space-y-1">
-          <p class="text-sm font-medium text-foreground">{{ $t('globals.terms.liveChat') }}</p>
-          <p class="text-sm text-muted-foreground">{{ $t('admin.inbox.help.livechat') }}</p>
+        </AdminHelpCard>
+        <AdminHelpCard>
+          <p class="text-sm font-semibold text-foreground">{{ $t('globals.terms.liveChat') }}</p>
+          <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.inbox.help.livechat') }}</p>
           <a
             href="https://docs.libredesk.io/configuration/livechat"
             target="_blank"
@@ -61,7 +61,7 @@
           >
             {{ $t('globals.terms.learnMore') }}
           </a>
-        </div>
+        </AdminHelpCard>
       </div>
     </template>
   </AdminSplitLayout>
@@ -70,6 +70,7 @@
 <script setup>
 import { ref, provide } from 'vue'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 import LivechatWidgetPreview from '@/features/admin/inbox/LivechatWidgetPreview.vue'
 import { Tabs, TabsList, TabsTrigger } from '@shared-ui/components/ui/tabs'
 

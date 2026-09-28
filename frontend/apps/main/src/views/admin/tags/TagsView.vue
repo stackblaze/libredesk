@@ -1,80 +1,77 @@
 <template>
-  <div>
-    <AdminSplitLayout>
-      <template #content>
-        <LoadingOverlay :loading="isLoading" reserve-height>
-          <div class="flex justify-between mb-5">
-            <div class="flex justify-end mb-4 w-full gap-2">
-              <Importer
-                entity-key="globals.terms.tag"
-                :upload-fn="api.importTags"
-                :get-status-fn="api.getTagImportStatus"
-                @import-complete="getTags"
-              >
-                <template #csv-example>
-                  <div class="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto leading-relaxed">
-                    <div>name</div>
-                    <div>Bug</div>
-                    <div>Feature Request</div>
-                    <div>Billing</div>
-                  </div>
+  <AdminSplitLayout>
+    <template #content>
+      <DataTable
+        :columns="createColumns(t, { onEdit: editTag })"
+        :data="tags"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Importer
+            entity-key="globals.terms.tag"
+            :upload-fn="api.importTags"
+            :get-status-fn="api.getTagImportStatus"
+            @import-complete="getTags"
+          >
+            <template #csv-example>
+              <div class="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto leading-relaxed">
+                <div>name</div>
+                <div>Bug</div>
+                <div>Feature Request</div>
+                <div>Billing</div>
+              </div>
+            </template>
+          </Importer>
+          <Dialog v-model:open="dialogOpen">
+            <DialogTrigger as-child @click="newTag">
+              <Button>
+                <Plus class="size-4" />
+                {{ t('tag.new') }}
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle class="mb-1">
+                  {{ isEditing ? t('tag.edit') : t('tag.new') }}
+                </DialogTitle>
+                <DialogDescription>
+                  {{
+                    isEditing
+                      ? t('admin.conversationTags.edit.description')
+                      : t('admin.conversationTags.new.description')
+                  }}
+                </DialogDescription>
+              </DialogHeader>
+              <TagsForm @submit.prevent="onSubmit">
+                <template #footer>
+                  <DialogFooter class="mt-10">
+                    <Button type="submit">
+                      {{ isEditing ? t('globals.messages.save') : t('globals.messages.create') }}
+                    </Button>
+                  </DialogFooter>
                 </template>
-              </Importer>
-              <Dialog v-model:open="dialogOpen">
-                <DialogTrigger as-child @click="newTag">
-                  <Button>{{
-                    t('tag.new')
-                  }}</Button>
-                </DialogTrigger>
-                <DialogContent class="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle class="mb-1">
-                      {{
-                        isEditing
-                          ? t('tag.edit')
-                          : t('tag.new')
-                      }}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {{
-                        isEditing
-                          ? t('admin.conversationTags.edit.description')
-                          : t('admin.conversationTags.new.description')
-                      }}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <TagsForm @submit.prevent="onSubmit">
-                    <template #footer>
-                      <DialogFooter class="mt-10">
-                        <Button type="submit">{{ isEditing ? t('globals.messages.save') : t('globals.messages.create') }}</Button>
-                      </DialogFooter>
-                    </template>
-                  </TagsForm>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          <div>
-            <DataTable :columns="createColumns(t, { onEdit: editTag })" :data="tags" :loading="isLoading" />
-          </div>
-        </LoadingOverlay>
-      </template>
+              </TagsForm>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </DataTable>
+    </template>
 
-      <template #help>
-        <p>{{ $t('admin.tag.help') }}</p>
-      </template>
-    </AdminSplitLayout>
-  </div>
+    <template #help>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.tag.help') }}</p>
+      </div>
+    </template>
+  </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { createColumns } from '../../../features/admin/tags/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button/index.js'
-
 import TagsForm from '@/features/admin/tags/TagsForm.vue'
 import {
   Dialog,
@@ -96,7 +93,7 @@ import Importer from '@/components/importer/Importer.vue'
 import api from '../../../api/index.js'
 
 const { t } = useI18n()
-const isLoading = ref(false)
+const isLoading = ref(true)
 const tags = ref([])
 const emitter = useEmitter()
 const dialogOpen = ref(false)
@@ -142,10 +139,13 @@ const newTag = () => {
 }
 
 const getTags = async () => {
-  isLoading.value = true
-  const resp = await api.getTags()
-  tags.value = resp.data.data
-  isLoading.value = false
+  try {
+    isLoading.value = true
+    const resp = await api.getTags()
+    tags.value = resp.data.data
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -159,7 +159,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     dialogOpen.value = false
     getTags()
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
-      description: t('globals.messages.savedSuccessfully'),
+      description: t('globals.messages.savedSuccessfully')
     })
   } catch (error) {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {

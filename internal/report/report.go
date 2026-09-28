@@ -7,6 +7,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/abhinavxd/libredesk/internal/dbutil"
 	"github.com/abhinavxd/libredesk/internal/envelope"
@@ -50,6 +51,9 @@ type queries struct {
 	GetOverviewTagDistribution string `query:"get-overview-tag-distribution"`
 	GetAgentReports            string `query:"get-agent-reports"`
 	GetTeamReports             string `query:"get-team-reports"`
+	GetTicketReports           string `query:"get-ticket-reports"`
+	GetEfficiencyReports       string `query:"get-efficiency-reports"`
+	GetBacklogReports          string `query:"get-backlog-reports"`
 }
 
 // New creates and returns a new instance of the Manager.
@@ -218,6 +222,61 @@ func (m *Manager) GetAgentReports(days int) ([]models.AgentReport, error) {
 		return nil, envelope.NewError(envelope.GeneralError, m.i18n.T("globals.messages.somethingWentWrong"), nil)
 	}
 	return out, nil
+}
+
+func (m *Manager) queryReportJSON(query string, label string) (json.RawMessage, error) {
+	var stats = json.RawMessage{}
+	tx, err := m.db.BeginTxx(context.Background(), &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		m.lo.Error("error starting db txn", "error", err)
+		return nil, envelope.NewError(envelope.GeneralError, m.i18n.T("globals.messages.somethingWentWrong"), nil)
+	}
+	defer tx.Rollback()
+	if err := tx.Get(&stats, query); err != nil {
+		m.lo.Error("error fetching report", "report", label, "error", err)
+		return nil, envelope.NewError(envelope.GeneralError, m.i18n.T("globals.messages.somethingWentWrong"), nil)
+	}
+	return stats, nil
+}
+
+func reportScope(teamID, priorityID int) string {
+	var b strings.Builder
+	if teamID > 0 {
+		fmt.Fprintf(&b, " AND c.assigned_team_id = %d", teamID)
+	}
+	if priorityID > 0 {
+		fmt.Fprintf(&b, " AND c.priority_id = %d", priorityID)
+	}
+	return b.String()
+}
+
+func (m *Manager) GetTicketReports(days, teamID, priorityID int) (json.RawMessage, error) {
+	days = clampDays(days)
+	scope := reportScope(teamID, priorityID)
+	query := fmt.Sprintf(m.q.GetTicketReports, days, days, scope, days, days, scope)
+	return m.queryReportJSON(query, "tickets")
+}
+
+func (m *Manager) GetEfficiencyReports(days, teamID, priorityID int) (json.RawMessage, error) {
+	days = clampDays(days)
+	scope := reportScope(teamID, priorityID)
+	query := fmt.Sprintf(
+		m.q.GetEfficiencyReports,
+		days, days, scope,
+		days, days, scope,
+		days, days, scope,
+		days, days, scope,
+		days, days, scope,
+		days, days, scope,
+	)
+	return m.queryReportJSON(query, "efficiency")
+}
+
+func (m *Manager) GetBacklogReports(days, teamID, priorityID int) (json.RawMessage, error) {
+	days = clampDays(days)
+	scope := reportScope(teamID, priorityID)
+	query := fmt.Sprintf(m.q.GetBacklogReports, days, scope, scope)
+	return m.queryReportJSON(query, "backlog")
 }
 
 func (m *Manager) GetTeamReports(days int) ([]models.TeamReport, error) {

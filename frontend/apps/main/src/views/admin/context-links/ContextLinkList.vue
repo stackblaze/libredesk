@@ -1,33 +1,30 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-between mb-5">
-      <div></div>
-      <div>
-        <RouterLink :to="{ name: 'new-context-link' }">
-          <Button>{{ $t('contextLink.new') }}</Button>
-        </RouterLink>
-      </div>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="links" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+  <DataTable :columns="createColumns(t)" :data="links" :loading="isLoading">
+    <template #actions>
+      <RouterLink :to="{ name: 'new-context-link' }">
+        <Button>
+          <Plus class="size-4" />
+          {{ $t('contextLink.new') }}
+        </Button>
+      </RouterLink>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { createColumns } from '@/features/admin/context-links/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import { useEmitter } from '@/composables/useEmitter'
 import { useI18n } from 'vue-i18n'
-import LoadingOverlay from '@/components/layout/LoadingOverlay.vue'
 import { EMITTER_EVENTS } from '@/constants/emitterEvents.js'
 import api from '@/api'
 
 const links = ref([])
 const { t } = useI18n()
-const isLoading = ref(false)
+const isLoading = ref(true)
 const emit = useEmitter()
 
 onMounted(() => {

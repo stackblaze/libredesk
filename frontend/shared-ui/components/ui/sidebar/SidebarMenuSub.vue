@@ -11,7 +11,7 @@ const props = defineProps({
     data-sidebar="menu-badge"
     :class="
       cn(
-        'flex min-w-0 flex-col gap-1 border-l border-sidebar-border pl-3 ml-3 py-0.5',
+        'ml-7 flex min-w-0 flex-col gap-px border-l border-border py-0.5 pl-2',
         'group-data-[collapsible=icon]:hidden',
         props.class,
       )

@@ -80,13 +80,76 @@ func handlePortalHome(r *fastglue.Request) error {
 	if err != nil {
 		convs = nil
 	}
+	inboxes, _ := enabledPortalInboxes(app)
 	return app.tmpl.RenderWebPage(r.RequestCtx, "portal", map[string]any{
 		"Data": map[string]any{
 			"Title":         app.i18n.T("portal.title"),
 			"ContactName":   strings.TrimSpace(contact.FirstName + " " + contact.LastName),
 			"Conversations": convs,
+			"Inboxes":       inboxes,
+			"Sent":          string(r.RequestCtx.QueryArgs().Peek("sent")) == "1",
 		},
 	})
+}
+
+func handlePortalNewConversation(r *fastglue.Request) error {
+	app := r.Context.(*App)
+	contactID := portalContactID(r)
+	if contactID == 0 {
+		return renderPortalLogin(r)
+	}
+	inboxID, _ := strconv.Atoi(string(r.RequestCtx.FormValue("inbox_id")))
+	subject := strings.TrimSpace(string(r.RequestCtx.FormValue("subject")))
+	content := strings.TrimSpace(string(r.RequestCtx.FormValue("content")))
+	inboxes, _ := enabledPortalInboxes(app)
+	allowed := false
+	for _, inbox := range inboxes {
+		if inbox.ID == inboxID {
+			allowed = true
+			break
+		}
+	}
+	if !allowed || subject == "" || content == "" {
+		r.RequestCtx.Redirect("/portal", fasthttp.StatusSeeOther)
+		return nil
+	}
+	_, uuid, err := app.conversation.CreateConversation(contactID, inboxID, "", time.Now(), subject, true, nil, nil, 0, 0)
+	if err != nil {
+		app.lo.Error("error creating portal conversation", "error", err)
+		r.RequestCtx.Redirect("/portal", fasthttp.StatusSeeOther)
+		return nil
+	}
+	if _, err := app.conversation.CreateContactMessage(nil, contactID, uuid, plainToHTML(content), cmodels.ContentTypeHTML, true, ""); err != nil {
+		app.lo.Error("error creating portal message", "error", err)
+	}
+	r.RequestCtx.Redirect("/portal/conversations/"+uuid, fasthttp.StatusSeeOther)
+	return nil
+}
+
+type portalInboxOption struct {
+	ID   int
+	Name string
+}
+
+func enabledPortalInboxes(app *App) ([]portalInboxOption, error) {
+	rows, err := app.inbox.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]portalInboxOption, 0)
+	for _, inbox := range rows {
+		if inbox.Enabled {
+			out = append(out, portalInboxOption{ID: inbox.ID, Name: inbox.Name})
+		}
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	return out, nil
+}
+
+func plainToHTML(content string) string {
+	return strings.ReplaceAll(html.EscapeString(content), "\n", "<br>")
 }
 
 func handlePortalConversation(r *fastglue.Request) error {
@@ -142,7 +205,7 @@ func handlePortalReply(r *fastglue.Request) error {
 		r.RequestCtx.Redirect("/portal/conversations/"+uuid, fasthttp.StatusSeeOther)
 		return nil
 	}
-	if _, err := app.conversation.CreateContactMessage(nil, contactID, uuid, html.EscapeString(content), cmodels.ContentTypeHTML, false, ""); err != nil {
+	if _, err := app.conversation.CreateContactMessage(nil, contactID, uuid, plainToHTML(content), cmodels.ContentTypeHTML, false, ""); err != nil {
 		app.lo.Error("error creating portal reply", "error", err)
 	}
 	r.RequestCtx.Redirect("/portal/conversations/"+uuid, fasthttp.StatusSeeOther)

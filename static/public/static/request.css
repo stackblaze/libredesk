@@ -1,0 +1,98 @@
+.req {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+}
+.req-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.req h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  color: #1a1a1a;
+}
+.req p.muted {
+  color: #667085;
+  margin: 8px 0 0;
+}
+.req-card {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+}
+.req label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+.req input,
+.req textarea,
+.req select {
+  width: 100%;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  background: #fff;
+}
+.req .btn {
+  background: #2ca01c;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 650;
+  cursor: pointer;
+  margin-top: 16px;
+}
+.req .btn.ghost {
+  background: #fff;
+  color: #17540f;
+  border: 1px solid #d0d5dd;
+  margin-top: 0;
+}
+.req a {
+  color: #17540f;
+  text-decoration: none;
+}
+.req table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.req th,
+.req td {
+  text-align: left;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+.req .msg {
+  border-left: 3px solid #d7efd3;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+.req .msg .who {
+  font-size: 12px;
+  color: #667085;
+  margin-bottom: 4px;
+}
+.req .banner {
+  background: #f1f8ee;
+  color: #17540f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+.req .error {
+  background: #fff4f2;
+  color: #9b2c2c;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}

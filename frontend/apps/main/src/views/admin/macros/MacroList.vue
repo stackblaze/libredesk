@@ -1,25 +1,21 @@
 <template>
-  <LoadingOverlay :loading="formLoading" reserve-height>
-    <div class="flex justify-end mb-5">
+  <DataTable :columns="createColumns(t)" :data="macros" :loading="formLoading">
+    <template #actions>
       <router-link :to="{ name: 'new-macro' }">
         <Button>
-          {{
-            $t('macro.new')
-          }}
+          <Plus class="size-4" />
+          {{ $t('macro.new') }}
         </Button>
       </router-link>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="macros" :loading="formLoading" />
-    </div>
-  </LoadingOverlay>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { createColumns } from '../../../features/admin/macros/dataTableColumns.js'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '../../../composables/useEmitter'
 import { EMITTER_EVENTS } from '../../../constants/emitterEvents.js'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
@@ -28,7 +24,7 @@ import { useI18n } from 'vue-i18n'
 import api from '../../../api'
 
 const { t } = useI18n()
-const formLoading = ref(false)
+const formLoading = ref(true)
 const macros = ref([])
 const emit = useEmitter()
 

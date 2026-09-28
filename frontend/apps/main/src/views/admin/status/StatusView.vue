@@ -1,64 +1,58 @@
 <template>
-  <div>
-    <AdminSplitLayout>
-      <template #content>
-        <LoadingOverlay :loading="isLoading" reserve-height>
-          <div class="flex justify-between mb-5">
-            <div class="flex justify-end mb-4 w-full">
-              <Dialog v-model:open="dialogOpen">
-                <DialogTrigger as-child @click="newStatus">
-                  <Button class="ml-auto">
-                    {{
-                      $t('status.new')
-                    }}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent class="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {{
-                        isEditing
-                          ? $t('status.edit')
-                          : $t('status.new')
-                      }}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {{ $t('admin.conversationStatus.name.description') }}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <StatusForm @submit.prevent="onSubmit">
-                    <template #footer>
-                      <DialogFooter class="mt-10">
-                        <Button type="submit" :isLoading="isLoading" :disabled="isLoading">
-                          {{ isEditing ? $t('globals.messages.save') : $t('globals.messages.create') }}
-                        </Button>
-                      </DialogFooter>
-                    </template>
-                  </StatusForm>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          <div>
-            <DataTable :columns="createColumns(t, { onEdit: editStatus })" :data="statuses" :loading="isLoading" />
-          </div>
-        </LoadingOverlay>
-      </template>
+  <AdminSplitLayout>
+    <template #content>
+      <DataTable
+        :columns="createColumns(t, { onEdit: editStatus })"
+        :data="statuses"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Dialog v-model:open="dialogOpen">
+            <DialogTrigger as-child @click="newStatus">
+              <Button>
+                <Plus class="size-4" />
+                {{ $t('status.new') }}
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {{ isEditing ? $t('status.edit') : $t('status.new') }}
+                </DialogTitle>
+                <DialogDescription>
+                  {{ $t('admin.conversationStatus.name.description') }}
+                </DialogDescription>
+              </DialogHeader>
+              <StatusForm @submit.prevent="onSubmit">
+                <template #footer>
+                  <DialogFooter class="mt-10">
+                    <Button type="submit" :isLoading="isLoading" :disabled="isLoading">
+                      {{ isEditing ? $t('globals.messages.save') : $t('globals.messages.create') }}
+                    </Button>
+                  </DialogFooter>
+                </template>
+              </StatusForm>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </DataTable>
+    </template>
 
-      <template #help>
-        <p>{{ $t('admin.status.help') }}</p>
-      </template>
-    </AdminSplitLayout>
-  </div>
+    <template #help>
+      <div class="rounded-lg border bg-card p-4 shadow-xs space-y-2">
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.status.help') }}</p>
+      </div>
+    </template>
+  </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
 import { createColumns } from '../../../features/admin/status/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import StatusForm from '@/features/admin/status/StatusForm.vue'
 import {
   Dialog,
@@ -79,7 +73,7 @@ import { useI18n } from 'vue-i18n'
 import api from '../../../api'
 
 const { t } = useI18n()
-const isLoading = ref(false)
+const isLoading = ref(true)
 const statuses = ref([])
 const emit = useEmitter()
 const dialogOpen = ref(false)

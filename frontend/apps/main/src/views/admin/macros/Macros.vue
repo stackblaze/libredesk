@@ -4,11 +4,14 @@
       <router-view></router-view>
     </template>
     <template #help>
-      <p>{{ $t('admin.macro.help') }}</p>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.macro.help') }}</p>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 </template>
 
 <script setup>
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 </script>

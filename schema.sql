@@ -1275,6 +1275,18 @@ VALUES (
   true
 );
 
+DROP TABLE IF EXISTS ticket_forms CASCADE;
+CREATE TABLE ticket_forms (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    inbox_id INT NOT NULL REFERENCES inboxes(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    fields JSONB NOT NULL DEFAULT '[]'::jsonb
+);
+
 -- Default business hours
 INSERT INTO business_hours ("name", description, is_always_open, hours, holidays) VALUES
 ('Default', 'Default business hours, Monday to Friday, 09:00 to 17:00.', false, '{"Monday": {"open": "09:00", "close": "17:00"}, "Tuesday": {"open": "09:00", "close": "17:00"}, "Wednesday": {"open": "09:00", "close": "17:00"}, "Thursday": {"open": "09:00", "close": "17:00"}, "Friday": {"open": "09:00", "close": "17:00"}}'::jsonb, '[]'::jsonb);

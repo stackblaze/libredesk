@@ -51,7 +51,7 @@ export function applyUiLayoutViewport (layout) {
   setViewportContent(useResponsiveViewport ? ZENDESK_VIEWPORT : DEFAULT_VIEWPORT)
 }
 
-/** Apply viewport from localStorage if Zendesk mode is already selected. */
+/** Apply viewport from localStorage; layout is locked to Zendesk. */
 export function applyStoredUiLayoutViewport () {
-  applyUiLayoutViewport(readStoredUiLayout())
+  applyUiLayoutViewport(UI_LAYOUT_ZENDESK)
 }

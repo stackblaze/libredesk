@@ -52,6 +52,7 @@ import (
 	"github.com/abhinavxd/libredesk/internal/tag"
 	"github.com/abhinavxd/libredesk/internal/team"
 	"github.com/abhinavxd/libredesk/internal/template"
+	"github.com/abhinavxd/libredesk/internal/ticketform"
 	"github.com/abhinavxd/libredesk/internal/user"
 	"github.com/abhinavxd/libredesk/internal/webhook"
 	"github.com/abhinavxd/libredesk/internal/ws"
@@ -112,6 +113,7 @@ type App struct {
 	status           *status.Manager
 	priority         *priority.Manager
 	tag              *tag.Manager
+	ticketForm       *ticketform.Manager
 	inbox            *inbox.Manager
 	tmpl             *template.Manager
 	macro            *macro.Manager
@@ -324,6 +326,7 @@ func main() {
 		search:           initSearch(db, i18n),
 		role:             initRole(db, i18n),
 		tag:              initTag(db, i18n),
+		ticketForm:       initTicketForm(db, i18n),
 		macro:            initMacro(db, i18n),
 		ai:               ai,
 		aiAgent:          aiAgent,

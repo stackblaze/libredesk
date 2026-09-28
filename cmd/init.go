@@ -52,6 +52,7 @@ import (
 	"github.com/abhinavxd/libredesk/internal/tag"
 	"github.com/abhinavxd/libredesk/internal/team"
 	tmpl "github.com/abhinavxd/libredesk/internal/template"
+	"github.com/abhinavxd/libredesk/internal/ticketform"
 	"github.com/abhinavxd/libredesk/internal/user"
 	"github.com/abhinavxd/libredesk/internal/view"
 	"github.com/abhinavxd/libredesk/internal/webhook"
@@ -189,7 +190,7 @@ func initFS(staticDir string) stuffbin.FileSystem {
 			// Running in local/dev mode, use the local filesystem.
 			// Only include frontend dirs if they exist (frontend build is optional in dev).
 			colorlog.Red("binary unstuff failed, using local filesystem for static files")
-			files := []string{"i18n", "static"}
+			files := []string{"i18n", "static", "schema.sql"}
 			for _, d := range []string{"frontend/dist/main", "frontend/dist/widget"} {
 				if _, err := os.Stat(d); err == nil {
 					files = append(files, d)
@@ -324,6 +325,18 @@ func initConversations(
 }
 
 // initTag inits tag manager.
+func initTicketForm(db *sqlx.DB, i18n *i18n.I18n) *ticketform.Manager {
+	m, err := ticketform.New(ticketform.Opts{
+		DB:   db,
+		Lo:   initLogger("ticketform-manager"),
+		I18n: i18n,
+	})
+	if err != nil {
+		log.Fatalf("error initializing ticket form manager: %v", err)
+	}
+	return m
+}
+
 func initTag(db *sqlx.DB, i18n *i18n.I18n) *tag.Manager {
 	var lo = initLogger("tag_manager")
 	mgr, err := tag.New(tag.Opts{

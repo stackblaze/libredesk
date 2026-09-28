@@ -35,6 +35,16 @@
                 <ShieldOffIcon size="12" />
                 {{ t('globals.terms.blocked') }}
               </Badge>
+              <Button
+                v-if="userStore.can('contacts:merge')"
+                variant="outline"
+                size="sm"
+                class="h-7"
+                @click="showMerge = true"
+              >
+                <GitMergeIcon class="mr-1" size="14" />
+                {{ t('contact.merge.title') }}
+              </Button>
               <DropdownMenu v-if="canOpenActionsMenu">
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" class="h-7 w-7">

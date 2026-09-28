@@ -1,6 +1,6 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-end mb-5 gap-2">
+  <DataTable :columns="createColumns(t)" :data="data" :loading="isLoading">
+    <template #actions>
       <Importer
         entity-key="globals.terms.agent"
         :upload-fn="api.importAgents"
@@ -20,37 +20,35 @@
         </template>
       </Importer>
       <router-link :to="{ name: 'new-agent' }">
-        <Button>{{
-          $t('agent.new')
-        }}</Button>
+        <Button>
+          <Plus class="size-4" />
+          {{ $t('agent.new') }}
+        </Button>
       </router-link>
-    </div>
-    <div>
-      <DataTable :columns="createColumns(t)" :data="data" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import { createColumns } from '@/features/admin/agents/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import DataTable from '@/components/datatable/DataTable.vue'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
-import LoadingOverlay from '@/components/layout/LoadingOverlay.vue'
 import { useEmitter } from '@/composables/useEmitter'
 import { EMITTER_EVENTS } from '@/constants/emitterEvents.js'
 import { useI18n } from 'vue-i18n'
 import Importer from '@/components/importer/Importer.vue'
 import api from '@/api'
 
-const isLoading = ref(false)
+const isLoading = ref(true)
 const { t } = useI18n()
 const data = ref([])
 const emitter = useEmitter()
 
-const refreshHandler = (data) => {
-  if (data?.model === 'agent') getData()
+const refreshHandler = (payload) => {
+  if (payload?.model === 'agent') getData()
 }
 
 onMounted(async () => {

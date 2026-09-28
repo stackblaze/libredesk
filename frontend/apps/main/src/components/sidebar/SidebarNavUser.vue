@@ -28,18 +28,20 @@
       <button
         v-else
         type="button"
-        class="zendesk-nav-item w-full"
+        class="zendesk-nav-item zendesk-nav-user"
         :title="userStore.getFullName"
       >
-        <div class="relative">
-          <Avatar class="h-7 w-7 rounded">
-            <AvatarImage :src="userStore.avatar" alt="U" class="rounded" />
-            <AvatarFallback class="rounded text-xs">{{ userStore.getInitials }}</AvatarFallback>
+        <div class="relative size-7">
+          <Avatar class="size-7 rounded-full">
+            <AvatarImage :src="userStore.avatar" alt="U" class="rounded-full" />
+            <AvatarFallback class="rounded-full text-[11px] font-medium bg-muted text-foreground">
+              {{ userStore.getInitials }}
+            </AvatarFallback>
           </Avatar>
           <StatusDot
             :status="userStore.user.availability_status"
             size="sm"
-            class="absolute -bottom-0.5 -right-0.5 border border-[hsl(var(--zendesk-nav-bg))]"
+            class="absolute -bottom-0.5 -right-0.5 ring-2 ring-[hsl(var(--zendesk-nav-bg))]"
           />
         </div>
       </button>
@@ -74,19 +76,6 @@
               :checked="mode === 'dark'"
               @update:checked="(val) => (mode = val ? 'dark' : 'light')"
             />
-          </div>
-
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{{ t('navigation.interfaceLayout') }}</span>
-            <Select :model-value="layout" @update:model-value="setLayout">
-              <SelectTrigger class="h-8 w-[7.5rem]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="UI_LAYOUT_DEFAULT">{{ t('navigation.interfaceDefault') }}</SelectItem>
-                <SelectItem :value="UI_LAYOUT_ZENDESK">{{ t('navigation.interfaceZendesk') }}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div class="border-t border-border pt-3 space-y-3">
@@ -159,20 +148,12 @@ import { SidebarMenuButton } from '@shared-ui/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@shared-ui/components/ui/avatar'
 import StatusDot from '@shared-ui/components/StatusDot.vue'
 import { Switch } from '@shared-ui/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@shared-ui/components/ui/select'
 import { ChevronsUpDown, CircleUserRound, Keyboard, LogOut } from 'lucide-vue-next'
 import { useUserStore } from '@main/stores/user'
 import { useIsMobile } from '@shared-ui/composables'
 import { useRouter } from 'vue-router'
 import KeyboardShortcutsDialog from '@main/components/KeyboardShortcutsDialog.vue'
 import { useColorMode } from '@vueuse/core'
-import { useUiLayout, UI_LAYOUT_DEFAULT, UI_LAYOUT_ZENDESK } from '@main/composables/useUiLayout'
 import { useEmitter } from '@main/composables/useEmitter'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents'
 
@@ -186,7 +167,6 @@ const mode = useColorMode()
 const userStore = useUserStore()
 const router = useRouter()
 const { t } = useI18n()
-const { layout, setLayout } = useUiLayout()
 const showShortcuts = ref(false)
 const emitter = useEmitter()
 

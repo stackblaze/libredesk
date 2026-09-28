@@ -1,36 +1,54 @@
 <template>
-  <LoadingOverlay :loading="isLoading" reserve-height>
-    <div class="flex justify-between mb-5">
-      <div></div>
-      <router-link :to="{ name: 'new-inbox' }">
-        <Button>
-          {{
-            $t('inbox.newInbox')
-          }}
-        </Button>
-      </router-link>
-    </div>
-    <div>
-      <DataTable :columns="columns" :data="data" :loading="isLoading" />
-    </div>
-  </LoadingOverlay>
+  <div class="space-y-4">
+    <AdminEmptyState
+      v-if="!isLoading && !data.length"
+      :icon="Inbox"
+      :title="t('admin.inbox.emptyTitle')"
+      :description="t('admin.inbox.emptyDescription')"
+    >
+      <template #action>
+        <router-link :to="{ name: 'new-inbox' }">
+          <Button>
+            <Plus class="size-4" />
+            {{ t('inbox.newInbox') }}
+          </Button>
+        </router-link>
+      </template>
+    </AdminEmptyState>
+
+    <DataTable
+      v-else
+      :columns="columns"
+      :data="data"
+      :loading="isLoading"
+      :empty-text="t('admin.inbox.emptyTitle')"
+    >
+      <template #actions>
+        <router-link :to="{ name: 'new-inbox' }">
+          <Button>
+            <Plus class="size-4" />
+            {{ t('inbox.newInbox') }}
+          </Button>
+        </router-link>
+      </template>
+    </DataTable>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { h } from 'vue'
-import { RouterLink } from 'vue-router'
+import { onMounted, ref, h } from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { format } from 'date-fns'
+import { Inbox, Plus } from 'lucide-vue-next'
 import InboxDataTableDropDown from '@main/features/admin/inbox/InboxDataTableDropDown.vue'
 import { handleHTTPError } from '@shared-ui/utils/http.js'
 import { Button } from '@shared-ui/components/ui/button'
 import { Badge } from '@shared-ui/components/ui/badge/index.js'
 import DataTable from '@main/components/datatable/DataTable.vue'
+import AdminEmptyState from '@main/components/layout/AdminEmptyState.vue'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'
 import { useEmitter } from '@main/composables/useEmitter'
-import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { format } from 'date-fns'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
 import { useInboxStore } from '@main/stores/inbox'
 import api from '@main/api'
 
@@ -39,11 +57,10 @@ const router = useRouter()
 const route = useRoute()
 const emitter = useEmitter()
 const inboxStore = useInboxStore()
-const isLoading = ref(false)
+const isLoading = ref(true)
 const data = ref([])
 
 onMounted(async () => {
-  // Handle OAuth callback messages
   const errorCode = route.query.error
   const successCode = route.query.success
 
@@ -94,83 +111,54 @@ const getInboxes = async () => {
   }
 }
 
-// Columns for the data table
 const columns = [
   {
     accessorKey: 'name',
-    header: function () {
-      return h('div', { class: 'text-center' }, t('globals.terms.name'))
-    },
-    cell: function ({ row }) {
-      return h('div', { class: 'text-center' },
-        h(RouterLink,
-          {
-            to: { name: 'edit-inbox', params: { id: row.original.id } },
-            class: 'text-foreground font-medium hover:underline'
-          },
-          () => row.getValue('name')
-        )
+    header: () => t('globals.terms.name'),
+    cell: ({ row }) =>
+      h(
+        RouterLink,
+        {
+          to: { name: 'edit-inbox', params: { id: row.original.id } },
+          class: 'text-foreground font-medium hover:underline'
+        },
+        () => row.getValue('name')
       )
-    }
   },
   {
     accessorKey: 'channel',
-    header: function () {
-      return h('div', { class: 'text-center' }, t('globals.terms.channel'))
-    },
-    cell: function ({ row }) {
-      return h('div', { class: 'text-center' }, row.getValue('channel'))
-    }
+    header: () => t('globals.terms.channel'),
+    cell: ({ row }) => row.getValue('channel')
   },
   {
     accessorKey: 'enabled',
-    header: () => h('div', { class: 'text-center' }, t('globals.terms.status')),
-    cell: ({ row }) => {
-      const enabled = row.getValue('enabled')
-      return h(
-        'div',
-        { class: 'text-center' },
-        h(Badge, { variant: enabled ? 'success' : 'secondary' }, () =>
-          enabled ? t('globals.terms.enabled') : t('globals.terms.disabled')
-        )
+    header: () => t('globals.terms.status'),
+    cell: ({ row }) =>
+      h(Badge, { variant: row.getValue('enabled') ? 'success' : 'secondary' }, () =>
+        row.getValue('enabled') ? t('globals.terms.enabled') : t('globals.terms.disabled')
       )
-    }
   },
   {
     accessorKey: 'created_at',
-    header: function () {
-      return h('div', { class: 'text-center' }, t('globals.terms.createdAt'))
-    },
-    cell: function ({ row }) {
-      return h('div', { class: 'text-center' }, format(row.getValue('created_at'), 'PPpp'))
-    }
+    header: () => t('globals.terms.createdAt'),
+    cell: ({ row }) => format(row.getValue('created_at'), 'PPpp')
   },
   {
     accessorKey: 'updated_at',
-    header: function () {
-      return h('div', { class: 'text-center' }, t('globals.terms.updatedAt'))
-    },
-    cell: function ({ row }) {
-      return h('div', { class: 'text-center' }, format(row.getValue('updated_at'), 'PPpp'))
-    }
+    header: () => t('globals.terms.updatedAt'),
+    cell: ({ row }) => format(row.getValue('updated_at'), 'PPpp')
   },
   {
     id: 'actions',
     enableHiding: false,
     enableSorting: false,
-    cell: ({ row }) => {
-      const inbox = row.original
-      return h(
-        'div',
-        { class: 'relative' },
-        h(InboxDataTableDropDown, {
-          inbox,
-          onEditInbox: (id) => handleEditInbox(id),
-          onDeleteInbox: (id) => handleDeleteInbox(id),
-          onToggleInbox: (id) => handleToggleInbox(id)
-        })
-      )
-    }
+    cell: ({ row }) =>
+      h(InboxDataTableDropDown, {
+        inbox: row.original,
+        onEditInbox: (id) => handleEditInbox(id),
+        onDeleteInbox: (id) => handleDeleteInbox(id),
+        onToggleInbox: (id) => handleToggleInbox(id)
+      })
   }
 ]
 

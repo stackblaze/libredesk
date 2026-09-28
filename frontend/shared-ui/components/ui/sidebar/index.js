@@ -27,17 +27,20 @@ export { default as SidebarTrigger } from './SidebarTrigger.vue';
 export { useSidebar } from './utils';
 
 export const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-[width,height,padding] text-foreground-lighter hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent/50 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent/50 data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  // OpenBooks rail language: quiet muted rows, green fill only when active,
+  // soft rounded-lg pills, compact 13.5px type.
+  'peer/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-[7px] text-left text-[13.5px] font-medium outline-none ring-sidebar-ring transition-colors text-foreground/70 hover:bg-muted hover:text-foreground focus-visible:ring-2 active:bg-muted active:text-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--ob-green-50))] data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--ob-green-800))] data-[state=open]:hover:bg-muted data-[state=open]:hover:text-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-[17px] [&>svg]:shrink-0 [&>svg]:opacity-85',
   {
     variants: {
       variant: {
-        default: 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+        default: 'hover:bg-muted hover:text-foreground',
         outline:
-          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
+          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-muted hover:text-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-border))]',
       },
       size: {
-        default: 'h-8 max-md:h-11 text-sm',
-        sm: 'h-7 text-xs',
+        default: 'h-auto min-h-8 max-md:min-h-11 text-[13.5px]',
+        // Nested leaves still use the OpenBooks green active pill (not muted gray).
+        sm: 'h-auto min-h-7 rounded-md px-2 py-1.5 text-[12.5px] font-medium data-[active=true]:bg-[hsl(var(--ob-green-50))] data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--ob-green-800))]',
         lg: 'h-12 text-sm group-data-[collapsible=icon]:!p-0',
       },
     },

@@ -10,7 +10,9 @@
       </LoadingOverlay>
     </template>
     <template #help>
-      <p>{{ $t('admin.general.help') }}</p>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ $t('admin.general.help') }}</p>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 </template>
@@ -20,6 +22,7 @@ import { ref, onMounted } from 'vue'
 import LoadingOverlay from '@/components/layout/LoadingOverlay.vue'
 import GeneralSettingForm from '@/features/admin/general/GeneralSettingForm.vue'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 import { useAppSettingsStore } from '@/stores/appSettings'
 import api from '@/api'
 

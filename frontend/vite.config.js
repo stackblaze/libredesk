@@ -71,6 +71,14 @@ export default defineConfig(({ mode, command }) => {
           target: apiTarget,
           changeOrigin: true,
         },
+        '/portal': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
+        '/forms': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
         '/ws': {
           target: wsTarget,
           ws: true,

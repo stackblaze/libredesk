@@ -1,38 +1,41 @@
 <template>
   <AdminSplitLayout>
     <template #content>
-      <LoadingOverlay :loading="isLoading" reserve-height>
-        <div class="flex justify-end mb-4">
-          <Button @click="router.push({ name: 'new-ai-tool' })">{{
-            t('admin.ai.tool.new')
-          }}</Button>
-        </div>
-        <DataTable
-          :columns="createToolColumns(t, { onEdit: editTool })"
-          :data="tools"
-          :loading="isLoading"
-        />
-      </LoadingOverlay>
+      <DataTable
+        :columns="createToolColumns(t, { onEdit: editTool })"
+        :data="tools"
+        :loading="isLoading"
+      >
+        <template #actions>
+          <Button @click="router.push({ name: 'new-ai-tool' })">
+            <Plus class="size-4" />
+            {{ t('admin.ai.tool.new') }}
+          </Button>
+        </template>
+      </DataTable>
     </template>
 
     <template #help>
-      <p>{{ t('admin.ai.toolsHelp') }}</p>
-      <a
-        href="https://docs.libredesk.io/configuration/ai#tools"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link-style"
-      >
-        {{ t('globals.terms.learnMore') }}
-      </a>
+      <AdminHelpCard>
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ t('admin.ai.toolsHelp') }}</p>
+        <a
+          href="https://docs.libredesk.io/configuration/ai#tools"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-style text-sm"
+        >
+          {{ t('globals.terms.learnMore') }}
+        </a>
+      </AdminHelpCard>
     </template>
   </AdminSplitLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import AdminSplitLayout from '@/layouts/admin/AdminSplitLayout.vue'
-import LoadingOverlay from '@main/components/layout/LoadingOverlay.vue'
+import AdminHelpCard from '@main/components/layout/AdminHelpCard.vue'
 import DataTable from '@main/components/datatable/DataTable.vue'
 import { Button } from '@shared-ui/components/ui/button/index.js'
 import { createToolColumns } from '@/features/admin/ai/toolColumns.js'
@@ -46,8 +49,7 @@ import api from '@/api'
 const { t } = useI18n()
 const emitter = useEmitter()
 const router = useRouter()
-const isLoading = ref(false)
-
+const isLoading = ref(true)
 const tools = ref([])
 
 const refreshHandler = (data) => {
