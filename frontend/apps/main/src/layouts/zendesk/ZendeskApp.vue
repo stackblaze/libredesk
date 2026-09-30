@@ -38,7 +38,7 @@
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue'
 import { useStorage } from '@vueuse/core'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@main/stores/user'
 import { initWS } from '@main/websocket.js'
 import { EMITTER_EVENTS } from '@main/constants/emitterEvents.js'
@@ -71,6 +71,7 @@ import { useZendeskTabs } from '@main/composables/useZendeskTabs'
 import api from '@main/api'
 
 const route = useRoute()
+const router = useRouter()
 const emitter = useEmitter()
 const userStore = useUserStore()
 const conversationStore = useConversationStore()
@@ -126,10 +127,27 @@ onMounted(() => {
   initStores()
 })
 
+const maybeOpenOnboarding = async () => {
+  if (!userStore.can('general_settings:manage')) return
+  try {
+    if (sessionStorage.getItem('onboarding_checked')) return
+    sessionStorage.setItem('onboarding_checked', '1')
+  } catch {
+    return
+  }
+  try {
+    const resp = await api.getOnboarding()
+    if (resp.data.data?.show_wizard) router.push({ name: 'onboarding' })
+  } catch {
+    // Setup status is a convenience; never block the app on it.
+  }
+}
+
 const initStores = async () => {
   if (!userStore.userID) {
     await userStore.getCurrentUser()
   }
+  maybeOpenOnboarding()
   await Promise.allSettled([
     getUserViews(),
     sharedViewStore.loadSharedViews(),

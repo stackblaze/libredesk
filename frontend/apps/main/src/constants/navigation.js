@@ -42,6 +42,12 @@ export const adminNavItems = [
     titleKey: 'globals.terms.workspace',
     children: [
       {
+        titleKey: 'onboarding.navTitle',
+        href: '/onboarding',
+        permission: 'general_settings:manage',
+        icon: 'Rocket'
+      },
+      {
         titleKey: 'globals.terms.general',
         href: '/admin/general',
         permission: 'general_settings:manage',

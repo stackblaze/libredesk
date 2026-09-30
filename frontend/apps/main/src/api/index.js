@@ -182,6 +182,10 @@ const requestMagicLink = (data) => http.post(`/api/v1/auth/magic-link`, data, {
 const verifyMagicLink = (data) => http.post(`/api/v1/auth/magic-link/verify`, data, {
   headers: { 'Content-Type': 'application/json' }
 })
+const getOnboarding = () => http.get('/api/v1/onboarding')
+const updateOnboarding = (data) => http.put('/api/v1/onboarding', data, {
+  headers: { 'Content-Type': 'application/json' }
+})
 const enrollTOTP = () => http.post(`/api/v1/agents/me/totp/enroll`)
 const confirmTOTP = (data) => http.post(`/api/v1/agents/me/totp/confirm`, data, {
   headers: { 'Content-Type': 'application/json' }
@@ -712,6 +716,8 @@ export default {
   login,
   verifyTOTP,
   requestMagicLink,
+  getOnboarding,
+  updateOnboarding,
   verifyMagicLink,
   enrollTOTP,
   confirmTOTP,

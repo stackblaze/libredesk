@@ -59,10 +59,12 @@ import {
   Bot,
   Lightbulb,
   BookOpen,
-  ClipboardList
+  ClipboardList,
+  Rocket
 } from 'lucide-vue-next'
 
 const navIconMap = {
+  Rocket,
   Settings,
   Clock,
   Timer,
