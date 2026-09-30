@@ -62,6 +62,8 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.DELETE("/api/v1/oidc/{id}", perm(handleDeleteOIDC, "oidc:manage"))
 	g.GET("/api/v1/settings/sso", perm(handleGetSSOSettings, "oidc:manage"))
 	g.PUT("/api/v1/settings/sso", perm(handleUpdateSSOSettings, "oidc:manage"))
+	g.GET("/api/v1/onboarding", perm(handleGetOnboarding, "general_settings:manage"))
+	g.PUT("/api/v1/onboarding", perm(handleUpdateOnboarding, "general_settings:manage"))
 
 	// Conversations.
 	g.GET("/api/v1/conversations/all", perm(handleGetAllConversations, "conversations:read_all"))
@@ -432,6 +434,7 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/teams/{all:*}", authPage(serveIndexPage))
 	g.GET("/views/{all:*}", authPage(serveIndexPage))
 	g.GET("/admin/{all:*}", authPage(serveIndexPage))
+	g.GET("/onboarding", authPage(serveIndexPage))
 	g.GET("/contacts/{all:*}", authPage(serveIndexPage))
 	g.GET("/reports/{all:*}", authPage(serveIndexPage))
 	g.GET("/account/{all:*}", authPage(serveIndexPage))

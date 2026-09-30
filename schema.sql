@@ -1075,7 +1075,8 @@ VALUES
     ('saml.allow_idp_initiated', 'false'::jsonb),
     ('saml.email_attribute', '""'::jsonb),
     ('saml.sp_certificate', '""'::jsonb),
-    ('saml.sp_private_key', '""'::jsonb);
+    ('saml.sp_private_key', '""'::jsonb),
+    ('onboarding.status', '""'::jsonb);
 
 -- Default conversation priorities
 INSERT INTO conversation_priorities (name) VALUES

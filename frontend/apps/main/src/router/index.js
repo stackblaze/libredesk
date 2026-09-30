@@ -40,6 +40,12 @@ const routes = [
     ]
   },
   {
+    path: '/onboarding',
+    name: 'onboarding',
+    component: () => import('@main/views/onboarding/OnboardingView.vue'),
+    meta: { titleKey: 'onboarding.title' }
+  },
+  {
     path: '/',
     component: AppShell,
     children: [

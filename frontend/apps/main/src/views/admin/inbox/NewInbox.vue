@@ -46,7 +46,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Button } from '@shared-ui/components/ui/button'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { CustomBreadcrumb } from '@shared-ui/components/ui/breadcrumb/index.js'
 import { Mail, MessageCircle } from 'lucide-vue-next'
 import MenuCard from '@main/components/layout/MenuCard.vue'
@@ -65,6 +65,7 @@ const availableLanguages = ref([])
 const currentStep = ref(1)
 const selectedChannel = ref(null)
 const router = useRouter()
+const route = useRoute()
 const breadcrumbLinks = [
   { path: 'inbox-list', label: t('globals.terms.inbox', 2) },
   { path: '', label: t('inbox.newInbox') }
@@ -153,7 +154,7 @@ async function createInbox(payload) {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
       description: t('globals.messages.savedSuccessfully')
     })
-    router.push({ name: 'inbox-list' })
+    router.push(route.query.from === 'onboarding' ? { name: 'onboarding', query: { step: 'inbox' } } : { name: 'inbox-list' })
   } catch (error) {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
       variant: 'destructive',
