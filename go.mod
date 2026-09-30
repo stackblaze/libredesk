@@ -6,6 +6,7 @@ require (
 	github.com/abhinavxd/ssrfguard v0.1.0
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/coreos/go-oidc/v3 v3.11.0
+	github.com/crewjam/saml v0.5.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
 	github.com/emersion/go-message v0.18.1
@@ -35,6 +36,7 @@ require (
 	github.com/mr-karan/balance v0.0.0-20250317053523-d32c6ade6cf1
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/pkoukk/tiktoken-go-loader v0.0.2
+	github.com/pquerna/otp v1.5.0
 	github.com/redis/go-redis/v9 v9.5.5
 	github.com/rhnvrm/simples3 v0.10.1
 	github.com/spf13/pflag v1.0.6
@@ -60,6 +62,7 @@ require (
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/beevik/etree v1.5.0 // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -76,9 +79,12 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
+	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
+	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.23 // indirect
@@ -91,7 +97,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/pquerna/otp v1.5.0 // indirect
+	github.com/russellhaering/goxmldsig v1.4.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/objx v0.5.2 // indirect

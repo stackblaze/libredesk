@@ -1066,7 +1066,16 @@ VALUES
 	('notification.email.hello_hostname', '""'::jsonb),
     ('notification.email.email_address', '"admin@yourcompany.com"'::jsonb),
     ('notification.email.max_msg_retries', '3'::jsonb),
-    ('notification.email.enabled', 'false'::jsonb);
+    ('notification.email.enabled', 'false'::jsonb),
+    ('auth.magic_link_enabled', 'false'::jsonb),
+    ('saml.enabled', 'false'::jsonb),
+    ('saml.name', '"SAML SSO"'::jsonb),
+    ('saml.idp_metadata_url', '""'::jsonb),
+    ('saml.idp_metadata_xml', '""'::jsonb),
+    ('saml.allow_idp_initiated', 'false'::jsonb),
+    ('saml.email_attribute', '""'::jsonb),
+    ('saml.sp_certificate', '""'::jsonb),
+    ('saml.sp_private_key', '""'::jsonb);
 
 -- Default conversation priorities
 INSERT INTO conversation_priorities (name) VALUES

@@ -22,7 +22,7 @@
           </div>
         </div>
 
-        <div v-if="enabledOIDCProviders.length" class="space-y-3">
+        <div v-if="enabledOIDCProviders.length || samlConfig" class="space-y-3">
           <Button
             v-for="oidcProvider in enabledOIDCProviders"
             :key="oidcProvider.id"
@@ -40,6 +40,17 @@
             {{ oidcProvider.name }}
           </Button>
 
+          <Button
+            v-if="samlConfig"
+            variant="outline"
+            type="button"
+            @click="redirectToSAML"
+            class="w-full"
+          >
+            <KeyRound class="w-5 h-5" />
+            {{ samlConfig.name || 'SAML SSO' }}
+          </Button>
+
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
               <span class="w-full border-t border-border"></span>
@@ -50,7 +61,33 @@
           </div>
         </div>
 
-        <form @submit.prevent="loginAction" class="space-y-4">
+        <form v-if="magicMode" @submit.prevent="sendMagicLink" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="magic-email" class="text-muted-foreground">{{ t('globals.terms.email') }}</Label>
+            <Input
+              id="magic-email"
+              type="text"
+              inputmode="email"
+              autofocus
+              autocomplete="username"
+              v-model.trim="loginForm.email"
+              class="h-11"
+            />
+          </div>
+          <p v-if="magicSent" class="text-sm text-muted-foreground">{{ t('auth.magicLinkSent') }}</p>
+          <Button class="w-full h-11 text-base" :disabled="isLoading" type="submit">
+            {{ t('auth.sendSignInLink') }}
+          </Button>
+          <button
+            type="button"
+            class="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            @click="setMagicMode(false)"
+          >
+            {{ t('auth.usePasswordInstead') }}
+          </button>
+        </form>
+
+        <form v-else @submit.prevent="loginAction" class="space-y-4">
           <div v-if="!pendingToken" class="space-y-2">
             <Label for="email" class="text-muted-foreground">{{ t('globals.terms.email') }}</Label>
             <Input
@@ -97,6 +134,14 @@
             >
               {{ t('auth.forgotPassword') }}
             </router-link>
+            <button
+              v-if="magicLinkEnabled"
+              type="button"
+              class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              @click="setMagicMode(true)"
+            >
+              {{ t('auth.emailMeALink') }}
+            </button>
           </div>
 
           <div v-if="pendingToken" class="space-y-2">
@@ -148,7 +193,7 @@ import { useI18n } from 'vue-i18n'
 import { EMITTER_EVENTS } from '../../constants/emitterEvents.js'
 import { useAppSettingsStore } from '../../stores/appSettings'
 import AuthLayout from '@/layouts/auth/AuthLayout.vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff, KeyRound } from 'lucide-vue-next'
 
 const emitter = useEmitter()
 const { t } = useI18n()
@@ -166,6 +211,8 @@ const loginForm = ref({
 const pendingToken = ref('')
 const totpCode = ref('')
 const oidcProviders = ref([])
+const magicMode = ref(false)
+const magicSent = ref(false)
 const appSettingsStore = useAppSettingsStore()
 
 const siteName = computed(
@@ -190,7 +237,48 @@ const oidcErrorKeys = {
   oidc_session_expired: 'auth.oidcSessionExpired',
   oidc_no_account: 'auth.oidcNoAccount',
   oidc_account_disabled: 'user.accountDisabled',
-  oidc_login_failed: 'auth.oidcLoginFailed'
+  oidc_login_failed: 'auth.oidcLoginFailed',
+  saml_login_failed: 'auth.samlLoginFailed',
+  saml_no_account: 'auth.oidcNoAccount',
+  saml_account_disabled: 'user.accountDisabled'
+}
+
+const samlConfig = computed(() => {
+  const saml = appSettingsStore.public_config?.['app.saml']
+  return saml?.enabled ? saml : null
+})
+const magicLinkEnabled = computed(() => appSettingsStore.public_config?.['app.magic_link_enabled'] === true)
+
+const setMagicMode = (on) => {
+  magicMode.value = on
+  magicSent.value = false
+  errorMessage.value = ''
+}
+
+const redirectToSAML = () => {
+  const nextParam = router.currentRoute.value.query.next
+  window.location.href = nextParam
+    ? `/api/v1/saml/login?next=${encodeURIComponent(nextParam)}`
+    : '/api/v1/saml/login'
+}
+
+const sendMagicLink = async () => {
+  if (!validateEmail(loginForm.value.email)) {
+    errorMessage.value = t('validation.invalidEmail')
+    applyTemporaryClass('login-container', 'animate-shake')
+    return
+  }
+  errorMessage.value = ''
+  isLoading.value = true
+  try {
+    await api.requestMagicLink({ email: loginForm.value.email })
+    magicSent.value = true
+  } catch (error) {
+    errorMessage.value = handleHTTPError(error).message
+    applyTemporaryClass('login-container', 'animate-shake')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 onMounted(async () => {

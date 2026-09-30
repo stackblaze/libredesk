@@ -58,6 +58,10 @@ func handleGetConfig(r *fastglue.Request) error {
 
 	// Add SSO providers to the response
 	publicSettings["app.sso_providers"] = enabledProviders
+	publicSettings["app.magic_link_enabled"] = magicLinkEnabled(app)
+	if app.saml != nil && app.saml.Enabled() {
+		publicSettings["app.saml"] = map[string]any{"enabled": true, "name": app.saml.Config().Name}
+	}
 
 	return r.SendEnvelope(publicSettings)
 }
