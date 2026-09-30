@@ -453,6 +453,9 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/assets/{all:*}", serveFrontendStaticFiles)
 	g.GET("/widget/assets/{all:*}", serveWidgetStaticFiles)
 	g.GET("/images/{all:*}", serveFrontendStaticFiles)
+	// Root-level brand files. app.favicon_url and app.logo_url commonly point here.
+	g.GET("/favicon.ico", serveFrontendStaticFiles)
+	g.GET("/logo.png", serveFrontendStaticFiles)
 	g.GET("/static/public/{all:*}", serveStaticFiles)
 
 	// Public pages.

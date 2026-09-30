@@ -9,10 +9,11 @@
       <CardContent class="p-5 sm:p-6 space-y-5">
         <div class="space-y-3 text-center">
           <img
-            v-if="siteLogoUrl"
+            v-if="siteLogoUrl && !logoFailed"
             :src="siteLogoUrl"
             :alt="siteName"
             class="mx-auto h-10 w-auto max-w-[12rem] object-contain"
+            @error="logoFailed = true"
           />
           <div class="space-y-1">
             <CardTitle class="text-xl sm:text-2xl font-bold text-foreground">
@@ -218,6 +219,8 @@ const appSettingsStore = useAppSettingsStore()
 const siteName = computed(
   () => appSettingsStore.public_config?.['app.site_name'] || 'libredesk'
 )
+// A bad logo URL hides the image instead of showing a broken one.
+const logoFailed = ref(false)
 const siteLogoUrl = computed(() => {
   const config = appSettingsStore.public_config
   return config?.['app.logo_url'] || config?.['app.favicon_url'] || ''
