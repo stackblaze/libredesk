@@ -25,6 +25,11 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/logout", auth(handleLogout))
 	g.GET("/api/v1/oidc/{id}/login", rateLimit(handleOIDCLogin, "auth"))
 	g.GET("/api/v1/oidc/{id}/finish", rateLimit(handleOIDCCallback, "auth"))
+	g.POST("/api/v1/auth/magic-link", rateLimit(handleRequestMagicLink, "auth"))
+	g.POST("/api/v1/auth/magic-link/verify", rateLimit(handleVerifyMagicLink, "auth"))
+	g.GET("/api/v1/saml/login", rateLimit(handleSAMLLogin, "auth"))
+	g.POST("/api/v1/saml/acs", rateLimit(handleSAMLACS, "auth"))
+	g.GET("/api/v1/saml/metadata", handleSAMLMetadata)
 
 	// i18n.
 	g.GET("/api/v1/lang", handleGetAvailableLanguages)
@@ -55,6 +60,8 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/api/v1/oidc/{id}", perm(handleGetOIDC, "oidc:manage"))
 	g.PUT("/api/v1/oidc/{id}", perm(handleUpdateOIDC, "oidc:manage"))
 	g.DELETE("/api/v1/oidc/{id}", perm(handleDeleteOIDC, "oidc:manage"))
+	g.GET("/api/v1/settings/sso", perm(handleGetSSOSettings, "oidc:manage"))
+	g.PUT("/api/v1/settings/sso", perm(handleUpdateSSOSettings, "oidc:manage"))
 
 	// Conversations.
 	g.GET("/api/v1/conversations/all", perm(handleGetAllConversations, "conversations:read_all"))
@@ -430,6 +437,7 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/account/{all:*}", authPage(serveIndexPage))
 	g.GET("/reset-password", notAuthPage(serveIndexPage))
 	g.GET("/set-password", notAuthPage(serveIndexPage))
+	g.GET("/magic-login", notAuthPage(serveIndexPage))
 
 	// PWA files. Served from the root so the service worker can control the
 	// whole app scope and the manifest is discoverable at a stable URL.

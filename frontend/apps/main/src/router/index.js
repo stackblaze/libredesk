@@ -30,6 +30,12 @@ const routes = [
         name: 'set-password',
         component: () => import('@main/views/auth/SetPasswordView.vue'),
         meta: { titleKey: 'auth.setNewPassword' }
+      },
+      {
+        path: 'magic-login',
+        name: 'magic-login',
+        component: () => import('@main/views/auth/MagicLoginView.vue'),
+        meta: { titleKey: 'auth.signInButton' }
       }
     ]
   },

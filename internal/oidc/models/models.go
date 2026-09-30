@@ -11,6 +11,7 @@ import (
 var providerLogos = map[string]string{
 	"Google":    "/images/google-logo.svg",
 	"Microsoft": "/images/microsoft-logo.svg",
+	"Okta":      "/images/okta-logo.svg",
 	"Custom":    "",
 }
 

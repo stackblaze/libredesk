@@ -72,6 +72,13 @@ func handleUpdateGeneralSettings(r *fastglue.Request) error {
 		return sendErrorEnvelope(r, envelope.NewError(envelope.GeneralError, app.i18n.T("globals.messages.somethingWentWrong"), nil))
 	}
 
+	// The SAML ACS and entity ID derive from the root URL.
+	go func() {
+		if err := reloadSAML(app); err != nil {
+			app.lo.Error("error reloading saml after settings update", "error", err)
+		}
+	}()
+
 	// Check if language changed and reload i18n if needed.
 	app.Lock()
 	newLang := ko.String("app.lang")

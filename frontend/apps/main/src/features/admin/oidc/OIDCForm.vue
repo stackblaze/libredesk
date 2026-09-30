@@ -27,6 +27,7 @@
                 <SelectGroup>
                   <SelectItem value="Google"> Google </SelectItem>
                   <SelectItem value="Microsoft"> Microsoft </SelectItem>
+                  <SelectItem value="Okta"> Okta </SelectItem>
                   <SelectItem value="Custom"> Custom </SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -50,7 +51,7 @@
         <FormItem v-auto-animate>
           <FormLabel>{{ $t('globals.terms.providerURL') }}</FormLabel>
           <FormControl>
-            <Input type="text" placeholder="https://accounts.google.com" v-bind="componentField" />
+            <Input type="text" :placeholder="providerURLPlaceholder" v-bind="componentField" />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -159,6 +160,15 @@ const { t } = useI18n()
 const submitLabel = computed(() => {
   return props.submitLabel || (props.isNewForm ? t('globals.messages.create') : t('globals.messages.save'))
 })
+
+// Issuer URLs differ per provider; Microsoft needs a tenant ID because go-oidc rejects the multi-tenant issuer.
+const providerURLPlaceholders = {
+  Google: 'https://accounts.google.com',
+  Microsoft: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
+  Okta: 'https://<your-org>.okta.com',
+  Custom: 'https://idp.example.com'
+}
+const providerURLPlaceholder = computed(() => providerURLPlaceholders[form.values.provider] || providerURLPlaceholders.Custom)
 
 const form = useForm({
   validationSchema: toTypedSchema(createFormSchema(t)),

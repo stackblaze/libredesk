@@ -45,6 +45,7 @@ import (
 	"github.com/abhinavxd/libredesk/internal/inbox"
 	"github.com/abhinavxd/libredesk/internal/media"
 	"github.com/abhinavxd/libredesk/internal/oidc"
+	"github.com/abhinavxd/libredesk/internal/samlsso"
 	"github.com/abhinavxd/libredesk/internal/organization"
 	"github.com/abhinavxd/libredesk/internal/ratelimit"
 	"github.com/abhinavxd/libredesk/internal/role"
@@ -104,6 +105,7 @@ type App struct {
 	i18n             *i18n.I18n
 	lo               *logf.Logger
 	oidc             *oidc.Manager
+	saml             *samlsso.Manager
 	media            *media.Manager
 	setting          *setting.Manager
 	role             *role.Manager
@@ -341,6 +343,7 @@ func main() {
 		wsHub:            wsHub,
 	}
 	app.consts.Store(constants)
+	initSAML(app, ssrfControl)
 	helpCenterCacheOpts.Logger = log.New(helpCenterCacheLogWriter{lo: app.lo}, "", 0)
 
 	g := fastglue.NewGlue()

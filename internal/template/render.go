@@ -20,6 +20,7 @@ const (
 	// Built-in templates fetched from memory stored in `static` directory.
 	TmplResetPassword = "reset-password"
 	TmplWelcome       = "welcome"
+	TmplMagicLink     = "magic-link"
 
 	// Template names for rendering.
 	TmplBase    = "base"

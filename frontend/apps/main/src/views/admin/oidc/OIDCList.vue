@@ -1,4 +1,9 @@
 <template>
+  <SignInMethods class="mb-8" />
+  <div class="mb-3 space-y-1">
+    <h3 class="font-medium">{{ $t('admin.sso.oidcProviders') }}</h3>
+    <p class="text-sm text-muted-foreground">{{ $t('admin.sso.oidcProvidersDescription') }}</p>
+  </div>
   <DataTable :columns="createColumns(t)" :data="oidc" :loading="isLoading">
     <template #actions>
       <RouterLink :to="{ name: 'new-sso' }">
@@ -15,6 +20,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import DataTable from '@main/components/datatable/DataTable.vue'
+import SignInMethods from '../../../features/admin/oidc/SignInMethods.vue'
 import { createColumns } from '../../../features/admin/oidc/dataTableColumns.js'
 import { Button } from '@shared-ui/components/ui/button'
 import { useEmitter } from '../../../composables/useEmitter'

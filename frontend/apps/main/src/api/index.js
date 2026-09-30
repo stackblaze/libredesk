@@ -176,6 +176,12 @@ const login = (data) => http.post(`/api/v1/auth/login`, data, {
 const verifyTOTP = (data) => http.post(`/api/v1/auth/totp/verify`, data, {
   headers: { 'Content-Type': 'application/json' }
 })
+const requestMagicLink = (data) => http.post(`/api/v1/auth/magic-link`, data, {
+  headers: { 'Content-Type': 'application/json' }
+})
+const verifyMagicLink = (data) => http.post(`/api/v1/auth/magic-link/verify`, data, {
+  headers: { 'Content-Type': 'application/json' }
+})
 const enrollTOTP = () => http.post(`/api/v1/agents/me/totp/enroll`)
 const confirmTOTP = (data) => http.post(`/api/v1/agents/me/totp/confirm`, data, {
   headers: { 'Content-Type': 'application/json' }
@@ -705,6 +711,8 @@ const deleteAllNotifications = () => http.delete('/api/v1/notifications')
 export default {
   login,
   verifyTOTP,
+  requestMagicLink,
+  verifyMagicLink,
   enrollTOTP,
   confirmTOTP,
   disableTOTP,
