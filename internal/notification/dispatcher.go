@@ -132,6 +132,27 @@ func (d *Dispatcher) sendToRecipient(recipientID int, n Notification) *models.Us
 	return &notification
 }
 
+// SendEmailsOnly sends email notifications without in-app notifications. Used for
+// recipients that have no user record, such as external addresses on automation notify actions.
+func (d *Dispatcher) SendEmailsOnly(emails []EmailNotification) {
+	if d.outbound == nil || !d.emailEnabled {
+		return
+	}
+	for _, e := range emails {
+		if len(e.Recipients) == 0 {
+			continue
+		}
+		if err := d.outbound.Send(Message{
+			RecipientEmails: e.Recipients,
+			Subject:         e.Subject,
+			Content:         e.Content,
+			Provider:        ProviderEmail,
+		}); err != nil {
+			d.lo.Error("error sending email notification", "email", e.Recipients[0], "error", err)
+		}
+	}
+}
+
 // sendEmail sends an email notification through the outbound service.
 func (d *Dispatcher) sendEmail(recipientID int, email, subject, content string, nType models.NotificationType) {
 	if err := d.outbound.Send(Message{

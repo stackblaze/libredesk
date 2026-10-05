@@ -1563,7 +1563,8 @@ func (m *Manager) ApplyAction(action amodels.RuleAction, conv models.Conversatio
 
 func (m *Manager) notifyAutomation(subject, message string, entries []string, conv models.Conversation) error {
 	userIDs := m.resolveNotifyRecipients(entries, conv)
-	if len(userIDs) == 0 {
+	externalEmails := m.resolveNotifyExternalEmails(entries)
+	if len(userIDs) == 0 && len(externalEmails) == 0 {
 		m.lo.Debug("notify action: no recipients resolved", "conversation_uuid", conv.UUID)
 		return nil
 	}
@@ -1572,39 +1573,30 @@ func (m *Manager) notifyAutomation(subject, message string, entries []string, co
 		userIDs = userIDs[:amodels.MaxNotifyRecipients]
 	}
 
-	recipientIDs, emails := m.buildRecipientEmails(userIDs, func(recipient umodels.User) (string, string, error) {
+	render := func(recipient umodels.User) (string, string, error) {
 		content, err := m.template.RenderEmailWithTemplate(
-			map[string]any{
-				"Conversation": map[string]any{
-					"ReferenceNumber": conv.ReferenceNumber,
-					"Subject":         conv.Subject.String,
-					"Priority":        conv.Priority.String,
-					"UUID":            conv.UUID,
-				},
-				"Recipient": map[string]any{
-					"FirstName": recipient.FirstName,
-					"LastName":  recipient.LastName,
-					"FullName":  recipient.FullName(),
-					"Email":     recipient.Email.String,
-				},
-				"Contact": map[string]any{
-					"FirstName": conv.Contact.FirstName,
-					"LastName":  conv.Contact.LastName,
-					"FullName":  conv.Contact.FullName(),
-					"Email":     conv.Contact.Email.String,
-				},
-				// Automated messages do not have an author.
-				"Author": map[string]any{
-					"FirstName": "",
-					"LastName":  "",
-					"FullName":  "",
-					"Email":     "",
-				},
-				"Message": message,
-			},
-			automationNotifyEmailContent)
+			m.automationNotifyTemplateData(conv, recipient), automationNotifyEmailContent)
 		return subject, content, err
-	})
+	}
+
+	recipientIDs, emails := m.buildRecipientEmails(userIDs, render)
+
+	// External addresses get email only; they have no user record for in-app notifications.
+	for _, addr := range externalEmails {
+		email := notifier.EmailNotification{Recipients: []string{addr}}
+		if subject, content, err := render(umodels.User{Email: null.StringFrom(addr)}); err != nil {
+			m.lo.Error("error rendering email notification", "external_email", addr, "error", err)
+		} else {
+			email.Subject, email.Content = subject, content
+		}
+		emails = append(emails, email)
+	}
+
+	if len(recipientIDs) == 0 {
+		// No in-app recipients; dispatch as email-only notifications.
+		m.dispatcher.SendEmailsOnly(emails)
+		return nil
+	}
 
 	m.dispatcher.SendWithEmails(notifier.Notification{
 		Type:             nmodels.NotificationTypeMention,
@@ -1615,6 +1607,71 @@ func (m *Manager) notifyAutomation(subject, message string, entries []string, co
 		ConversationUUID: conv.UUID,
 	}, emails)
 	return nil
+}
+
+// automationNotifyTemplateData builds the template data map for notify-action emails,
+// mirroring BuildTemplateData's Conversation and Contact shape.
+func (m *Manager) automationNotifyTemplateData(conv models.Conversation, recipient umodels.User) map[string]any {
+	return map[string]any{
+		"Conversation": map[string]any{
+			"ReferenceNumber":  conv.ReferenceNumber,
+			"Subject":          conv.Subject.String,
+			"Priority":         conv.Priority.String,
+			"UUID":             conv.UUID,
+			"Status":           conv.Status.String,
+			"Channel":          conv.InboxChannel,
+			"SLAPolicyName":    conv.SlaPolicyName.String,
+			"CustomAttributes": jsonAttributesToMap(conv.CustomAttributes),
+		},
+		"Recipient": map[string]any{
+			"FirstName": recipient.FirstName,
+			"LastName":  recipient.LastName,
+			"FullName":  recipient.FullName(),
+			"Email":     recipient.Email.String,
+		},
+		"Contact": map[string]any{
+			"FirstName":        conv.Contact.FirstName,
+			"LastName":         conv.Contact.LastName,
+			"FullName":         conv.Contact.FullName(),
+			"Email":            conv.Contact.Email.String,
+			"Organization":     conv.Contact.OrganizationName.String,
+			"CustomAttributes": jsonAttributesToMap(conv.Contact.CustomAttributes),
+		},
+		// Automated messages do not have an author.
+		"Author": map[string]any{
+			"FirstName": "",
+			"LastName":  "",
+			"FullName":  "",
+			"Email":     "",
+		},
+		"Message": "",
+	}
+}
+
+// resolveNotifyExternalEmails extracts external email addresses from notify recipients.
+// Accepts "email:<address>" entries and bare addresses that are not a known recipient kind.
+func (m *Manager) resolveNotifyExternalEmails(entries []string) []string {
+	var emails []string
+	seen := make(map[string]bool)
+	for _, entry := range entries {
+		addr := ""
+		kind, id := parseNotifyRecipient(entry)
+		switch kind {
+		case amodels.NotifyRecipientEmail:
+			addr = strings.TrimSpace(entry[strings.Index(entry, ":")+1:])
+		default:
+			// A bare value with an "@" is not a known kind; treat it as an email address.
+			if id == 0 && kind != "" && strings.Contains(kind, "@") {
+				addr = strings.TrimSpace(entry)
+			}
+		}
+		if addr == "" || !strings.Contains(addr, "@") || seen[addr] {
+			continue
+		}
+		seen[addr] = true
+		emails = append(emails, addr)
+	}
+	return emails
 }
 
 // buildRecipientEmails fetches each recipient and renders their email, returning emails index-aligned with recipient IDs; on fetch or render failure the in-app notification still goes out with a zero-value email.

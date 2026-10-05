@@ -49,11 +49,20 @@
                 class="flex-1 min-w-0 space-y-3"
               >
                 <SelectTag
-                  :modelValue="action.recipients || []"
+                  :modelValue="internalNotifyRecipients(action)"
                   @update:modelValue="(value) => handleNotifyRecipientsChange(value, index)"
                   :items="notifyRecipientOptions"
                   :placeholder="t('placeholders.selectRecipients')"
                 />
+                <Input
+                  type="text"
+                  :placeholder="t('placeholders.notifyExternalEmails')"
+                  :modelValue="externalNotifyEmails(action)"
+                  @update:modelValue="(value) => handleNotifyExternalEmailsChange(value, index)"
+                />
+                <p class="text-xs text-muted-foreground mt-1">
+                  {{ $t('admin.automation.notifyExternalEmailsHint') }}
+                </p>
                 <Input
                   type="text"
                   :placeholder="t('globals.terms.subject')"
@@ -201,7 +210,26 @@ const notifyRecipientOptions = computed(() => [
 ])
 
 const handleNotifyRecipientsChange = (value, index) => {
-  actions.value[index].recipients = value || []
+  // Keep external email entries; they are managed by the free-text input below.
+  const externals = (actions.value[index].recipients || []).filter((r) => r.startsWith('email:'))
+  actions.value[index].recipients = [...(value || []), ...externals]
+  emitUpdate(index)
+}
+
+const EMAIL_PREFIX = 'email:'
+const internalNotifyRecipients = (action) => (action.recipients || []).filter((r) => !r.startsWith(EMAIL_PREFIX))
+const externalNotifyEmails = (action) => (action.recipients || [])
+  .filter((r) => r.startsWith(EMAIL_PREFIX))
+  .map((r) => r.slice(EMAIL_PREFIX.length))
+  .join(', ')
+const handleNotifyExternalEmailsChange = (value, index) => {
+  const externals = (value || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((email) => `${EMAIL_PREFIX}${email}`)
+  const internals = internalNotifyRecipients(actions.value[index])
+  actions.value[index].recipients = [...internals, ...externals]
   emitUpdate(index)
 }
 
