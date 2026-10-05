@@ -253,16 +253,22 @@ func (m *Manager) BuildTemplateData(conversationUUID string, senderID int) (map[
 
 	data := map[string]any{
 		"Conversation": map[string]any{
-			"ReferenceNumber": conversation.ReferenceNumber,
-			"Subject":         conversation.Subject.String,
-			"Priority":        conversation.Priority.String,
-			"UUID":            conversation.UUID,
+			"ReferenceNumber":  conversation.ReferenceNumber,
+			"Subject":          conversation.Subject.String,
+			"Priority":         conversation.Priority.String,
+			"UUID":             conversation.UUID,
+			"Status":           conversation.Status.String,
+			"Channel":          conversation.InboxChannel,
+			"SLAPolicyName":    conversation.SlaPolicyName.String,
+			"CustomAttributes": jsonAttributesToMap(conversation.CustomAttributes),
 		},
 		"Contact": map[string]any{
-			"FirstName": conversation.Contact.FirstName,
-			"LastName":  conversation.Contact.LastName,
-			"FullName":  conversation.Contact.FullName(),
-			"Email":     conversation.Contact.Email.String,
+			"FirstName":        conversation.Contact.FirstName,
+			"LastName":         conversation.Contact.LastName,
+			"FullName":         conversation.Contact.FullName(),
+			"Email":            conversation.Contact.Email.String,
+			"Organization":     conversation.Contact.OrganizationName.String,
+			"CustomAttributes": jsonAttributesToMap(conversation.Contact.CustomAttributes),
 		},
 		"Recipient": map[string]any{
 			"FirstName": conversation.Contact.FirstName,
@@ -1586,4 +1592,17 @@ func (m *Manager) emailFromAddress(inb inbox.Inbox, message models.Message) stri
 	}
 	addr.Name = name
 	return addr.String()
+}
+
+// jsonAttributesToMap unmarshals a raw JSON attributes blob into a map for template rendering.
+// Returns an empty map for empty or invalid input so template access is always nil-safe.
+func jsonAttributesToMap(attributes json.RawMessage) map[string]any {
+	out := map[string]any{}
+	if len(attributes) == 0 {
+		return out
+	}
+	if err := json.Unmarshal(attributes, &out); err != nil {
+		return map[string]any{}
+	}
+	return out
 }
