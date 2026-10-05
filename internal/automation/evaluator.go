@@ -102,10 +102,9 @@ func (e *Engine) evaluateGroup(rules []models.RuleDetail, operator string, conve
 // Returns true if the rule condition is met, false otherwise.
 func (e *Engine) evaluateRule(rule models.RuleDetail, conversation cmodels.Conversation, previousValues map[string]string) bool {
 	var (
-		valueToCompare   string
-		ruleValues       []string
-		conditionMet     bool
-		customAttributes map[string]any
+		valueToCompare string
+		ruleValues     []string
+		conditionMet   bool
 	)
 
 	if rule.FieldType == "" {
@@ -151,6 +150,8 @@ func (e *Engine) evaluateRule(rule models.RuleDetail, conversation cmodels.Conve
 			}
 		case models.ConversationInbox:
 			valueToCompare = strconv.Itoa(conversation.InboxID)
+		case models.ConversationOrganization:
+			valueToCompare = conversation.Contact.OrganizationName.String
 		case models.ConversationPreviousStatus, models.ConversationPreviousPriority,
 			models.ConversationPreviousAssignedUser, models.ConversationPreviousAssignedTeam:
 			// An absent key is not the same as an empty previous value.
@@ -164,12 +165,27 @@ func (e *Engine) evaluateRule(rule models.RuleDetail, conversation cmodels.Conve
 			e.lo.Error("error unrecognized conversation field", "field", rule.Field, "field_type", rule.FieldType, "conversation_uuid", conversation.UUID)
 			return false
 		}
+	} else if rule.FieldType == models.FieldTypeConversationCustomAttribute {
+		// Conversation custom attributes are evaluated the same way as contact custom attributes.
+		var attributes json.RawMessage = conversation.CustomAttributes
+		customAttributes, err := parseCustomAttributes(attributes)
+		if err != nil {
+			e.lo.Error("error unmarshalling conversation custom attributes", "conversation_uuid", conversation.UUID, "error", err)
+			return false
+		}
+		val, ok := customAttributes[rule.Field]
+		if !ok {
+			e.lo.Warn("field not found in conversation custom attribute", "field", rule.Field, "conversation_uuid", conversation.UUID, "custom_attributes", customAttributes)
+			return false
+		}
+		valueToCompare = customAttributeValueToString(val)
 	} else if rule.FieldType == models.FieldTypeContactCustomAttribute {
 		// If the field type is custom attribute, need to extract the value from the custom attributes
 		var attributes json.RawMessage = conversation.Contact.CustomAttributes
 
 		// Unmarshal the custom attributes
-		if err := json.Unmarshal(attributes, &customAttributes); err != nil {
+		customAttributes, err := parseCustomAttributes(attributes)
+		if err != nil {
 			e.lo.Error("error unmarshalling custom attributes", "conversation_uuid", conversation.UUID, "error", err)
 			return false
 		}
@@ -177,20 +193,7 @@ func (e *Engine) evaluateRule(rule models.RuleDetail, conversation cmodels.Conve
 
 		// Check if the field exists in the custom attributes, If the field is not found, return false.
 		if val, ok := customAttributes[rule.Field]; ok {
-			// Convert the value to a string for comparison, Handle different types of values, really not required but just to be safe.
-			switch v := val.(type) {
-			case string:
-				valueToCompare = v
-			case int:
-				valueToCompare = strconv.Itoa(v)
-			// Float type does not exist in the custom attributes.
-			case float64:
-				valueToCompare = strconv.FormatInt(int64(v), 10)
-			case bool:
-				valueToCompare = strconv.FormatBool(v)
-			default:
-				valueToCompare = fmt.Sprintf("%v", v)
-			}
+			valueToCompare = customAttributeValueToString(val)
 		} else {
 			e.lo.Warn("field not found in custom attribute", "field", rule.Field, "field_type", rule.FieldType, "conversation_uuid", conversation.UUID, "custom_attributes", customAttributes)
 			return false
@@ -299,4 +302,34 @@ func (e *Engine) evaluateRule(rule models.RuleDetail, conversation cmodels.Conve
 	}
 	e.lo.Debug("conversation automation rule status", "has_met", conditionMet, "conversation_uuid", conversation.UUID)
 	return conditionMet
+}
+
+// parseCustomAttributes unmarshals a raw JSON custom attributes blob into a map.
+func parseCustomAttributes(attributes json.RawMessage) (map[string]any, error) {
+	customAttributes := map[string]any{}
+	if len(attributes) == 0 {
+		return customAttributes, nil
+	}
+	if err := json.Unmarshal(attributes, &customAttributes); err != nil {
+		return nil, err
+	}
+	return customAttributes, nil
+}
+
+// customAttributeValueToString converts a custom attribute value of any JSON type to a string for comparison.
+// Floats truncate to their integer form, matching the documented comparison behavior.
+func customAttributeValueToString(val any) string {
+	switch v := val.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	// Float type does not exist in the custom attributes.
+	case float64:
+		return strconv.FormatInt(int64(v), 10)
+	case bool:
+		return strconv.FormatBool(v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

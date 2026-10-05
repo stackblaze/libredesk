@@ -56,6 +56,7 @@ const (
 	ConversationHoursSinceResolved   = "hours_since_resolved"
 	ConversationInbox                = "inbox"
 	ContactEmail                     = "contact_email"
+	ConversationOrganization         = "organization"
 
 	ConversationPreviousStatus       = "previous_status"
 	ConversationPreviousPriority     = "previous_priority"
@@ -66,6 +67,7 @@ const (
 	NotifyRecipientAssignedTeam = "assigned_team"
 	NotifyRecipientTeam         = "team"
 	NotifyRecipientUser         = "user"
+	NotifyRecipientEmail        = "email"
 
 	MaxNotifyRecipients = 1000
 
@@ -79,7 +81,8 @@ const (
 	ExecutionModeAll        = "all"
 	ExecutionModeFirstMatch = "first_match"
 
-	FieldTypeContactCustomAttribute = "contact_custom_attribute"
+	FieldTypeContactCustomAttribute      = "contact_custom_attribute"
+	FieldTypeConversationCustomAttribute = "conversation_custom_attribute"
 	FieldTypeConversationField      = "conversation"
 )
 
