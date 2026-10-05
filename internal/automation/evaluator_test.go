@@ -1786,3 +1786,147 @@ func TestMoreThanTwoGroups_RuleSkipped(t *testing.T) {
 
 	assert.Equal(t, 0, mockStore.callCount, "rules with more than 2 groups must be skipped entirely")
 }
+
+// Test: organization condition matches the contact's organization name.
+func TestOrganizationCondition(t *testing.T) {
+	mockStore := new(mockConversationStore)
+	mockStore.On("ApplyAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	engine := createTestEngine(mockStore)
+
+	conversation := createTestConversation(func(c *cmodels.Conversation) {
+		c.Contact.OrganizationName = null.StringFrom("Acme Corp")
+	})
+
+	t.Run("Equals match", func(t *testing.T) {
+		rules := []models.Rule{
+			{
+				Groups: []models.RuleGroup{
+					{
+						LogicalOp: models.OperatorOR,
+						Rules: []models.RuleDetail{
+							{Field: models.ConversationOrganization, Operator: models.RuleOperatorEquals, Value: "acme corp", FieldType: models.FieldTypeConversationField},
+						},
+					},
+				},
+				Actions: []models.RuleAction{
+					{Type: models.ActionSetStatus, Value: []string{"2"}},
+				},
+				GroupOperator: models.OperatorOR,
+				ExecutionMode: models.ExecutionModeAll,
+			},
+		}
+		mockStore.appliedActions = nil
+		mockStore.callCount = 0
+		engine.evalConversationRules(rules, conversation, nil)
+		assert.Equal(t, 1, mockStore.callCount, "organization name should match case-insensitively")
+	})
+
+	t.Run("Not set on missing organization", func(t *testing.T) {
+		conv := createTestConversation()
+		rules := []models.Rule{
+			{
+				Groups: []models.RuleGroup{
+					{
+						LogicalOp: models.OperatorOR,
+						Rules: []models.RuleDetail{
+							{Field: models.ConversationOrganization, Operator: models.RuleOperatorNotSet, FieldType: models.FieldTypeConversationField},
+						},
+					},
+				},
+				Actions: []models.RuleAction{
+					{Type: models.ActionSetStatus, Value: []string{"2"}},
+				},
+				GroupOperator: models.OperatorOR,
+				ExecutionMode: models.ExecutionModeAll,
+			},
+		}
+		mockStore.appliedActions = nil
+		mockStore.callCount = 0
+		engine.evalConversationRules(rules, conv, nil)
+		assert.Equal(t, 1, mockStore.callCount, "empty organization should satisfy not set")
+	})
+}
+
+// Test: conversation custom attribute conditions evaluate against the conversation's attributes.
+func TestConversationCustomAttributeCondition(t *testing.T) {
+	mockStore := new(mockConversationStore)
+	mockStore.On("ApplyAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	engine := createTestEngine(mockStore)
+
+	attrs, _ := json.Marshal(map[string]interface{}{"tier": "gold", "seats": 40})
+	conversation := createTestConversation(func(c *cmodels.Conversation) {
+		c.CustomAttributes = attrs
+	})
+
+	t.Run("String match", func(t *testing.T) {
+		rules := []models.Rule{
+			{
+				Groups: []models.RuleGroup{
+					{
+						LogicalOp: models.OperatorOR,
+						Rules: []models.RuleDetail{
+							{Field: "tier", Operator: models.RuleOperatorEquals, Value: "gold", FieldType: models.FieldTypeConversationCustomAttribute},
+						},
+					},
+				},
+				Actions: []models.RuleAction{
+					{Type: models.ActionSetStatus, Value: []string{"2"}},
+				},
+				GroupOperator: models.OperatorOR,
+				ExecutionMode: models.ExecutionModeAll,
+			},
+		}
+		mockStore.appliedActions = nil
+		mockStore.callCount = 0
+		engine.evalConversationRules(rules, conversation, nil)
+		assert.Equal(t, 1, mockStore.callCount, "conversation custom attribute should match")
+	})
+
+	t.Run("Number match", func(t *testing.T) {
+		rules := []models.Rule{
+			{
+				Groups: []models.RuleGroup{
+					{
+						LogicalOp: models.OperatorOR,
+						Rules: []models.RuleDetail{
+							{Field: "seats", Operator: models.RuleOperatorEquals, Value: "40", FieldType: models.FieldTypeConversationCustomAttribute},
+						},
+					},
+				},
+				Actions: []models.RuleAction{
+					{Type: models.ActionSetStatus, Value: []string{"2"}},
+				},
+				GroupOperator: models.OperatorOR,
+				ExecutionMode: models.ExecutionModeAll,
+			},
+		}
+		mockStore.appliedActions = nil
+		mockStore.callCount = 0
+		engine.evalConversationRules(rules, conversation, nil)
+		assert.Equal(t, 1, mockStore.callCount, "numeric conversation custom attribute should match")
+	})
+
+	t.Run("Missing attribute does not match", func(t *testing.T) {
+		rules := []models.Rule{
+			{
+				Groups: []models.RuleGroup{
+					{
+						LogicalOp: models.OperatorOR,
+						Rules: []models.RuleDetail{
+							{Field: "nonexistent", Operator: models.RuleOperatorEquals, Value: "x", FieldType: models.FieldTypeConversationCustomAttribute},
+						},
+					},
+				},
+				Actions: []models.RuleAction{
+					{Type: models.ActionSetStatus, Value: []string{"2"}},
+				},
+				GroupOperator: models.OperatorOR,
+				ExecutionMode: models.ExecutionModeAll,
+			},
+		}
+		mockStore.appliedActions = nil
+		mockStore.callCount = 0
+		engine.evalConversationRules(rules, conversation, nil)
+		assert.Equal(t, 0, mockStore.callCount, "missing conversation custom attribute should not match")
+	})
+}

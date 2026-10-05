@@ -165,6 +165,23 @@ export function useConversationFilters () {
             }, {})
     })
 
+    const conversationCustomAttributes = computed(() => {
+        return customAttributeStore.conversationAttributeOptions
+            .filter(attribute => attribute.applies_to === 'conversation')
+            .reduce((acc, attribute) => {
+                acc[attribute.key] = {
+                    label: attribute.label,
+                    type: customAttributeDataTypeToFieldType[attribute.data_type] || FIELD_TYPE.TEXT,
+                    operators: customAttributeDataTypeToFieldOperators[attribute.data_type] || FIELD_OPERATORS.TEXT,
+                    options: attribute.values.map(value => ({
+                        label: value,
+                        value: value
+                    })) || [],
+                }
+                return acc
+            }, {})
+    })
+
     const newConversationFilters = computed(() => ({
         contact_email: {
             label: t('globals.terms.email'),
@@ -210,6 +227,11 @@ export function useConversationFilters () {
             type: FIELD_TYPE.SELECT,
             operators: FIELD_OPERATORS.SELECT,
             options: iStore.options
+        },
+        organization: {
+            label: t('globals.terms.organization'),
+            type: FIELD_TYPE.TEXT,
+            operators: FIELD_OPERATORS.TEXT_AUTOMATION
         }
     }))
 
@@ -287,6 +309,11 @@ export function useConversationFilters () {
             type: FIELD_TYPE.SELECT,
             operators: FIELD_OPERATORS.SELECT,
             options: tStore.options
+        },
+        organization: {
+            label: t('globals.terms.organization'),
+            type: FIELD_TYPE.TEXT,
+            operators: FIELD_OPERATORS.TEXT_AUTOMATION
         }
     }))
 
@@ -401,5 +428,6 @@ export function useConversationFilters () {
         conversationActions,
         macroActions,
         contactCustomAttributes,
+        conversationCustomAttributes,
     }
 }

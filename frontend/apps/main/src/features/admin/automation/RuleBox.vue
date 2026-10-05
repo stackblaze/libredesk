@@ -240,9 +240,10 @@ const props = defineProps({
 
 const fieldTypeConstants = {
   conversation: 'conversation',
-  contact_custom_attribute: 'contact_custom_attribute'
+  contact_custom_attribute: 'contact_custom_attribute',
+  conversation_custom_attribute: 'conversation_custom_attribute'
 }
-const { conversationFilters, newConversationFilters, contactCustomAttributes } =
+const { conversationFilters, newConversationFilters, contactCustomAttributes, conversationCustomAttributes } =
   useConversationFilters()
 const { ruleGroup } = toRefs(props)
 const emit = defineEmits(['update-group', 'add-condition', 'remove-condition'])
@@ -280,7 +281,9 @@ const handleGroupOperator = (value) => {
 const handleFieldChange = (value, ruleIndex) => {
   // Set the field type based on the selected field value.
   let fieldType = fieldTypeConstants.conversation
-  if (contactCustomAttributes.value[value]) {
+  if (conversationCustomAttributes.value[value]) {
+    fieldType = fieldTypeConstants.conversation_custom_attribute
+  } else if (contactCustomAttributes.value[value]) {
     fieldType = fieldTypeConstants.contact_custom_attribute
   }
 
@@ -347,6 +350,9 @@ const getFieldOperators = (field, fieldType) => {
   if (fieldType === fieldTypeConstants.contact_custom_attribute) {
     return contactCustomAttributes.value[field]?.operators || []
   }
+  if (fieldType === fieldTypeConstants.conversation_custom_attribute) {
+    return conversationCustomAttributes.value[field]?.operators || []
+  }
   if (fieldType === fieldTypeConstants.conversation) {
     return currentFilters.value[field]?.operators || []
   }
@@ -360,6 +366,9 @@ const getFieldOptions = (field, fieldType) => {
   }
   if (fieldType === fieldTypeConstants.contact_custom_attribute) {
     return contactCustomAttributes.value[field]?.options || []
+  }
+  if (fieldType === fieldTypeConstants.conversation_custom_attribute) {
+    return conversationCustomAttributes.value[field]?.options || []
   }
   if (fieldType === fieldTypeConstants.conversation) {
     return currentFilters.value[field]?.options || []
@@ -380,6 +389,9 @@ const inputType = (index) => {
   if (field && fieldType) {
     if (fieldType === fieldTypeConstants.contact_custom_attribute) {
       return contactCustomAttributes.value[field]?.type || ''
+    }
+    if (fieldType === fieldTypeConstants.conversation_custom_attribute) {
+      return conversationCustomAttributes.value[field]?.type || ''
     }
     if (fieldType === fieldTypeConstants.conversation) {
       return currentFilters.value[field]?.type || ''
