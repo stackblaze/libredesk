@@ -6,7 +6,7 @@ on:
 
 jobs:
   stale:
-    runs-on: [self-hosted, kubero]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v9
         with:

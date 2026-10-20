@@ -1,166 +1,49 @@
 name: Pipeline
 
-# Single pipeline for the repo: run the frontend + Go test suites, and only
-# once both pass build & publish the Docker image and roll it out to
+# Push-to-main pipeline: run the frontend + Go test suites (tests.yml), and
+# only once both pass build & publish the Docker image and roll it out to
 # leaseweb-montreal (ns libredesk).
-# Replaces the separate CI / Go / Docker workflows so a push to main produces
-# one ordered run instead of several competing for the single self-hosted runner.
+#
+# No pull_request trigger here (stackblaze/region-provisioner#170): the deploy
+# job runs on our self-hosted runner with the Montreal kubeconfig, so this
+# workflow is only reachable by a push to main or a manual dispatch. Pull
+# requests run the same tests on GitHub-hosted runners via ci.yml.
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 concurrency:
   group: pipeline-${{ github.ref }}
-  # Cancel superseded PR runs to save the single runner, but never cancel a
-  # main run mid-flight — those build & deploy to prod and must complete.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Never cancel a main run mid-flight: it builds & deploys to prod.
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  frontend:
-    name: Frontend & E2E
-    # TEMP: set to `true` to re-enable frontend + E2E tests before deploy.
-    if: false
-    runs-on: [self-hosted, kubero]
-    services:
-      db:
-        image: postgres:17-alpine
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: libredesk
-          POSTGRES_PASSWORD: libredesk
-          POSTGRES_DB: libredesk
-        options: >-
-          --health-cmd="pg_isready -U libredesk"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-      mailhog:
-        image: mailhog/mailhog
-        ports:
-          - 1025:1025
-          - 8025:8025
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.24.3"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-
-      - name: Install pnpm
-        run: npm install -g pnpm@9.15.3
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-
-      - name: Install cypress deps
-        run: sudo apt-get update && sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth xvfb
-
-      - name: Build binary and frontend
-        run: make build
-
-      - name: Configure app
-        run: |
-          cp config.sample.toml config.toml
-          sed -i 's/host = "db"/host = "127.0.0.1"/' config.toml
-          sed -i 's/address = "redis:6379"/address = "localhost:6379"/' config.toml
-
-      - name: Run unit tests for frontend
-        run: cd frontend && pnpm test:run
-
-      - name: Install db schema and run tests
-        env:
-          LIBREDESK_SYSTEM_USER_PASSWORD: "StrongPass!123"
-          # E2E runs over plain HTTP, so the Secure session/csrf cookies must be off
-          # or real login + writes would be rejected.
-          LIBREDESK_APP__SERVER__DISABLE_SECURE_COOKIES: "true"
-          CYPRESS_SYSTEM_PASSWORD: "StrongPass!123"
-          CYPRESS_MAILHOG_URL: "http://localhost:8025"
-        run: |
-          ./libredesk --install --idempotent-install --yes --config ./config.toml
-          ./libredesk --upgrade --yes --config ./config.toml
-          ./libredesk --config ./config.toml &
-          sleep 10
-          cd frontend
-          pnpm run test:e2e:ci
-
-  go:
-    name: Go tests
-    # TEMP: set to `true` to re-enable Go tests before deploy.
-    if: false
-    runs-on: [self-hosted, kubero]
-    # Run inside the Go toolchain image so the build deps come from the image,
-    # not the host runner. golang:1.25 matches the `go 1.25.0` directive in go.mod.
-    container:
-      image: golang:1.25-bookworm
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install build deps (make, node, pnpm)
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends make ca-certificates curl
-          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          apt-get install -y --no-install-recommends nodejs
-          npm install -g pnpm@9.15.3
-
-      - name: Install dependencies
-        run: go get -v ./...
-
-      - name: Run tests
-        run: make test
-
-      # The container runs as root; hand the shared checkout back to the host
-      # runner user (uid 1000) so subsequent host-based jobs can clean it.
-      - name: Restore workspace ownership
-        if: always()
-        run: chown -R 1000:1000 "$GITHUB_WORKSPACE" || true
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
 
   docker:
     name: Build & Publish Docker image
-    # Only build/publish on a real push to main (or manual dispatch); PRs stop
-    # after the test jobs above.
-    needs: [frontend, go]
+    # Image build only needs GITHUB_TOKEN, so it runs GitHub-hosted.
+    needs: tests
     # NOTE: the leading !cancelled() is REQUIRED. Without a status-check function,
-    # GitHub skips a job whose `needs` were skipped (frontend/go are `if: false`),
+    # GitHub skips a job whose `needs` were skipped (the test jobs are `if: false`),
     # regardless of the rest of this `if` — which is why every push since the
     # test-skip change deployed nothing. !cancelled() forces the `if` to evaluate.
     if: |
       !cancelled() &&
       github.event_name != 'pull_request' &&
-      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
-      (needs.go.result == 'success' || needs.go.result == 'skipped')
-    runs-on: [self-hosted, kubero]
+      github.repository == 'stackblaze/libredesk' &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped')
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -237,8 +120,12 @@ jobs:
     # Same status-function requirement as `docker`: deploy sits downstream of the
     # skipped test jobs, so without !cancelled() GitHub skips it even when the
     # build succeeded. Guard on docker success so a failed build never deploys.
+    # The only job that needs our infra (kubectl + KUBECONFIG_MONTREAL_B64), so
+    # the only one left on the self-hosted runner. Never on a pull request.
     if: |
       !cancelled() && needs.docker.result == 'success' &&
+      github.event_name != 'pull_request' &&
+      github.repository == 'stackblaze/libredesk' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main'
     runs-on: [self-hosted, kubero]

@@ -1,0 +1,23 @@
+name: CI
+
+# Pull-request checks: the same frontend + Go test suites as the push
+# pipeline, on GitHub-hosted runners only. PRs from forks run this, so it
+# never touches our self-hosted runners or any deploy secret
+# (stackblaze/region-provisioner#170). Build & deploy live in pipeline.yml,
+# which has no pull_request trigger.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
