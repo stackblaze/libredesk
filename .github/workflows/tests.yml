@@ -1,0 +1,130 @@
+name: Tests
+
+# Frontend + Go test suites, shared by ci.yml (pull requests) and
+# pipeline.yml (push to main, before build & deploy). GitHub-hosted only:
+# this is a public repo and pull requests from forks run these jobs, so they
+# must never land on our self-hosted runners (stackblaze/region-provisioner#170).
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend & E2E
+    # TEMP: set to `true` to re-enable frontend + E2E tests before deploy.
+    if: false
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:17-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: libredesk
+          POSTGRES_PASSWORD: libredesk
+          POSTGRES_DB: libredesk
+        options: >-
+          --health-cmd="pg_isready -U libredesk"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      mailhog:
+        image: mailhog/mailhog
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.24.3"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9.15.3
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+
+      - name: Install cypress deps
+        run: sudo apt-get update && sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth xvfb
+
+      - name: Build binary and frontend
+        run: make build
+
+      - name: Configure app
+        run: |
+          cp config.sample.toml config.toml
+          sed -i 's/host = "db"/host = "127.0.0.1"/' config.toml
+          sed -i 's/address = "redis:6379"/address = "localhost:6379"/' config.toml
+
+      - name: Run unit tests for frontend
+        run: cd frontend && pnpm test:run
+
+      - name: Install db schema and run tests
+        env:
+          LIBREDESK_SYSTEM_USER_PASSWORD: "StrongPass!123"
+          # E2E runs over plain HTTP, so the Secure session/csrf cookies must be off
+          # or real login + writes would be rejected.
+          LIBREDESK_APP__SERVER__DISABLE_SECURE_COOKIES: "true"
+          CYPRESS_SYSTEM_PASSWORD: "StrongPass!123"
+          CYPRESS_MAILHOG_URL: "http://localhost:8025"
+        run: |
+          ./libredesk --install --idempotent-install --yes --config ./config.toml
+          ./libredesk --upgrade --yes --config ./config.toml
+          ./libredesk --config ./config.toml &
+          sleep 10
+          cd frontend
+          pnpm run test:e2e:ci
+
+  go:
+    name: Go tests
+    # TEMP: set to `true` to re-enable Go tests before deploy.
+    if: false
+    runs-on: ubuntu-latest
+    # Run inside the Go toolchain image so the build deps come from the image,
+    # not the host runner. golang:1.25 matches the `go 1.25.0` directive in go.mod.
+    container:
+      image: golang:1.25-bookworm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install build deps (make, node, pnpm)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends make ca-certificates curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y --no-install-recommends nodejs
+          npm install -g pnpm@9.15.3
+
+      - name: Install dependencies
+        run: go get -v ./...
+
+      - name: Run tests
+        run: make test
